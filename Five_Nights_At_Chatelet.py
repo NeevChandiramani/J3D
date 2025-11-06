@@ -4,9 +4,9 @@ from ursina import *
 Five_nights_at_chatelet = Ursina()
 
 sol = Entity(
-    model='plane',
-    texture='shore',
-    collider='box',
-    scale=(50, 1, 50))
+    model = 'plane',
+    texture = 'shore',
+    collider = 'box',
+    scale = (50, 1, 50))
 
 Five_nights_at_chatelet.run()
