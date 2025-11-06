@@ -15,4 +15,8 @@ joueur = Entity(
     scale_y = 3,
     collider = 'box')
 
+camera.parent = joueur
+camera.position = (1, 1.5, 1)
+camera.rotation = (1, 1, 1)
+
 Five_nights_at_chatelet.run()
