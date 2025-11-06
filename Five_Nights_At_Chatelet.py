@@ -10,13 +10,16 @@ sol = Entity(
     scale = (50, 1, 50))
 
 joueur = Entity(
-    model = 'arrow',
+    model = 'cube',
     color = color.red,
     scale_y = 3,
     collider = 'box')
 
 camera.parent = joueur
-camera.position = (1, 1.5, 1)
-camera.rotation = (1, 1, 1)
+camera.position = (0, 2, -6)
+camera.rotation_x = 15
+camera.fov = 90
+camera.clip_plane_near = 0.1
+camera.clip_plane_far = 100
 
 Five_nights_at_chatelet.run()
