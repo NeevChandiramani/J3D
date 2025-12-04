@@ -1,35 +1,44 @@
 from ursina import *
+from ursina.prefabs.first_person_controller import FirstPersonController
+from ursina.shaders import lit_with_shadows_shader
+
+
 #pip install ursina on oublie pas tu connais
 
 Five_nights_at_chatelet = Ursina()
 
-sol = Entity(
-    model = 'plane',
-    texture = 'shore',
-    collider = 'box',
-    scale = (50, 1, 50))
+def input(key):
+    if key == 'escape':
+        application.quit()
 
-joueur = Entity(
-    model = 'cube',    #Pour avoir d'autres model il faut télécharger des trucs sinon ça marche pas
-    color = color.red,
-    scale_y = 3,
-    collider = 'box')
 
-camera.parent = joueur
-camera.position = (0, 2, -6)
-camera.rotation_x = 15
-camera.fov = 90
-camera.clip_plane_near = 0.1
-camera.clip_plane_far = 100
 
-vitesse = 6.7
-def mouvement() :
-    avance = joueur.forward * (held_keys['w'])
-    recule = joueur.forward * (- held_keys['s'])    #forward et right sont de type vecteur, pour ça qu'on multiplie
-    droite = joueur.right * (held_keys['d'])
-    gauche = joueur.right * (- held_keys['a'])    #touche de qwerty mais ça marche en azerty
-    direction = (avance + recule + droite + gauche).normalized() * time.dt * 6.7
-    joueur.position += direction
+# --- Joueur ---
+player = FirstPersonController(position=(0,10,0), mouse_sensitivity=Vec2(100,100))
+
+sun = DirectionalLight()
+sun.look_at(Vec3(1, -1, -1))
+#sun.color = color.rgb(0.04,0.04,0.04)
+sun.color = color.rgb(1,1,1)
+sun.shadows = True 
+
+# --- Cube test ---
+test_cube = Entity(
+    model='cube',
+    color=color.azure,
+    position=(2,1,2),
+    shader=lit_with_shadows_shader
+    
+)
+
+
+# --- Map ---
+ground = Entity(
+    model="Mall.obj",
+    collider="mesh",
+    shader=lit_with_shadows_shader,
+    scale=1
+)
 
 
 Five_nights_at_chatelet.run()
