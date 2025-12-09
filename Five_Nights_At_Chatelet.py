@@ -43,7 +43,7 @@ camera.parent = camera_pivot
 camera.fov = 90
 camera.rotation = (15, 0, 0)
 
-def mouvement_caméra():
+def mouvement_camera():
     camera_pivot.rotation_y += mouse.velocity[0] * 80
     camera_pivot.rotation_x -= mouse.velocity[1] * 80
     camera_pivot.rotation_x = clamp(camera_pivot.rotation_x, -30, 45)
@@ -62,7 +62,7 @@ def input(key):
         application.quit()
 
 def update():
-    mouvement()
-    cam_mouv()
+    mouvement_joueur()
+    mouvement_camera()
 
 Five_nights_at_chatelet.run()
