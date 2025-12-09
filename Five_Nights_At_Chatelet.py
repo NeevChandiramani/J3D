@@ -35,6 +35,14 @@ test_cube = Entity(
     shader=lit_with_shadows_shader
 )
 
+mouse.locked = True
+mouse.visible = False 
+
+camera_pivot = Entity(parent=joueur, y=2)
+camera.parent = camera_pivot
+camera.fov = 90
+camera.rotation = (15, 0, 0)
+
 def input(key):
     if key == 'escape':
         application.quit()
