@@ -61,6 +61,8 @@ def input(key):
     if key == 'escape':
         application.quit()
 
-
+def update():
+    mouvement()
+    cam_mouv()
 
 Five_nights_at_chatelet.run()
