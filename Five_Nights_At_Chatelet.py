@@ -7,9 +7,12 @@ from ursina.shaders import lit_with_shadows_shader
 
 Five_nights_at_chatelet = Ursina()
 
-def input(key):
-    if key == 'escape':
-        application.quit()
+sol = Entity(
+    model="Mall.obj",
+    collider="mesh",
+    shader=lit_with_shadows_shader,
+    scale=Vec3(1,3,1)
+)
 
 sun = DirectionalLight()
 sun.look_at(Vec3(1, -1, -1))
@@ -32,12 +35,10 @@ test_cube = Entity(
     shader=lit_with_shadows_shader
 )
 
-sol = Entity(
-    model="Mall.obj",
-    collider="mesh",
-    shader=lit_with_shadows_shader,
-    scale=Vec3(1,3,1)
-)
+def input(key):
+    if key == 'escape':
+        application.quit()
+
 
 
 Five_nights_at_chatelet.run()
