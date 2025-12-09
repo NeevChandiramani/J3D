@@ -15,7 +15,15 @@ sun = DirectionalLight()
 sun.look_at(Vec3(1, -1, -1))
 #sun.color = color.rgb(0.04,0.04,0.04)
 sun.color = color.rgb(1,1,1)
-sun.shadows = True 
+sun.shadows = False
+
+joueur = Entity(
+    position= (0,5,0),
+    model = 'cube', 
+    color = color.red,
+    scale_y = 3,
+    collider = 'box'
+)
 
 test_cube = Entity(
     model='cube',
