@@ -43,6 +43,12 @@ camera.parent = camera_pivot
 camera.fov = 90
 camera.rotation = (15, 0, 0)
 
+def mouvement_caméra():
+    camera_pivot.rotation_y += mouse.velocity[0] * 80
+    camera_pivot.rotation_x -= mouse.velocity[1] * 80
+    camera_pivot.rotation_x = clamp(camera_pivot.rotation_x, -30, 45)
+    camera.position = (0, 0, -5)
+
 def input(key):
     if key == 'escape':
         application.quit()
