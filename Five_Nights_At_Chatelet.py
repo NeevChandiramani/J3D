@@ -1,6 +1,7 @@
 #lignes à commenter pour désactiver le menu = -
 
 from ursina import *
+import pygame
 from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import lit_with_shadows_shader
 #pip install ursina on oublie pas tu connais
