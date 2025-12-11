@@ -9,18 +9,6 @@ COLOR_BG = (10, 10, 15)
 COLOR_TEXT = (150, 150, 150)
 COLOR_SELECTED = (255, 255, 255)
 
-pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("FIVE NIGHTS AT CHATELET")
-clock = pygame.time.Clock()
-
-try:
-    background_img = pygame.image.load("fnac_background.jpg")
-    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
-    has_background = True
-except:
-    has_background = False  
-
 def draw_scanlines(surface):
     scan_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     for y in range(0, HEIGHT, 6):
@@ -86,7 +74,6 @@ class Menu:
             
             opt_surf = self.font_menu.render(prefix + option, True, color)
             surface.blit(opt_surf, (100, start_y + (i * 60)))
-
  
         bar_filled = "|" * self.volume
         bar_empty = "." * (10 - self.volume)
@@ -101,14 +88,41 @@ class Menu:
         surface.blit(ver_surf, (20, HEIGHT - 40))
 
 def main():
+    run_menu()
+
+def run_menu():
+    """Run the pygame menu loop and return the chosen action: 'start' or 'exit'."""
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("FIVE NIGHTS AT CHATELET")
+    clock = pygame.time.Clock()
+
+    try:
+        background_img = pygame.image.load("fnac_background.jpg")
+        background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
+        has_background = True
+    except Exception:
+        has_background = False
+
     menu = Menu()
-    
     running = True
+    action = None
+    
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                action = 'exit'
                 running = False
-            menu.handle_input(event)
+            else:
+                menu.handle_input(event)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                    sel = menu.options[menu.selected_index]
+                    if sel == "START":
+                        action = 'start'
+                        running = False
+                    elif sel == "EXIT":
+                        action = 'exit'
+                        running = False
 
         if has_background:
             screen.blit(background_img, (0, 0))
@@ -127,8 +141,27 @@ def main():
         pygame.display.flip()
         clock.tick(FPS)
 
+    if action == 'start':
+        try:
+            screen.fill((0, 0, 0))
+            # optional loading text
+            font = pygame.font.SysFont(FONT_MAIN, 40)
+            txt = font.render('LOADING...', True, (200, 200, 200))
+            txt_rect = txt.get_rect(center=(WIDTH//2, HEIGHT//2))
+            screen.blit(txt, txt_rect)
+            pygame.display.flip()
+            pygame.event.pump()
+            import time
+            time.sleep(0.05)
+        except Exception:
+            pass
+        return action
     pygame.quit()
-    sys.exit()
+    return action
 
 if __name__ == "__main__":
-    main()
+    result = run_menu()
+    if result == 'start':
+        print('Démarrage du jeu...')
+    else:
+        print('Sortie du menu')
