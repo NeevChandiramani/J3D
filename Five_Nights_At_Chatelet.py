@@ -1,11 +1,28 @@
+#lignes à commenter pour désactiver le menu = -
+
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import lit_with_shadows_shader
-
-
 #pip install ursina on oublie pas tu connais
 
+import sys                                                                      #-
+try:                                                                            #-
+    from Menu import run_menu                                                   #-
+except Exception as e:                                                          #-
+    run_menu = None                                                             #-
+    print("Warning: impossible d'importer `Menu.run_menu()`: ", e)              #-
+
+if run_menu:                                                                    #-
+    result = run_menu()                                                         #-
+    if result != 'start':                                                       #-
+        sys.exit()                                                              #-
+
 Five_nights_at_chatelet = Ursina()
+
+try:                                                                            #-
+    pygame.quit()                                                               #-
+except Exception:                                                               #-
+    pass                                                                        #-
 
 sol = Entity(
     model="Mall.obj",
