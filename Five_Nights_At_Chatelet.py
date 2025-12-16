@@ -26,7 +26,7 @@ except Exception:                                                               
     pass                                                                        #-
 
 sol = Entity(
-    model="Mall.obj",
+    model="Ressource/Mall.obj",
     collider="mesh",
     shader=lit_with_shadows_shader,
     scale=Vec3(1,3,1)
