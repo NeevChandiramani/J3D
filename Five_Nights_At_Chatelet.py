@@ -26,10 +26,11 @@ except Exception:                                                               
     pass                                                                        #-
 
 sol = Entity(
-    model="ressource/Mall.obj",
+    model="ressources/Mall.obj",
     collider="mesh",
     shader=lit_with_shadows_shader,
     scale=Vec3(1,3,1)
+    
 )
 
 sun = DirectionalLight()
@@ -116,7 +117,11 @@ def mouvement_joueur():
     recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys['s']
     droite = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * held_keys['d']
     gauche = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * -held_keys['a']   #touche de qwerty mais ça marche en azerty
-    direction = (avance + recule + droite + gauche).normalized() * time.dt * current_speed
+    move_vec = (avance + recule + droite + gauche)
+    if move_vec.length_squared() > 0:                       # avoid normalizing zero vector
+        direction = move_vec.normalized() * time.dt * current_speed
+    else:
+        direction = Vec3(0,0,0)
     joueur.position += direction
 
 def input(key):
