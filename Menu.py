@@ -98,7 +98,7 @@ def run_menu():
     clock = pygame.time.Clock()
 
     try:
-        background_img = pygame.image.load("Ressources/images/fnac_background.jpg")
+        background_img = pygame.image.load("ressources/images/fnac_background.jpg")
         background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
         has_background = True
     except Exception:
