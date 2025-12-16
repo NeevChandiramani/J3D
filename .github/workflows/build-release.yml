@@ -1,0 +1,139 @@
+name: Build and Release Executables
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0-pre)'
+        required: true
+        default: 'v1.0.0-pre'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            output_name: J3D-Windows.exe
+            pyinstaller_separator: ";"
+          - os: ubuntu-latest
+            output_name: J3D-Linux
+            pyinstaller_separator: ":"
+          - os: macos-latest
+            output_name: J3D-macOS
+            pyinstaller_separator: ":"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --name J3D --add-data "ressources${{ matrix.pyinstaller_separator }}ressources" --add-data "models_compressed${{ matrix.pyinstaller_separator }}models_compressed" Five_Nights_At_Chatelet.py
+
+      - name: Rename executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          move dist\J3D.exe dist\${{ matrix.output_name }}
+
+      - name: Rename executable (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          mv dist/J3D dist/${{ matrix.output_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output_name }}
+          path: dist/${{ matrix.output_name }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: J3D Game Pre-release ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: true
+          body: |
+            # Five Nights at Chatelet - J3D Game Pre-release
+            
+            This is a pre-release of the J3D game, providing executable files for easy testing and gameplay without building from source.
+            
+            ## Download and Run
+            
+            ### Windows
+            1. Download `J3D-Windows.exe`
+            2. Double-click to run
+            3. If Windows SmartScreen appears, click "More info" then "Run anyway"
+            
+            ### Linux
+            1. Download `J3D-Linux`
+            2. Make it executable: `chmod +x J3D-Linux`
+            3. Run: `./J3D-Linux`
+            
+            ### macOS
+            1. Download `J3D-macOS`
+            2. Make it executable: `chmod +x J3D-macOS`
+            3. Run: `./J3D-macOS`
+            4. If macOS blocks it, go to System Preferences > Security & Privacy and allow it
+            
+            ## Controls
+            - WASD: Move
+            - Shift: Sprint
+            - Mouse: Look around
+            - ESC: Exit
+            
+            ## Notes
+            - This is a pre-release version for testing purposes
+            - The game requires OpenGL support
+            - First launch may take a moment to initialize
+            
+            ## Feedback
+            Please report any issues on the [GitHub Issues page](https://github.com/NeevChandiramani/J3D/issues).
+          files: |
+            artifacts/J3D-Windows.exe/J3D-Windows.exe
+            artifacts/J3D-Linux/J3D-Linux
+            artifacts/J3D-macOS/J3D-macOS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
