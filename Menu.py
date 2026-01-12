@@ -125,14 +125,14 @@ def run_menu():
 
     try:
         # musique ambiente
-        pygame.mixer.music.load("menu_music.mp3")
+        pygame.mixer.music.load("ressources/sounds/menu_music.mp3")
         pygame.mixer.music.set_volume(0.7)
         pygame.mixer.music.play(-1)
     except: pass
 
     try:
         # arrière plan
-        bg = pygame.image.load("fnac_background.jpg")
+        bg = pygame.image.load("ressources/images/fnac_background.jpg")
         bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
         has_background = True
     except:
