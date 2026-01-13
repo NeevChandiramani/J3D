@@ -30,7 +30,6 @@ sol = Entity(
     collider="mesh",
     shader=lit_with_shadows_shader,
     scale=Vec3(1,3,1)
-    
 )
 
 sun = DirectionalLight()
