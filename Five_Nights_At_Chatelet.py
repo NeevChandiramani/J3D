@@ -117,7 +117,7 @@ def mouvement_joueur():
     droite = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * held_keys['d']
     gauche = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * -held_keys['a']   #touche de qwerty mais ça marche en azerty
     move_vec = (avance + recule + droite + gauche)
-    if move_vec.length_squared() > 0:                       # avoid normalizing zero vector
+    if move_vec.length_squared() > 0:
         direction = move_vec.normalized() * time.dt * current_speed
     else:
         direction = Vec3(0,0,0)
