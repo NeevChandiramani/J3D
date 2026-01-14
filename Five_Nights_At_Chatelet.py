@@ -30,7 +30,7 @@ sol = Entity(
     model="ressources/Mall.obj",
     collider="mesh",
     shader=lit_with_shadows_shader,
-    scale=Vec3(1,3,1)
+    scale=Vec3(0.5,1.5,0.5)
 )
 
 sun = DirectionalLight()
@@ -41,8 +41,8 @@ sun.shadows = False
 
 joueur = Entity(
     position= (0,5,0),
-    model = 'cube', 
-    color = color.red,
+    model = 'ressources/Crackhead.obj', 
+    #color = color.red,
     scale_y = 3,
     collider = 'box'
 )
