@@ -132,7 +132,7 @@ def run_menu():
 
     try:
         # arrière plan
-        bg = pygame.image.load("ressources/images/fnac_background.jpg")
+        bg = pygame.image.load("ressources/images/chatelet.jpg")
         bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
         has_background = True
     except:
@@ -166,7 +166,7 @@ def run_menu():
         if has_background:
             screen.blit(bg, (0, 0))
             dark = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-            dark.fill((0, 0, 0, 180))
+            dark.fill((0, 0, 0, 220))
             screen.blit(dark, (0, 0))
         else:
             screen.fill(COLOR_BG)
