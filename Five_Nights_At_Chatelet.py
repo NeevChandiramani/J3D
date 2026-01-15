@@ -112,20 +112,31 @@ def mouvement_camera():
 
 is_jumping = False
 vertical_velocity = 0
-gravity = -20
-jump_force = 8
-ground_y = 5 
+gravity = -40
+jump_force = 20
+on_ground = True
+
 
 def saut():
-    global is_jumping, vertical_velocity
+    global is_jumping, vertical_velocity, on_ground
     
     vertical_velocity += gravity * time.dt
     joueur.y += vertical_velocity * time.dt
-    
-    if joueur.y <= ground_y:
-        joueur.y = ground_y
+      
+    col_info = raycast(joueur.position, Vec3(0, -1, 0), distance=2, ignore=[joueur])
+    on_ground = col_info.hit if col_info else False
+
+    if on_ground:
+        joueur.y = max(joueur.y, hit_info.world_point.y + 0.5)
+        if vertical_velocity < 0:
+            vertical_velocity = 0
+            is_jumping = False
+
+    if joueur.y < -50:
+        joueur.position = (0, 5, 0)
         vertical_velocity = 0
-        is_jumping = False
+        on_ground = True
+
 
 def mouvement_joueur():
     global current_stamina
@@ -150,7 +161,6 @@ def mouvement_joueur():
     
     stamina_text.text = f'Stamina: {int(current_stamina)}'
     
-    # Mouvement horizontal
     avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys['w']
     recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys['s']
     droite = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * held_keys['d']
@@ -158,17 +168,22 @@ def mouvement_joueur():
     move_vec = (avance + recule + droite + gauche)
     if move_vec.length_squared() > 0:
         direction = move_vec.normalized() * time.dt * current_speed
+        new_pos = joueur.position + direction
+      
+        col_wall = raycast(joueur.position, direction.normalized(), distance=1.5, ignore=[joueur, sol])
+        if not (col_wall and col_wall.hit):
+            joueur.position = new_pos
     else:
         direction = Vec3(0,0,0)
-    joueur.position += direction
+
 
 def input(key):
-    global is_jumping, vertical_velocity, rectangle_visible
+    global is_jumping, vertical_velocity, rectangle_visible, on_ground
     
     if key == 'escape':
         application.quit()
     
-    if key == 'space' and not is_jumping:
+    if key == 'space' and on_ground:
         is_jumping = True
         vertical_velocity = jump_force
     
