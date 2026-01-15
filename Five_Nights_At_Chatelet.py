@@ -127,7 +127,7 @@ def saut():
     on_ground = col_info.hit if col_info else False
 
     if on_ground:
-        joueur.y = max(joueur.y, hit_info.world_point.y + 0.5)
+        joueur.y = max(joueur.y, col_info.world_point.y + 0.5)
         if vertical_velocity < 0:
             vertical_velocity = 0
             is_jumping = False
