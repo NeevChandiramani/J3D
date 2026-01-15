@@ -40,7 +40,7 @@ sun.color = color.rgb(1,1,1)
 sun.shadows = False
 
 joueur = Entity(
-    position= (0,5,0),
+    position= (15,3,0),
     model = 'ressources/Crackhead.obj', 
     #color = color.red,
     scale_y = 3,
@@ -131,7 +131,7 @@ def saut():
             is_jumping = False
 
     if joueur.y < -50:
-        joueur.position = (0, 5, 0)
+        joueur.position = (15, 3, 0)
         vertical_velocity = 0
         on_ground = True
 
