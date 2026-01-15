@@ -83,7 +83,6 @@ rectangle_ui = Entity(
     enabled=False  
 )
 
-
 # Stamina UI (à modifier)
 stamina_text = Text(
     text='Stamina: 100',
@@ -107,7 +106,6 @@ def mouvement_camera():
     camera_pivot.rotation_x -= mouse.velocity[1] * 80
     camera_pivot.rotation_x = clamp(camera_pivot.rotation_x, -30, 45)
     camera.position = (0, 0, -5)
-    
     joueur.rotation = Vec3(0, camera_pivot.rotation_y, 0)
 
 is_jumping = False
@@ -119,13 +117,13 @@ on_ground = True
 
 def saut():
     global is_jumping, vertical_velocity, on_ground
-    
+  
     vertical_velocity += gravity * time.dt
     joueur.y += vertical_velocity * time.dt
-      
+  
     col_info = raycast(joueur.position, Vec3(0, -1, 0), distance=2, ignore=[joueur])
     on_ground = col_info.hit if col_info else False
-
+  
     if on_ground:
         joueur.y = max(joueur.y, col_info.world_point.y + 0.5)
         if vertical_velocity < 0:
@@ -150,8 +148,10 @@ def mouvement_joueur():
         
         if current_stamina > 0:
             current_speed = base_speed * sprint_speed_multiplier
+          
         else:
             current_speed = base_speed
+          
     else:
         current_speed = base_speed
         
@@ -166,13 +166,15 @@ def mouvement_joueur():
     droite = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * held_keys['d']
     gauche = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * -held_keys['a']
     move_vec = (avance + recule + droite + gauche)
+  
     if move_vec.length_squared() > 0:
         direction = move_vec.normalized() * time.dt * current_speed
         new_pos = joueur.position + direction
-      
         col_wall = raycast(joueur.position, direction.normalized(), distance=1.5, ignore=[joueur, sol])
+      
         if not (col_wall and col_wall.hit):
             joueur.position = new_pos
+          
     else:
         direction = Vec3(0,0,0)
 
