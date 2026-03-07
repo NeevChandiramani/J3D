@@ -4,6 +4,7 @@ from ursina import *
 import pygame
 from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import lit_with_shadows_shader
+from Rooms import Rooms
 #pip install ursina on oublie pas tu connais
 
 import sys       
@@ -91,6 +92,13 @@ stamina_text = Text(
     parent=camera.ui,
     color=color.white
 )
+
+#salle_ui = Text(
+#    text="",
+#    position=(-0.85,0.45),
+#    scale=2,
+#    parent=camera.ui
+#)
 
 mouse.locked = True
 mouse.visible = False 
@@ -195,7 +203,7 @@ def input(key):
         if dist <= distance_interaction:
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
-
+          
 
 def update():
     mouvement_joueur()
@@ -208,6 +216,11 @@ def update():
     if dist > distance_interaction and rectangle_visible:
         rectangle_visible = False
         rectangle_ui.enabled = False
+
+#    salle_actuelle = Rooms.salle_du_joueur(joueur)
+
+#    if salle_actuelle:
+#      salle_ui.text = salle_actuelle.nom
 
 
 Five_nights_at_chatelet.run()
