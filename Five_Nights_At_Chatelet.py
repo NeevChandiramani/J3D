@@ -103,6 +103,10 @@ def update_ghosts(other_players):
                 print(f"[NET] Je suis la cible ! Appel receive_damage({event.get('amount', 10)})")
                 receive_damage(event.get("amount", 10))
 
+            if event.get("type") == "screamer":
+                play_screamer(event.get("screamer"))
+                continue
+
             target_pid = str(event.get("target_id"))
             if target_pid in ghost_entities:
                 g = ghost_entities[target_pid]
