@@ -2,7 +2,7 @@ import socket
 import threading
 import json
 
-SERVER_HOST = "86.242.238.8"
+SERVER_HOST = "dyn.ychandir.com"
 SERVER_PORT = 5555
 
 
