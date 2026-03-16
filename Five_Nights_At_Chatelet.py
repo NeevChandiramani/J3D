@@ -344,19 +344,39 @@ on_ground = True
 
 def saut():
     global is_jumping, vertical_velocity, on_ground
+
+    # Toujours appliquer la gravité
     vertical_velocity += gravity * time.dt
     joueur.y += vertical_velocity * time.dt
-    col_info = raycast(joueur.position, Vec3(0, -1, 0), distance=2, ignore=[joueur])
-    on_ground = col_info.hit if col_info else False
-    if on_ground:
-        joueur.y = max(joueur.y, col_info.world_point.y + 0.5)
-        if vertical_velocity < 0:
+
+    # Raycast vers le bas depuis le centre du joueur
+    col_info = raycast(
+        joueur.position + Vec3(0, 0.1, 0),  # légèrement au-dessus des pieds
+        Vec3(0, -1, 0),
+        distance=1.5,
+        ignore=[joueur]
+    )
+
+    if col_info and col_info.hit:
+        ground_y = col_info.world_point.y
+
+        # Si le joueur est proche du sol ou en dessous
+        if joueur.y <= ground_y + 0.6:
+            joueur.y = ground_y + 0.5  # snap précis au sol
             vertical_velocity = 0
             is_jumping = False
+            on_ground = True
+        else:
+            on_ground = False
+    else:
+        on_ground = False
+
+    # Sécurité : si le joueur tombe hors de la map
     if joueur.y < -50:
         joueur.position = (15, 3, 0)
         vertical_velocity = 0
         on_ground = True
+        is_jumping = False
 
 
 def mouvement_joueur():
@@ -386,11 +406,31 @@ def mouvement_joueur():
     move_vec = avance + recule + droite + gauche
 
     if move_vec.length_squared() > 0:
-        direction = move_vec.normalized() * time.dt * current_speed
-        new_pos = joueur.position + direction
-        col_wall = raycast(joueur.position, direction.normalized(), distance=1.5, ignore=[joueur, sol])
-        if not (col_wall and col_wall.hit):
-            joueur.position = new_pos
+        direction = move_vec.normalized()
+        move = direction * time.dt * current_speed
+        right = Vec3(direction.z, 0, -direction.x)  # vecteur perpendiculaire
+
+        # ── 6 raycasts : centre + gauche + droite, à 2 hauteurs ──
+        origins = [
+            joueur.position + Vec3(0, 0.3, 0),   # bas centre
+            joueur.position + Vec3(0, 1.0, 0),   # milieu centre
+            joueur.position + Vec3(0, 0.3, 0) + right  * 0.4,  # bas droite
+            joueur.position + Vec3(0, 1.0, 0) + right  * 0.4,  # milieu droite
+            joueur.position + Vec3(0, 0.3, 0) - right  * 0.4,  # bas gauche
+            joueur.position + Vec3(0, 1.0, 0) - right  * 0.4,  # milieu gauche
+        ]
+
+        bloque = False
+        for origin in origins:
+            col = raycast(origin, direction, distance=1.0, ignore=[joueur, sol])
+            if col and col.hit:
+                normal = col.world_normal
+                if normal.y < 0.7:  # c'est un mur, pas une rampe
+                    bloque = True
+                    break
+
+        if not bloque:
+            joueur.position = joueur.position + move
 
 
 def input(key):
