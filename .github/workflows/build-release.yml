@@ -96,7 +96,7 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.version || github.ref_name }}
           name: Release ${{ github.event.inputs.version || github.ref_name }}
-          prerelease: true
+          prerelease: ${{ contains(github.event.inputs.version || github.ref_name, '-pre') || contains(github.event.inputs.version || github.ref_name, '-beta') || contains(github.event.inputs.version || github.ref_name, '-rc') }}
           files: |
             windows-build/FiveNightsAtChatelet-Windows.exe
             linux-build/FiveNightsAtChatelet-Linux
