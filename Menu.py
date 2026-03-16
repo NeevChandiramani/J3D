@@ -125,7 +125,7 @@ def run_menu():
 
     try:
         # musique ambiente
-        pygame.mixer.music.load("ressources/sounds/menu_music.mp3")
+        pygame.mixer.music.load("ressources/sounds/menu_music.ogg")
         pygame.mixer.music.set_volume(0.7)
         pygame.mixer.music.play(-1)
     except: pass
