@@ -42,13 +42,15 @@ _send_timer = 0
 
 
 def update_ghosts(other_players):
-    """Crée, met à jour ou supprime les entités fantômes des autres joueurs."""
+    """Crée, met à jour ou supprime les entités fantômes et traite les dégâts réseau."""
+    # 1. Nettoyage des joueurs partis
     for pid in list(ghost_entities.keys()):
         if pid not in other_players:
             destroy(ghost_entities.pop(pid))
             ghost_hp.pop(pid, None)
 
-    for pid, pos in other_players.items():
+    # 2. Mise à jour des positions et rotations
+    for pid, data in other_players.items():
         if pid not in ghost_entities:
             ghost_entities[pid] = Entity(
                 model='ressources/Crackhead.obj',
@@ -56,20 +58,28 @@ def update_ghosts(other_players):
                 color=color.red,
                 collider='box'
             )
-            ghost_hp[pid] = MAX_HP  # HP plein à la création
+            ghost_hp[pid] = MAX_HP 
 
-        ghost_entities[pid].position = Vec3(pos["x"], pos["y"], pos["z"])
+        # Mise à jour position ET rotation Y
+        ghost_entities[pid].position = Vec3(data["x"], data["y"], data["z"])
+        if "ry" in data:
+            ghost_entities[pid].rotation_y = data["ry"]
 
-    # ── Récupérer les dégâts reçus depuis le réseau ──
-    # NetworkClient doit implémenter get_damage_events() → liste de dicts {"amount": int}
+    # 3. Traitement des événements de dégâts réseau
     if hasattr(network, 'get_damage_events'):
         for event in network.get_damage_events():
-            receive_damage(event.get("amount", 10))
+            # Si JE suis la cible
+            if str(event.get("target_id")) == str(network.my_id):
+                receive_damage(event.get("amount", 10))
+            
+            # Feedback visuel si quelqu'un (moi ou un autre) est touché
+            target_pid = str(event.get("target_id"))
+            if target_pid in ghost_entities:
+                g = ghost_entities[target_pid]
+                g.color = color.white
+                invoke(setattr, g, 'color', color.red, delay=0.15)
 
 
-# ──────────────────────────────────────────────
-# MONDE
-# ──────────────────────────────────────────────
 sol = Entity(
     model="ressources/Mall.obj",
     collider="mesh",
@@ -175,7 +185,7 @@ ATTACK_COOLDOWN = 0.6    # secondes entre deux coups
 _attack_timer   = 0.0
 
 def do_attack():
-    """Déclenche une attaque : hitbox carrée devant le joueur."""
+    """Déclenche une attaque : hitbox carrée et envoi au serveur."""
     global _attack_timer
     if _attack_timer > 0 or is_dead:
         return
@@ -185,7 +195,7 @@ def do_attack():
     forward = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z).normalized()
     right   = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ).normalized()
 
-    # ── Feedback visuel : boîte semi-transparente ──
+    # ── Feedback visuel (Hitbox) ──
     center = joueur.position + Vec3(0, 1, 0) + forward * (ATTACK_RANGE * 0.5)
     hitbox_vis = Entity(
         model='cube',
@@ -196,32 +206,22 @@ def do_attack():
     )
     destroy(hitbox_vis, delay=0.12)
 
-    # ── Détection des hits sur les fantômes ──
+    # ── Détection des hits ──
     for pid, ghost in ghost_entities.items():
         delta = ghost.position - joueur.position
-
-        # Projection sur les axes forward / right / vertical
         f_dist = delta.dot(forward)
         s_dist = abs(delta.dot(right))
         h_dist = abs((ghost.position.y + 1.5) - (joueur.position.y + 1.5))
 
-        in_range = (
-            0 < f_dist <= ATTACK_RANGE
-            and s_dist <= ATTACK_WIDTH  * 0.5
-            and h_dist <= ATTACK_HEIGHT * 0.5
-        )
-
-        if in_range:
-            # ── Côté local : déduire les HP du fantôme ──
+        # Vérification si le fantôme est dans la boîte
+        if (0 < f_dist <= ATTACK_RANGE) and (s_dist <= ATTACK_WIDTH * 0.5) and (h_dist <= ATTACK_HEIGHT * 0.5):
+            # Côté local : Feedback immédiat
             ghost_hp[pid] = max(0, ghost_hp.get(pid, MAX_HP) - ATTACK_DAMAGE)
-            print(f"[ATTACK] Touché joueur {pid} → HP restants (local) : {ghost_hp[pid]}")
-
-            # Flash blanc sur le fantôme touché
             ghost.color = color.white
             invoke(setattr, ghost, 'color', color.red, delay=0.15)
 
-            # ── Réseau : envoyer les dégâts ──
-            if hasattr(network, 'send_damage'):
+            # Côté réseau : On prévient le serveur
+            if network.connected:
                 network.send_damage(pid, ATTACK_DAMAGE)
 
 
@@ -422,31 +422,27 @@ def input(key):
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer
 
+    # Mouvements de base
     mouvement_joueur()
     mouvement_camera()
     saut()
 
-    # ── Timers ──
+    # Gestion des Timers
     if _attack_timer > 0:
         _attack_timer -= time.dt
-        # Feedback visuel : texte grisé pendant le cooldown
         ratio = max(0.0, _attack_timer / ATTACK_COOLDOWN)
         attack_indicator.color = lerp(color.white, color.dark_gray, ratio)
 
     if _invincibility_timer > 0:
         _invincibility_timer -= time.dt
 
-    # ── Interaction cube ──
+    # Interaction avec le cube orange (E)
     dist = distance(joueur.position, cube_proche.position)
     if dist > distance_interaction and rectangle_visible:
         rectangle_visible = False
         rectangle_ui.enabled = False
 
-#    salle_actuelle = Rooms.salle_du_joueur(joueur)
-#    if salle_actuelle:
-#      salle_ui.text = salle_actuelle.nom
-
-    # ── Réseau ──
+    # ── Gestion Réseau ──
     if network.connected:
         network_text.text = f'Réseau: connecté ({len(ghost_entities) + 1} joueur(s))'
         network_text.color = color.lime
@@ -454,8 +450,8 @@ def update():
         _send_timer += time.dt
         if _send_timer >= SEND_INTERVAL:
             _send_timer = 0
-            p = joueur.position
-            network.send_position(p.x, p.y, p.z)
+            # ENVOI POSITION + ROTATION
+            network.send_position(joueur.x, joueur.y, joueur.z, joueur.rotation_y)
 
         update_ghosts(network.get_other_players())
     else:
