@@ -1,5 +1,6 @@
 #lignes à commenter pour désactiver le menu = -
 
+import math
 from ursina import *
 import pygame
 import random
@@ -42,15 +43,15 @@ _send_timer = 0
 
 
 def update_ghosts(other_players):
-    """Crée, met à jour ou supprime les entités fantômes et traite les dégâts réseau."""
-    # 1. Nettoyage des joueurs partis
     for pid in list(ghost_entities.keys()):
         if pid not in other_players:
             destroy(ghost_entities.pop(pid))
             ghost_hp.pop(pid, None)
 
-    # 2. Mise à jour des positions et rotations
     for pid, data in other_players.items():
+        if not isinstance(data, dict) or "x" not in data or "y" not in data or "z" not in data:
+            continue
+
         if pid not in ghost_entities:
             ghost_entities[pid] = Entity(
                 model='ressources/Crackhead.obj',
@@ -58,21 +59,19 @@ def update_ghosts(other_players):
                 color=color.red,
                 collider='box'
             )
-            ghost_hp[pid] = MAX_HP 
+            ghost_hp[pid] = MAX_HP
 
-        # Mise à jour position ET rotation Y
         ghost_entities[pid].position = Vec3(data["x"], data["y"], data["z"])
         if "ry" in data:
             ghost_entities[pid].rotation_y = data["ry"]
 
-    # 3. Traitement des événements de dégâts réseau
     if hasattr(network, 'get_damage_events'):
         for event in network.get_damage_events():
-            # Si JE suis la cible
-            if str(event.get("target_id")) == str(network.my_id):
+            print(f"[NET] Event dégât reçu : {event}")
+            if network.my_id is not None and str(event.get("target_id")) == str(network.my_id):
+                print(f"[NET] Je suis la cible ! Appel receive_damage({event.get('amount', 10)})")
                 receive_damage(event.get("amount", 10))
-            
-            # Feedback visuel si quelqu'un (moi ou un autre) est touché
+
             target_pid = str(event.get("target_id"))
             if target_pid in ghost_entities:
                 g = ghost_entities[target_pid]
@@ -124,34 +123,37 @@ cube_proche = Entity(
 # ──────────────────────────────────────────────
 MAX_HP = 100
 player_hp = MAX_HP
-
-INVINCIBILITY_DURATION = 0.5   # secondes d'invincibilité après un coup
+INVINCIBILITY_DURATION = 0.5
 _invincibility_timer = 0.0
 is_dead = False
+_death_timer = 0.0
+RESPAWN_DELAY = 3.0
 
 def receive_damage(amount):
-    """Applique des dégâts au joueur local."""
     global player_hp, _invincibility_timer, is_dead
+    print(f"[DAMAGE] receive_damage appelé : amount={amount}, hp={player_hp}, invincible={_invincibility_timer:.2f}, dead={is_dead}")
     if _invincibility_timer > 0 or is_dead:
+        print("[DAMAGE] Ignoré (invincible ou mort)")
         return
     player_hp -= amount
     player_hp = max(0, player_hp)
     _invincibility_timer = INVINCIBILITY_DURATION
     update_hp_ui()
-    # Flash rouge de l'écran
+
     damage_flash.enabled = True
     invoke(setattr, damage_flash, 'enabled', False, delay=0.15)
 
+    print(f"[DAMAGE] HP restant : {player_hp}")
     if player_hp <= 0:
+        print("[DAMAGE] → player_death()")
         player_death()
 
 def player_death():
-    global is_dead, player_hp
+    global is_dead, _death_timer
     is_dead = True
+    _death_timer = RESPAWN_DELAY
     hp_text.text = 'HP: 0  —  MORT'
     hp_text.color = color.red
-    # Respawn après 3 secondes
-    invoke(respawn_player, delay=3)
 
 def respawn_player():
     global is_dead, player_hp, _invincibility_timer
@@ -185,17 +187,14 @@ ATTACK_COOLDOWN = 0.6    # secondes entre deux coups
 _attack_timer   = 0.0
 
 def do_attack():
-    """Déclenche une attaque : hitbox carrée et envoi au serveur."""
     global _attack_timer
     if _attack_timer > 0 or is_dead:
         return
     _attack_timer = ATTACK_COOLDOWN
 
-    # Direction forward dans le plan horizontal
-    forward = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z).normalized()
-    right   = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ).normalized()
+    forward = Vec3(joueur.forward.x, 0, joueur.forward.z).normalized()
+    right   = Vec3(joueur.right.x,   0, joueur.right.z  ).normalized()
 
-    # ── Feedback visuel (Hitbox) ──
     center = joueur.position + Vec3(0, 1, 0) + forward * (ATTACK_RANGE * 0.5)
     hitbox_vis = Entity(
         model='cube',
@@ -206,21 +205,24 @@ def do_attack():
     )
     destroy(hitbox_vis, delay=0.12)
 
-    # ── Détection des hits ──
-    for pid, ghost in ghost_entities.items():
-        delta = ghost.position - joueur.position
+    for pid, ghost in list(ghost_entities.items()):
+        delta  = ghost.position - joueur.position
         f_dist = delta.dot(forward)
         s_dist = abs(delta.dot(right))
         h_dist = abs((ghost.position.y + 1.5) - (joueur.position.y + 1.5))
 
-        # Vérification si le fantôme est dans la boîte
         if (0 < f_dist <= ATTACK_RANGE) and (s_dist <= ATTACK_WIDTH * 0.5) and (h_dist <= ATTACK_HEIGHT * 0.5):
-            # Côté local : Feedback immédiat
             ghost_hp[pid] = max(0, ghost_hp.get(pid, MAX_HP) - ATTACK_DAMAGE)
-            ghost.color = color.white
-            invoke(setattr, ghost, 'color', color.red, delay=0.15)
+            print(f"[ATTACK] HIT sur {pid} ! HP restant : {ghost_hp[pid]}")
 
-            # Côté réseau : On prévient le serveur
+            if ghost_hp[pid] <= 0:
+                print(f"[ATTACK] Ghost {pid} est mort !")
+                destroy(ghost_entities.pop(pid))
+                ghost_hp.pop(pid, None)
+            else:
+                ghost.color = color.white
+                invoke(setattr, ghost, 'color', color.red, delay=0.15)
+
             if network.connected:
                 network.send_damage(pid, ATTACK_DAMAGE)
 
@@ -414,35 +416,45 @@ def input(key):
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
 
-    # ── Attaque au clic gauche ──
     if key == 'left mouse down':
         do_attack()
 
+    # ← Touche T pour tester la mort en solo (debug)
+    if key == 't':
+        print("[DEBUG] Test dégâts forcé")
+        receive_damage(999)
+
 
 def update():
-    global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer
+    global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
 
-    # Mouvements de base
     mouvement_joueur()
     mouvement_camera()
     saut()
 
-    # Gestion des Timers
+    # Cooldown attaque (feedback couleur)
     if _attack_timer > 0:
         _attack_timer -= time.dt
         ratio = max(0.0, _attack_timer / ATTACK_COOLDOWN)
         attack_indicator.color = lerp(color.white, color.dark_gray, ratio)
 
+    # Invincibilité
     if _invincibility_timer > 0:
         _invincibility_timer -= time.dt
 
-    # Interaction avec le cube orange (E)
+    # Timer de respawn (remplace l'ancien invoke)
+    if is_dead and _death_timer > 0:
+        _death_timer -= time.dt
+        if _death_timer <= 0:
+            respawn_player()
+
+    # Interaction cube orange
     dist = distance(joueur.position, cube_proche.position)
     if dist > distance_interaction and rectangle_visible:
         rectangle_visible = False
         rectangle_ui.enabled = False
 
-    # ── Gestion Réseau ──
+    # Réseau
     if network.connected:
         network_text.text = f'Réseau: connecté ({len(ghost_entities) + 1} joueur(s))'
         network_text.color = color.lime
@@ -450,7 +462,6 @@ def update():
         _send_timer += time.dt
         if _send_timer >= SEND_INTERVAL:
             _send_timer = 0
-            # ENVOI POSITION + ROTATION
             network.send_position(joueur.x, joueur.y, joueur.z, joueur.rotation_y)
 
         update_ghosts(network.get_other_players())
@@ -458,7 +469,7 @@ def update():
         network_text.text = 'Réseau: déconnecté'
         network_text.color = color.red
 
-    # ── Son ambiance aléatoire ──
+    # Son ambiance aléatoire
     _son_timer -= time.dt
     if _son_timer <= 0:
         son_gare.play()
