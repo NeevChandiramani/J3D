@@ -99,14 +99,14 @@ def update_ghosts(other_players):
 
     if hasattr(network, 'get_damage_events'):
         for event in network.get_damage_events():
+            if event.get("type") == "screamer":
+                play_screamer(event.get("screamer"))
+                continue
+
             print(f"[NET] Event dégât reçu : {event}")
             if network.my_id is not None and str(event.get("target_id")) == str(network.my_id):
                 print(f"[NET] Je suis la cible ! Appel receive_damage({event.get('amount', 10)})")
                 receive_damage(event.get("amount", 10))
-
-            if event.get("type") == "screamer":
-                play_screamer(event.get("screamer"))
-                continue
 
             target_pid = str(event.get("target_id"))
             if target_pid in ghost_entities:
