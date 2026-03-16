@@ -235,9 +235,9 @@ stamina_regen_rate = 15
 sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
-# Son ambiance gare (se déclenche aléatoirement toutes les 30-60 secondes)
+# Son ambiance gare (se déclenche aléatoirement toutes les 120-240 secondes)
 son_gare = Audio('ressources/sounds/son_gare.mp3', autoplay=False)
-_son_timer = random.uniform(30, 60)
+_son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
 # UI
