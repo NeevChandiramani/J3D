@@ -19,9 +19,6 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def res(path):
-    return os.path.join(BASE_DIR, path).replace("\\", "/")
-
                                                                                 #-
 try:                                                                            #-
     from Menu import run_menu                                                   #-
@@ -36,6 +33,10 @@ if run_menu:                                                                    
 
 Five_nights_at_chatelet = Ursina()
 
+# On change le répertoire de travail vers BASE_DIR
+# pour que Ursina trouve les assets avec des chemins relatifs
+os.chdir(BASE_DIR)
+
 try:                                                                            #-
     pygame.quit()                                                               #-
 except Exception:                                                               #-
@@ -48,7 +49,7 @@ network = NetworkClient()
 network.connect()
 
 ghost_entities = {}   # {player_id: Entity}
-ghost_hp = {}         # {player_id: int}  ← HP des autres joueurs (côté local)
+ghost_hp = {}         # {player_id: int}
 
 SEND_INTERVAL = 0.05
 _send_timer = 0
@@ -66,7 +67,7 @@ def update_ghosts(other_players):
 
         if pid not in ghost_entities:
             ghost_entities[pid] = Entity(
-                model=res('ressources/Crackhead.obj'),
+                model='ressources/Crackhead.obj',
                 scale_y=3,
                 color=color.red,
                 collider='box'
@@ -92,7 +93,7 @@ def update_ghosts(other_players):
 
 
 sol = Entity(
-    model=res("ressources/Mall.obj"),
+    model="ressources/Mall.obj",
     collider="mesh",
     shader=lit_with_shadows_shader,
     scale=Vec3(0.5, 1.5, 0.5)
@@ -110,8 +111,8 @@ joueur = Entity(
 )
 joueur_model = Entity(
     parent=joueur,
-    model=res('ressources/Perso.obj'),
-    rotation_y=180   # ← retourne uniquement le visuel
+    model='ressources/Perso.obj',
+    rotation_y=180
 )
 
 test_cube = Entity(
@@ -171,7 +172,7 @@ def respawn_player():
     global is_dead, player_hp, _invincibility_timer
     is_dead = False
     player_hp = MAX_HP
-    _invincibility_timer = 1.0  # courte invincibilité au respawn
+    _invincibility_timer = 1.0
     joueur.position = (15, 3, 0)
     hp_text.color = color.lime
     update_hp_ui()
@@ -185,7 +186,7 @@ def update_hp_ui():
         hp_text.color = color.orange
     else:
         hp_text.color = color.red
-    hp_bar_fill.scale_x = ratio * 0.3   # 0.3 = largeur max de la barre
+    hp_bar_fill.scale_x = ratio * 0.3
 
 # ──────────────────────────────────────────────
 # ATTAQUE
@@ -249,7 +250,7 @@ sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
 # Son ambiance gare (se déclenche aléatoirement toutes les 120-240 secondes)
-son_gare = Audio(res('ressources/sounds/son_gare.ogg'), autoplay=False)
+son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
 _son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
