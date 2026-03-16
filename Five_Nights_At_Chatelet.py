@@ -54,8 +54,7 @@ def update_ghosts(other_players):
         if pid not in ghost_entities:
             ghost_entities[pid] = Entity(
                 model='ressources/Crackhead.obj',
-                scale_y=3,
-                color=color.red,   # Rouge pour distinguer les autres joueurs
+                scale_y=3,  # Rouge pour distinguer les autres joueurs
                 collider='box'
             )
         ghost_entities[pid].position = Vec3(pos["x"], pos["y"], pos["z"])
@@ -76,7 +75,7 @@ sun.shadows = False
 
 joueur = Entity(
     position= (15,3,0),
-    model = 'ressources/Crackhead.obj',
+    model = 'ressources/Perso.obj',
     #color = color.red,
     scale_y = 3,
     collider = 'box'
