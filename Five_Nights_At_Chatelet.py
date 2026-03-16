@@ -2,12 +2,13 @@
 
 from ursina import *
 import pygame
-from ursina.prefabs.first_person_controller import FirstPersonController
+import random
 from ursina.shaders import lit_with_shadows_shader
 from Rooms import Rooms
+from NetworkClient import NetworkClient
 #pip install ursina on oublie pas tu connais
 
-import sys       
+import sys
                                                                                 #-
 try:                                                                            #-
     from Menu import run_menu                                                   #-
@@ -27,6 +28,39 @@ try:                                                                            
 except Exception:                                                               #-
     pass                                                                        #-
 
+# ──────────────────────────────────────────────
+# RÉSEAU
+# ──────────────────────────────────────────────
+network = NetworkClient()
+network.connect()
+
+# Entités représentant les autres joueurs (fantômes réseau)
+# {player_id: Entity}
+ghost_entities = {}
+
+SEND_INTERVAL = 0.05   # Envoyer la position toutes les 50ms
+_send_timer = 0
+
+
+def update_ghosts(other_players):
+    """Crée, met à jour ou supprime les entités fantômes des autres joueurs."""
+    # Supprimer les joueurs déconnectés
+    for pid in list(ghost_entities.keys()):
+        if pid not in other_players:
+            destroy(ghost_entities.pop(pid))
+
+    # Créer ou déplacer les joueurs existants
+    for pid, pos in other_players.items():
+        if pid not in ghost_entities:
+            ghost_entities[pid] = Entity(
+                model='ressources/Crackhead.obj',
+                scale_y=3,
+                color=color.red,   # Rouge pour distinguer les autres joueurs
+                collider='box'
+            )
+        ghost_entities[pid].position = Vec3(pos["x"], pos["y"], pos["z"])
+
+
 sol = Entity(
     model="ressources/Mall.obj",
     collider="mesh",
@@ -42,7 +76,7 @@ sun.shadows = False
 
 joueur = Entity(
     position= (15,3,0),
-    model = 'ressources/Crackhead.obj', 
+    model = 'ressources/Crackhead.obj',
     #color = color.red,
     scale_y = 3,
     collider = 'box'
@@ -72,6 +106,10 @@ stamina_regen_rate = 15
 sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
+# Son ambiance gare (se déclenche aléatoirement toutes les 30-60 secondes)
+son_gare = Audio('ressources/sounds/son_gare.mp3', autoplay=False)
+_son_timer = random.uniform(30, 60)  # Premier déclenchement aléatoire
+
 distance_interaction = 3  
 rectangle_visible = False
 
@@ -91,6 +129,15 @@ stamina_text = Text(
     scale=1.5,
     parent=camera.ui,
     color=color.white
+)
+
+# Indicateur de connexion réseau
+network_text = Text(
+    text='Réseau: connexion...',
+    position=(-0.8, 0.45),
+    scale=1.2,
+    parent=camera.ui,
+    color=color.yellow
 )
 
 #salle_ui = Text(
@@ -191,6 +238,7 @@ def input(key):
     global is_jumping, vertical_velocity, rectangle_visible, on_ground
     
     if key == 'escape':
+        network.disconnect()
         application.quit()
     
     if key == 'space' and on_ground:
@@ -210,7 +258,7 @@ def update():
     mouvement_camera()
     saut()
     
-    global rectangle_visible
+    global rectangle_visible, _send_timer, _son_timer
     dist = distance(joueur.position, cube_proche.position)
     
     if dist > distance_interaction and rectangle_visible:
@@ -221,6 +269,28 @@ def update():
 
 #    if salle_actuelle:
 #      salle_ui.text = salle_actuelle.nom
+
+    # ── Réseau ──
+    if network.connected:
+        network_text.text = f'Réseau: connecté ({len(ghost_entities)+1} joueur(s))'
+        network_text.color = color.lime
+
+        _send_timer += time.dt
+        if _send_timer >= SEND_INTERVAL:
+            _send_timer = 0
+            p = joueur.position
+            network.send_position(p.x, p.y, p.z)
+
+        update_ghosts(network.get_other_players())
+    else:
+        network_text.text = 'Réseau: déconnecté'
+        network_text.color = color.red
+
+    # ── Son ambiance aléatoire ──
+    _son_timer -= time.dt
+    if _son_timer <= 0:
+        son_gare.play()
+        _son_timer = random.uniform(30, 60)  # Prochain déclenchement aléatoire
 
 
 Five_nights_at_chatelet.run()
