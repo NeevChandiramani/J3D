@@ -42,7 +42,7 @@ Five Nights At Châtelet est un jeu d'horreur multijoueur asymétrique inspiré 
 
 ### Depuis les releases (recommandé)
 
-1. Aller dans l'onglet **Releases** du repo
+1. Aller dans l'onglet [Releases page](https://github.com/NeevChandiramani/J3D/releases) du repo
 2. Télécharger l'exécutable correspondant à votre OS
 3. Lancer directement — aucune installation requise
 
