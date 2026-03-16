@@ -1,84 +1,113 @@
-# J3D - Five Nights at Chatelet
+# Five Nights At Châtelet
 
-A 3D horror game inspired by Five Nights at Freddy's, built with Python and Ursina Engine.
+> Jeu d'horreur et de survie multijoueur en vue à la troisième personne — Projet SAE J3D EPITA 2025/2026
 
-## Quick Start - Download and Play
+**BambouX Studio** — Promo 2030
 
-### Pre-built Executables (Recommended for Players)
+---
 
-Download the latest pre-release from the [Releases page](https://github.com/NeevChandiramani/J3D/releases) to play the game without setting up a development environment.
+## L'équipe
 
-#### Windows
-1. Download `J3D-Windows.exe` from the latest release
-2. Double-click to run
-3. If Windows SmartScreen appears, click "More info" then "Run anyway"
+| Membre | Rôle |
+|---|---|
+| Neev Chandiramani | Multijoueur réseau, site web |
+| Maximilien Cochet | Logique des événements, interactions |
+| Gauthier Roland | Modèles 3D, map design, character design |
+| Maxime Ye | Audio, ambiance sonore |
+| Maxime Gontran | Déplacements, UI, gameplay |
 
-#### Linux
-1. Download `J3D-Linux` from the latest release
-2. Make it executable: `chmod +x J3D-Linux`
-3. Run: `./J3D-Linux`
+---
 
-#### macOS
-1. Download `J3D-macOS` from the latest release
-2. Make it executable: `chmod +x J3D-macOS`
-3. Run: `./J3D-macOS`
-4. If macOS blocks it, go to System Preferences > Security & Privacy and allow it
+## Concept
 
-### Game Controls
-- **WASD**: Move
-- **Shift**: Sprint (uses stamina)
-- **Mouse**: Look around
-- **ESC**: Exit game
+Five Nights At Châtelet est un jeu d'horreur multijoueur asymétrique inspiré de Five Nights at Freddy's. Les joueurs sont répartis en deux équipes aux objectifs opposés :
 
-## Development Setup
+- **Explorateurs** : coopèrent pour résoudre une énigme et s'échapper
+- **Infectés** : traquent les survivants pour les éliminer
 
-If you want to run from source or contribute to development:
+---
 
-### Prerequisites
-- Python 3.11 or higher
-- pip
+## Stack technique
 
-### Installation
+- **Moteur 3D** : Ursina Engine
+- **Menu** : Pygame
+- **Langage** : Python 3.11
+- **Réseau** : Sockets TCP (stdlib Python)
+- **Modélisation** : Blender
+- **Build** : PyInstaller + GitHub Actions
 
-1. Clone the repository:
+---
+
+## Installation & Lancement
+
+### Depuis les releases (recommandé)
+
+1. Aller dans l'onglet **Releases** du repo
+2. Télécharger l'exécutable correspondant à votre OS
+3. Lancer directement — aucune installation requise
+
+### Depuis le code source
+
 ```bash
-git clone https://github.com/NeevChandiramani/J3D.git
+# Cloner le repo
+git clone https://github.com/votre-repo/J3D.git
 cd J3D
-```
 
-2. Install dependencies:
-```bash
+# Créer un environnement virtuel Python 3.11
+python3.11 -m venv venv
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
+
+# Installer les dépendances
 pip install -r requirements.txt
-```
 
-3. Run the game:
-```bash
+# Lancer le jeu
 python Five_Nights_At_Chatelet.py
 ```
 
-## Building Executables
+---
 
-To build executables yourself:
+## Multijoueur
 
-1. Install PyInstaller:
-```bash
-pip install pyinstaller
+Le multijoueur repose sur une architecture client-serveur TCP :
+
+- Le serveur tourne en continu sur un VPS dédié
+- Chaque client se connecte automatiquement au démarrage
+- Les positions des joueurs sont synchronisées toutes les 50ms
+- En cas d'échec de connexion, le jeu démarre en mode solo
+
+---
+
+## Structure du projet
+
+```
+J3D/
+├── Five_Nights_At_Chatelet.py   # Fichier principal du jeu
+├── Menu.py                       # Menu principal (Pygame)
+├── NetworkClient.py              # Client réseau TCP
+├── Rooms.py                      # Système de salles
+├── requirements.txt              # Dépendances Python
+├── ressources/
+│   ├── Mall.obj                  # Modèle 3D de la map
+│   ├── Crackhead.obj             # Modèle 3D du personnage
+│   ├── sounds/
+│   │   ├── menu_music.mp3
+│   │   └── son_gare.mp3
+│   └── images/
+│       └── chatelet.jpg
+└── .github/
+    └── workflows/
+        └── build-release.yml     # CI/CD build automatique
 ```
 
-2. Build the executable:
+---
 
-**Windows:**
-```bash
-pyinstaller --onefile --windowed --name J3D --add-data "ressources;ressources" --add-data "models_compressed;models_compressed" Five_Nights_At_Chatelet.py
-```
+## Site web
 
-**Linux/macOS:**
-```bash
-pyinstaller --onefile --windowed --name J3D --add-data "ressources:ressources" --add-data "models_compressed:models_compressed" Five_Nights_At_Chatelet.py
-```
+https://fivenightsatchatelet.neevchandiramani.com/
 
-The executable will be in the `dist/` folder.
+---
 
-## License
+## Licence
 
-See [LICENSE](LICENSE) for details.
+MIT — © 2026 BambouX Studio
