@@ -150,6 +150,25 @@ cube_proche = Entity(
 )
 
 # ──────────────────────────────────────────────
+# CUBE SCREAMER
+# ──────────────────────────────────────────────
+screamer_list = ['ressources/screamers/Screamer1.mp4',
+                 'ressources/screamers/Screamer2.mp4',
+                 'ressources/screamers/Screamer3-1.mp4',
+                 'ressources/screamers/Screamer4.mp4']
+
+cube_screamer = Entity(
+    model='cube',
+    color=color.red,
+    position=(-53.015377, 36.245815, 0.37925073),
+    scale=(1, 1, 1),
+    collider='box',
+    shader=lit_with_shadows_shader
+)
+
+_screamer_timer = 0.0
+
+# ──────────────────────────────────────────────
 # HP
 # ──────────────────────────────────────────────
 MAX_HP = 100
