@@ -1,6 +1,8 @@
 #lignes à commenter pour désactiver le menu = -
 
 import math
+import os
+import sys
 from ursina import *
 import pygame
 import random
@@ -9,7 +11,17 @@ from Rooms import Rooms
 from NetworkClient import NetworkClient
 #pip install ursina on oublie pas tu connais
 
-import sys
+# ──────────────────────────────────────────────
+# CHEMINS RESSOURCES (compatibilité PyInstaller)
+# ──────────────────────────────────────────────
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def res(path):
+    return os.path.join(BASE_DIR, path).replace("\\", "/")
+
                                                                                 #-
 try:                                                                            #-
     from Menu import run_menu                                                   #-
@@ -54,7 +66,7 @@ def update_ghosts(other_players):
 
         if pid not in ghost_entities:
             ghost_entities[pid] = Entity(
-                model='ressources/Crackhead.obj',
+                model=res('ressources/Crackhead.obj'),
                 scale_y=3,
                 color=color.red,
                 collider='box'
@@ -80,7 +92,7 @@ def update_ghosts(other_players):
 
 
 sol = Entity(
-    model="ressources/Mall.obj",
+    model=res("ressources/Mall.obj"),
     collider="mesh",
     shader=lit_with_shadows_shader,
     scale=Vec3(0.5, 1.5, 0.5)
@@ -98,7 +110,7 @@ joueur = Entity(
 )
 joueur_model = Entity(
     parent=joueur,
-    model='ressources/Perso.obj',
+    model=res('ressources/Perso.obj'),
     rotation_y=180   # ← retourne uniquement le visuel
 )
 
@@ -173,17 +185,16 @@ def update_hp_ui():
         hp_text.color = color.orange
     else:
         hp_text.color = color.red
-    # Barre de vie
     hp_bar_fill.scale_x = ratio * 0.3   # 0.3 = largeur max de la barre
 
 # ──────────────────────────────────────────────
 # ATTAQUE
 # ──────────────────────────────────────────────
 ATTACK_DAMAGE   = 10
-ATTACK_RANGE    = 3.0    # profondeur de la hitbox (en unités)
-ATTACK_WIDTH    = 2.0    # largeur de la hitbox carrée
-ATTACK_HEIGHT   = 3.0    # hauteur de la hitbox
-ATTACK_COOLDOWN = 0.6    # secondes entre deux coups
+ATTACK_RANGE    = 3.0
+ATTACK_WIDTH    = 2.0
+ATTACK_HEIGHT   = 3.0
+ATTACK_COOLDOWN = 0.6
 _attack_timer   = 0.0
 
 def do_attack():
@@ -238,7 +249,7 @@ sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
 # Son ambiance gare (se déclenche aléatoirement toutes les 120-240 secondes)
-son_gare = Audio('ressources/sounds/son_gare.mp3', autoplay=False)
+son_gare = Audio(res('ressources/sounds/son_gare.ogg'), autoplay=False)
 _son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
@@ -335,10 +346,10 @@ camera.rotation = (15, 0, 0)
 
 # W.I.P C'est pas très fluide pour la rotation du perso
 def mouvement_camera():
-    joueur.rotation_y      += mouse.velocity[0] * 80        # rotation horizontale sur le modèle
-    camera_pivot.rotation_x -= mouse.velocity[1] * 80       # inclinaison verticale caméra seulement
+    joueur.rotation_y      += mouse.velocity[0] * 80
+    camera_pivot.rotation_x -= mouse.velocity[1] * 80
     camera_pivot.rotation_x  = clamp(camera_pivot.rotation_x, -30, 45)
-    camera_pivot.rotation_y  = 0                            # on force le pivot à rester droit
+    camera_pivot.rotation_y  = 0
     camera.position = (0, 0, -5)
 
 is_jumping = False
@@ -442,7 +453,7 @@ def update():
     if _invincibility_timer > 0:
         _invincibility_timer -= time.dt
 
-    # Timer de respawn (remplace l'ancien invoke)
+    # Timer de respawn
     if is_dead and _death_timer > 0:
         _death_timer -= time.dt
         if _death_timer <= 0:
