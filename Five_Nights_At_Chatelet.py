@@ -1,9 +1,7 @@
 #lignes à commenter pour désactiver le menu = -
-import cv2
-import threading
+
 import math
 import os
-import json
 import sys
 from ursina import *
 import pygame
@@ -21,17 +19,7 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-# touches par défaut
-touches = {
-    'Avancer': 'z',
-    'Reculer': 's',
-    'Gauche': 'q',
-    'Droite': 'd',
-    'Interagir': 'e',
-    'Sauter': 'space'
-}
-
+                                                                                #-
 try:                                                                            #-
     from Menu import run_menu                                                   #-
 except Exception as e:                                                          #-
@@ -43,14 +31,6 @@ if run_menu:                                                                    
     if result != 'start':                                                       #-
         sys.exit()                                                              #-
 
-# charger les touches modifiées depuis le menu
-if os.path.exists("config_touches.json"):
-    try:
-        with open("config_touches.json", "r") as f:
-            touches.update(json.load(f))
-    except Exception as e:
-        print("Erreur lors du chargement des touches:", e)
-        
 Five_nights_at_chatelet = Ursina()
 
 # On change le répertoire de travail vers BASE_DIR
@@ -99,10 +79,6 @@ def update_ghosts(other_players):
 
     if hasattr(network, 'get_damage_events'):
         for event in network.get_damage_events():
-            if event.get("type") == "screamer":
-                play_screamer(event.get("screamer"))
-                continue
-
             print(f"[NET] Event dégât reçu : {event}")
             if network.my_id is not None and str(event.get("target_id")) == str(network.my_id):
                 print(f"[NET] Je suis la cible ! Appel receive_damage({event.get('amount', 10)})")
@@ -153,25 +129,6 @@ cube_proche = Entity(
     collider='box',
     shader=lit_with_shadows_shader
 )
-
-# ──────────────────────────────────────────────
-# CUBE SCREAMER
-# ──────────────────────────────────────────────
-screamer_list = ['ressources/screamers/Screamer1.mp4',
-                 'ressources/screamers/Screamer2.mp4',
-                 'ressources/screamers/Screamer3-1.mp4',
-                 'ressources/screamers/Screamer4.mp4']
-
-cube_screamer = Entity(
-    model='cube',
-    color=color.red,
-    position=(-53.015377, 36.245815, 0.37925073),
-    scale=(1, 1, 1),
-    collider='box',
-    shader=lit_with_shadows_shader
-)
-
-_screamer_timer = 0.0
 
 # ──────────────────────────────────────────────
 # HP
@@ -427,7 +384,7 @@ def mouvement_joueur():
     if is_dead:
         return
 
-    is_moving = held_keys[touches['Avancer']] or held_keys[touches['Reculer']] or held_keys[touches['Gauche']] or held_keys[touches['Droite']]
+    is_moving = held_keys['w'] or held_keys['s'] or held_keys['a'] or held_keys['d']
     is_sprinting = held_keys['shift'] and current_stamina > 1 and is_moving
 
     if is_sprinting:
@@ -442,10 +399,10 @@ def mouvement_joueur():
 
     stamina_text.text = f'Stamina: {int(current_stamina)}'
 
-    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Avancer']]
-    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Reculer']]
-    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Droite']]
-    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Gauche']]
+    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) *  held_keys['w']
+    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys['s']
+    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) *  held_keys['d']
+    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys['a']
     move_vec = avance + recule + droite + gauche
 
     if move_vec.length_squared() > 0:
@@ -475,23 +432,6 @@ def mouvement_joueur():
         if not bloque:
             joueur.position = joueur.position + move
 
-def play_screamer(filename):
-    def _play():
-        cap = cv2.VideoCapture(filename)
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30
-        delay = int(1000 / fps)
-        cv2.namedWindow("", cv2.WND_PROP_FULLSCREEN)
-        cv2.setWindowProperty("", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            cv2.imshow("", frame)
-            if cv2.waitKey(delay) & 0xFF == ord('q'):
-                break
-        cap.release()
-        cv2.destroyAllWindows()
-    threading.Thread(target=_play, daemon=True).start()
 
 def input(key):
     global is_jumping, vertical_velocity, rectangle_visible, on_ground
@@ -500,21 +440,15 @@ def input(key):
         network.disconnect()
         application.quit()
 
-    if key == touches['Sauter'] and on_ground and not is_dead:
+    if key == 'space' and on_ground and not is_dead:
         is_jumping = True
         vertical_velocity = jump_force
 
-    if key == touches['Interagir']:
+    if key == 'e':
         dist = distance(joueur.position, cube_proche.position)
         if dist <= distance_interaction:
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
-
-        dist_s = distance(joueur.position, cube_screamer.position)
-        if dist_s <= distance_interaction:
-            chosen = random.choice(screamer_list)
-            if network.connected:
-                network.send_screamer(chosen)
 
     if key == 'left mouse down':
         do_attack()
