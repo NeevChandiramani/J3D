@@ -451,6 +451,29 @@ def mouvement_joueur():
         if not bloque:
             joueur.position = joueur.position + move
 
+def play_screamer(filename):
+    pygame.init()
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    pygame.display.set_caption("")
+    cap = pygame.movie if hasattr(pygame, 'movie') else None
+
+def play_screamer(filename):
+    def _play():
+        cap = cv2.VideoCapture(filename)
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30
+        delay = int(1000 / fps)
+        cv2.namedWindow("", cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty("", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            cv2.imshow("", frame)
+            if cv2.waitKey(delay) & 0xFF == ord('q'):
+                break
+        cap.release()
+        cv2.destroyAllWindows()
+    threading.Thread(target=_play, daemon=True).start()
 
 def input(key):
     global is_jumping, vertical_velocity, rectangle_visible, on_ground
