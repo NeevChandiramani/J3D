@@ -186,7 +186,6 @@ def update_hp_ui():
         hp_text.color = color.orange
     else:
         hp_text.color = color.red
-    hp_bar_fill.scale_x = ratio * 0.3
 
 # ──────────────────────────────────────────────
 # ATTAQUE
@@ -274,22 +273,6 @@ stamina_text = Text(
     scale=1.5,
     parent=camera.ui,
     color=color.white
-)
-
-# ── Barre de vie (fond + remplissage) ──
-hp_bar_bg = Entity(
-    model='quad',
-    color=color.dark_gray,
-    scale=(0.305, 0.028),
-    position=(-0.648, -0.38),
-    parent=camera.ui
-)
-hp_bar_fill = Entity(
-    model='quad',
-    color=color.lime,
-    scale=(0.3, 0.022),
-    position=(-0.648, -0.38),
-    parent=camera.ui
 )
 
 hp_text = Text(
