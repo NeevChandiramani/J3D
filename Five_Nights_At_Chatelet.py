@@ -2,6 +2,7 @@
 
 import math
 import os
+import json
 import sys
 from ursina import *
 import pygame
@@ -19,7 +20,17 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-                                                                                #-
+
+# touches par défaut
+touches = {
+    'Avancer': 'z',
+    'Reculer': 's',
+    'Gauche': 'q',
+    'Droite': 'd',
+    'Interagir': 'e',
+    'Sauter': 'space'
+}
+
 try:                                                                            #-
     from Menu import run_menu                                                   #-
 except Exception as e:                                                          #-
@@ -31,6 +42,14 @@ if run_menu:                                                                    
     if result != 'start':                                                       #-
         sys.exit()                                                              #-
 
+# charger les touches modifiées depuis le menu
+if os.path.exists("config_touches.json"):
+    try:
+        with open("config_touches.json", "r") as f:
+            touches.update(json.load(f))
+    except Exception as e:
+        print("Erreur lors du chargement des touches:", e)
+        
 Five_nights_at_chatelet = Ursina()
 
 # On change le répertoire de travail vers BASE_DIR
@@ -384,7 +403,7 @@ def mouvement_joueur():
     if is_dead:
         return
 
-    is_moving = held_keys['w'] or held_keys['s'] or held_keys['a'] or held_keys['d']
+    is_moving = held_keys[touches['Avancer']] or held_keys[touches['Reculer']] or held_keys[touches['Gauche']] or held_keys[touches['Droite']]
     is_sprinting = held_keys['shift'] and current_stamina > 1 and is_moving
 
     if is_sprinting:
@@ -399,10 +418,10 @@ def mouvement_joueur():
 
     stamina_text.text = f'Stamina: {int(current_stamina)}'
 
-    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) *  held_keys['w']
-    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys['s']
-    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) *  held_keys['d']
-    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys['a']
+    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Avancer']]
+    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Reculer']]
+    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Droite']]
+    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Gauche']]
     move_vec = avance + recule + droite + gauche
 
     if move_vec.length_squared() > 0:
@@ -440,11 +459,11 @@ def input(key):
         network.disconnect()
         application.quit()
 
-    if key == 'space' and on_ground and not is_dead:
+    if key == touches['Sauter'] and on_ground and not is_dead:
         is_jumping = True
         vertical_velocity = jump_force
 
-    if key == 'e':
+    if key == touches['Interagir']:
         dist = distance(joueur.position, cube_proche.position)
         if dist <= distance_interaction:
             rectangle_visible = not rectangle_visible
