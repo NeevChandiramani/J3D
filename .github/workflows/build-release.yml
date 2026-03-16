@@ -28,11 +28,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build Windows executable
-        run: |
-          pyinstaller --onefile --windowed ^
-            --add-data "ressources;ressources" ^
-            --name "FiveNightsAtChatelet" ^
-            Five_Nights_At_Chatelet.py
+        run: pyinstaller --onefile --windowed --add-data "ressources;ressources" --name "FiveNightsAtChatelet" Five_Nights_At_Chatelet.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -56,11 +52,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build Linux executable
-        run: |
-          pyinstaller --onefile --windowed \
-            --add-data "ressources:ressources" \
-            --name "FiveNightsAtChatelet" \
-            Five_Nights_At_Chatelet.py
+        run: pyinstaller --onefile --windowed --add-data "ressources:ressources" --name "FiveNightsAtChatelet" Five_Nights_At_Chatelet.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -84,11 +76,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build macOS executable
-        run: |
-          pyinstaller --onefile --windowed \
-            --add-data "ressources:ressources" \
-            --name "FiveNightsAtChatelet" \
-            Five_Nights_At_Chatelet.py
+        run: pyinstaller --onefile --windowed --add-data "ressources:ressources" --name "FiveNightsAtChatelet" Five_Nights_At_Chatelet.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
