@@ -112,6 +112,20 @@ class NetworkClient:
         with self._lock:
             return dict(self.other_players)
 
+    def send_screamer(self, screamer_name):
+        """Envoie un screamer à tous les autres joueurs."""
+        if not self.connected: return
+        try:
+            msg = {
+                "type": "screamer",
+                "screamer": screamer_name,
+                "sender_id": self.my_id
+            }
+            self.sock.sendall((json.dumps(msg) + "\n").encode())
+            print(f"[SCREAMER] Envoyé : {screamer_name}")
+        except Exception as e:
+            print(f"Erreur envoi screamer : {e}")
+
     def disconnect(self):
         self.connected = False
         if self.sock: self.sock.close()
