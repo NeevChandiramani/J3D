@@ -469,6 +469,12 @@ def input(key):
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
 
+        dist_s = distance(joueur.position, cube_screamer.position)
+        if dist_s <= distance_interaction:
+            chosen = random.choice(screamer_list)
+            if network.connected:
+                network.send_screamer(chosen)
+
     if key == 'left mouse down':
         do_attack()
 
