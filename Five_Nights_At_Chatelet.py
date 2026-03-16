@@ -476,12 +476,6 @@ def mouvement_joueur():
             joueur.position = joueur.position + move
 
 def play_screamer(filename):
-    pygame.init()
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-    pygame.display.set_caption("")
-    cap = pygame.movie if hasattr(pygame, 'movie') else None
-
-def play_screamer(filename):
     def _play():
         cap = cv2.VideoCapture(filename)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
