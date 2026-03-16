@@ -57,7 +57,12 @@ class NetworkClient:
                             with self._lock:
                                 self.damage_queue.append(msg)
 
-                        # Cas 3 : C'est la liste des positions/rotations des joueurs
+                        # Cas 3 : C'est un screamer à afficher
+                        elif isinstance(msg, dict) and msg.get("type") == "screamer":
+                            with self._lock:
+                                self.damage_queue.append(msg)
+
+                        # Cas 4 : C'est la liste des positions/rotations des joueurs
                         else:
                             nouveaux_joueurs = {}
                             for pid, pos in msg.items():
