@@ -69,7 +69,6 @@ def update_ghosts(other_players):
             ghost_entities[pid] = Entity(
                 model='ressources/Crackhead.obj',
                 scale_y=3,
-                color=color.red,
                 collider='box'
             )
             ghost_hp[pid] = MAX_HP
