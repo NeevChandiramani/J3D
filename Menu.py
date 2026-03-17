@@ -57,17 +57,17 @@ class Menu:
         self.selected_index = 0
         self.volume = 7
 
-        # gestion des touches
-        # touches par défaut
+        # gestion des touches — mapping par défaut
         self.keybinds = {
-            'Avancer': pygame.K_z,
-            'Reculer': pygame.K_s,
-            'Gauche': pygame.K_q,
-            'Droite': pygame.K_d,
-            'Interagir': pygame.K_e,
-            'Sauter': pygame.K_SPACE
+            'Move Forward': pygame.K_z,
+            'Move Backward': pygame.K_s,
+            'Move Left': pygame.K_q,
+            'Move Right': pygame.K_d,
+            'Interact': pygame.K_e,
+            'Sprint' : pygame.K_LSHIFT,
+            'Jump': pygame.K_SPACE
         }
-        self.bind_order = ['Avancer', 'Gauche', 'Reculer', 'Droite', 'Interagir', 'Sauter']
+        self.bind_order = ['Move Forward', 'Move Left', 'Move Backward', 'Move Right', 'Jump', 'Sprint', 'Interact']
         self.waiting_for_key = None # indique si on attend une saisie de touche
 
         self.font_title = pygame.font.SysFont(FONT_MAIN, 90, bold=True)
@@ -89,11 +89,11 @@ class Menu:
             self.options = []
             for action in self.bind_order:
                 if self.waiting_for_key == action:
-                    self.options.append(f"{action} : [ APPUYEZ ]")
+                    self.options.append(f"{action} : [ PRESS ]")
                 else:
                     key_name = pygame.key.name(self.keybinds[action]).upper()
                     self.options.append(f"{action} : {key_name}")
-            self.options.append("RETOUR")
+            self.options.append("BACK")
 
     def update_volume(self, delta):
         """modifie le volume"""
@@ -224,14 +224,14 @@ def run_menu():
     clock = pygame.time.Clock()
 
     try:
-        # musique ambiente
+        # musique ambiente — chemin absolu pour pygame
         pygame.mixer.music.load(res("ressources/sounds/menu_music.ogg"))
         pygame.mixer.music.set_volume(0.7)
         pygame.mixer.music.play(-1)
     except: pass
 
     try:
-        # arrière plan
+        # arrière plan — chemin absolu pour pygame
         bg = pygame.image.load(res("ressources/images/chatelet.jpg"))
         bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
         has_background = True
