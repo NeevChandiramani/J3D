@@ -178,12 +178,11 @@ cube_proche = Entity(
 # ──────────────────────────────────────────────
 # CUBE SCREAMER
 # ──────────────────────────────────────────────
-# Chemins absolus pour cv2 (ne suit pas os.chdir)
 screamer_list = [
-    res('screamers/Screamer1.mp4'),
-    res('screamers/Screamer2.mp4'),
-    res('screamers/Screamer3-1.mp4'),
-    res('screamers/Screamer4.mp4')
+    ('ressources/screamers/Snapshot_2.png', 'ressources/screamers/Snapshot2.ogg'),
+    ('ressources/screamers/Snapshot_3.png', 'ressources/screamers/Snapshot3.ogg'),
+    ('ressources/screamers/Snapshot_4.png', 'ressources/screamers/Snapshot4.ogg'),
+    ('ressources/screamers/Snapshot_5.png', 'ressources/screamers/Snapshot5.ogg'),
 ]
 
 cube_screamer = Entity(
