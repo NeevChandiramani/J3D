@@ -28,12 +28,13 @@ def res(path):
 
 # touches par défaut
 touches = {
-    'Avancer': 'z',
-    'Reculer': 's',
-    'Gauche': 'q',
-    'Droite': 'd',
-    'Interagir': 'e',
-    'Sauter': 'space'
+    'Move Forward': 'z',
+    'Move Backward': 's',
+    'Move Left': 'q',
+    'Move Right': 'd',
+    'Interact': 'e',
+    'Jump': 'space',
+    'Sprint': 'left shift'
 }
 
 try:                                                                            #-
@@ -158,7 +159,6 @@ rambarde_2 = Entity(
     position=(-25.49, 23.38, -2.36),
     scale=(23.57, 40.81, 0.2)
 )
-
 rambarde_3 = Entity(
     model='cube',
     collider='box',
@@ -175,13 +175,33 @@ rambarde_4 = Entity(
     scale=(0.2, 63.25, 31.31)
 )
 
-debug_text = Text(
-    text='pos: 0,0,0',
-    position=(-0.8, 0.35),
-    scale=1.2,
-    parent=camera.ui,
-    color=color.white
-)
+# ── Rambardes cylindre (24 segments) ──
+rambardes_cylindre = [
+    Entity(model='cube', collider='box', visible=False, position=(-36.53, 73.11, -5.68), scale=(0.3, 73.77, 4.72), rotation_y=169.14),
+    Entity(model='cube', collider='box', visible=False, position=(-34.21, 73.11, -11.88), scale=(0.3, 73.78, 8.62), rotation_y=154.15),
+    Entity(model='cube', collider='box', visible=False, position=(-29.4, 73.11, -18.84), scale=(0.3, 73.78, 8.5), rotation_y=136.43),
+    Entity(model='cube', collider='box', visible=False, position=(-22.67, 73.11, -24.4), scale=(0.3, 73.78, 9.07), rotation_y=123.16),
+    Entity(model='cube', collider='box', visible=False, position=(-14.39, 73.11, -28.38), scale=(0.3, 73.78, 9.47), rotation_y=108.53),
+    Entity(model='cube', collider='box', visible=False, position=(-4.97, 73.12, -30.42), scale=(0.3, 73.76, 9.92), rotation_y=96.14),
+    Entity(model='cube', collider='box', visible=False, position=(4.93, 73.11, -30.44), scale=(0.3, 73.77, 9.99), rotation_y=84.08),
+    Entity(model='cube', collider='box', visible=False, position=(14.36, 73.11, -28.39), scale=(0.3, 73.77, 9.43), rotation_y=71.07),
+    Entity(model='cube', collider='box', visible=False, position=(22.62, 73.11, -24.39), scale=(0.3, 73.77, 9.07), rotation_y=57.01),
+    Entity(model='cube', collider='box', visible=False, position=(29.3, 73.11, -18.8), scale=(0.3, 73.77, 8.49), rotation_y=42.56),
+    Entity(model='cube', collider='box', visible=False, position=(34.01, 73.11, -11.96), scale=(0.3, 73.77, 8.29), rotation_y=26.29),
+    Entity(model='cube', collider='box', visible=False, position=(36.34, 72.62, -4.18), scale=(0.3, 74.75, 8.18), rotation_y=6.95),
+    Entity(model='cube', collider='box', visible=False, position=(36.34, 72.62, 4.15), scale=(0.3, 74.75, 8.59), rotation_y=-6.62),
+    Entity(model='cube', collider='box', visible=False, position=(34.07, 73.11, 12.03), scale=(0.3, 73.77, 8.05), rotation_y=-26.09),
+    Entity(model='cube', collider='box', visible=False, position=(29.36, 73.11, 18.83), scale=(0.3, 73.77, 8.67), rotation_y=-42.71),
+    Entity(model='cube', collider='box', visible=False, position=(22.61, 73.11, 24.39), scale=(0.3, 73.77, 8.98), rotation_y=-58.06),
+    Entity(model='cube', collider='box', visible=False, position=(14.35, 73.12, 28.3), scale=(0.3, 73.76, 9.43), rotation_y=-70.93),
+    Entity(model='cube', collider='box', visible=False, position=(4.93, 73.11, 30.49), scale=(0.3, 73.78, 10.02), rotation_y=-82.48),
+    Entity(model='cube', collider='box', visible=False, position=(-4.98, 72.99, 30.64), scale=(0.3, 74.02, 9.93), rotation_y=-95.89),
+    Entity(model='cube', collider='box', visible=False, position=(-14.42, 72.99, 28.52), scale=(0.3, 74.02, 9.56), rotation_y=-109.74),
+    Entity(model='cube', collider='box', visible=False, position=(-22.67, 73.11, 24.48), scale=(0.3, 73.78, 8.93), rotation_y=-122.89),
+    Entity(model='cube', collider='box', visible=False, position=(-29.35, 72.99, 18.96), scale=(0.3, 74.02, 8.5), rotation_y=-136.52),
+    Entity(model='cube', collider='box', visible=False, position=(-34.17, 72.99, 12.08), scale=(0.3, 74.02, 8.5), rotation_y=-153.43),
+    Entity(model='cube', collider='box', visible=False, position=(-36.55, 73.11, 5.86), scale=(0.3, 73.78, 4.94), rotation_y=-168.67),
+]
 
 test_cube = Entity(
     model='cube',
@@ -220,6 +240,74 @@ cube_screamer = Entity(
 
 _screamer_timer = 0.0
 
+#Interface de mort
+ecran_mort = Entity(parent=camera.ui, enabled=False)
+
+fond_mort = Entity(
+    parent=ecran_mort,
+    model='quad',
+    color=color.rgba(0, 0, 0, 0.75),
+    scale=(2, 1),
+    z=0.1
+)
+
+texte_mort = Text(
+    parent=ecran_mort,
+    text='YOU DIED!',
+    origin=(0, 0),
+    position=(0, 0.15),
+    scale=4,
+    color=color.rgb(180, 0, 0),
+    font='VeraMono.ttf'
+)
+
+ligne_mort = Entity(
+    parent=ecran_mort,
+    model='quad',
+    color=color.rgba(180, 0, 0, 0.8),
+    scale=(0.5, 0.003),
+    position=(0, 0.07)
+)
+
+def bouton_respawn():
+    respawn_player()
+
+def bouton_menu():
+    network.disconnect()
+    import subprocess, sys, os
+    subprocess.Popen([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "Five_Nights_At_Chatelet.py")])
+    application.quit()
+
+btn_respawn = Button(
+    parent=ecran_mort,
+    text='RESPAWN',
+    text_color= color.black,
+    position=(0, -0.05),
+    scale=(0.28, 0.07),
+    color=color.rgba(140, 0, 0, 0.9),
+    highlight_color=color.rgba(200, 30, 30, 1),
+    pressed_color=color.rgba(80, 0, 0, 1),
+    on_click=bouton_respawn
+)
+btn_respawn.text_entity.scale *= 0.9
+
+
+
+btn_menu = Button(
+    parent=ecran_mort,
+    text='TITLE SCREEN',
+    text_color= color.black,
+    position=(0, -0.16),
+    scale=(0.28, 0.07),
+    color=color.rgba(30, 30, 30, 0.9),
+    highlight_color=color.rgba(70, 70, 70, 1),
+    pressed_color=color.rgba(10, 10, 10, 1),
+    on_click=bouton_menu
+
+)
+btn_menu.text_entity.scale *= 0.9
+
+
 # ──────────────────────────────────────────────
 # HP
 # ──────────────────────────────────────────────
@@ -257,6 +345,10 @@ def player_death():
     hp_text.text = 'HP: 0  —  MORT'
     hp_text.color = color.red
 
+    ecran_mort.enabled = True
+    mouse.locked = False
+    mouse.visible = True
+
 def respawn_player():
     global is_dead, player_hp, _invincibility_timer
     is_dead = False
@@ -265,6 +357,10 @@ def respawn_player():
     joueur.position = (15, 3, 0)
     hp_text.color = color.lime
     update_hp_ui()
+
+    ecran_mort.enabled = False
+    mouse.locked = True
+    mouse.visible = False
 
 def update_hp_ui():
     ratio = player_hp / MAX_HP
@@ -419,6 +515,8 @@ camera.rotation = (15, 0, 0)
 
 # W.I.P C'est pas très fluide pour la rotation du perso
 def mouvement_camera():
+    if is_dead:
+        return
     joueur.rotation_y      += mouse.velocity[0] * 80
     camera_pivot.rotation_x -= mouse.velocity[1] * 80
     camera_pivot.rotation_x  = clamp(camera_pivot.rotation_x, -30, 45)
@@ -474,8 +572,8 @@ def mouvement_joueur():
     if is_dead:
         return
 
-    is_moving = held_keys[touches['Avancer']] or held_keys[touches['Reculer']] or held_keys[touches['Gauche']] or held_keys[touches['Droite']]
-    is_sprinting = held_keys['shift'] and current_stamina > 1 and is_moving
+    is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
+    is_sprinting = held_keys[touches['Sprint']] and current_stamina > 1 and is_moving
 
     if is_sprinting:
         current_stamina -= stamina_drain_rate * time.dt
@@ -489,10 +587,10 @@ def mouvement_joueur():
 
     stamina_text.text = f'Stamina: {int(current_stamina)}'
 
-    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Avancer']]
-    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Reculer']]
-    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Droite']]
-    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Gauche']]
+    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Move Forward']]
+    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Move Backward']]
+    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Move Right']]
+    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Move Left']]
     move_vec = avance + recule + droite + gauche
 
     if move_vec.length_squared() > 0:
@@ -542,16 +640,18 @@ def play_screamer(data):
 
 def input(key):
     global is_jumping, vertical_velocity, rectangle_visible, on_ground
+    if key == 'p':
+        print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
     if key == 'escape':
         network.disconnect()
         application.quit()
 
-    if key == touches['Sauter'] and on_ground and not is_dead:
+    if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True
         vertical_velocity = jump_force
 
-    if key == touches['Interagir']:
+    if key == touches['Interact']:
         dist = distance(joueur.position, cube_proche.position)
         if dist <= distance_interaction:
             rectangle_visible = not rectangle_visible
@@ -574,7 +674,7 @@ def input(key):
 
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
-    debug_text.text = f'pos: {round(joueur.x, 2)}, {round(joueur.y, 2)}, {round(joueur.z, 2)}'
+
     mouvement_joueur()
     mouvement_camera()
     saut()
@@ -589,11 +689,6 @@ def update():
     if _invincibility_timer > 0:
         _invincibility_timer -= time.dt
 
-    # Timer de respawn
-    if is_dead and _death_timer > 0:
-        _death_timer -= time.dt
-        if _death_timer <= 0:
-            respawn_player()
 
     # Interaction cube orange
     dist = distance(joueur.position, cube_proche.position)
@@ -621,6 +716,7 @@ def update():
     if _son_timer <= 0:
         son_gare.play()
         _son_timer = random.uniform(30, 60)
+
 
 
 Five_nights_at_chatelet.run()
