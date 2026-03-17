@@ -22,6 +22,8 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def res(path):
+    return os.path.join(BASE_DIR, path)
 
 # touches par défaut
 touches = {
@@ -51,7 +53,7 @@ if os.path.exists("config_touches.json"):
             touches.update(json.load(f))
     except Exception as e:
         print("Erreur lors du chargement des touches:", e)
-        
+
 Five_nights_at_chatelet = Ursina()
 
 # On change le répertoire de travail vers BASE_DIR
@@ -115,9 +117,6 @@ def update_ghosts(other_players):
                 invoke(setattr, g, 'color', color.red, delay=0.15)
 
 
-
-
-
 sol = Entity(
     model="ressources/Mall.obj",
     collider="mesh",
@@ -139,7 +138,7 @@ joueur_model = Entity(
     parent=joueur,
     model='ressources/Perso.obj',
     rotation_y=180,
-    position=(-0.5, 0, 0)  # ← ajuste le -0.5 jusqu'à ce que ce soit centré
+    position=(-0.5, 0, 0)
 )
 
 rambarde_1 = Entity(
@@ -177,10 +176,13 @@ cube_proche = Entity(
 # ──────────────────────────────────────────────
 # CUBE SCREAMER
 # ──────────────────────────────────────────────
-screamer_list = ['ressources/screamers/Screamer1.mp4',
-                 'ressources/screamers/Screamer2.mp4',
-                 'ressources/screamers/Screamer3-1.mp4',
-                 'ressources/screamers/Screamer4.mp4']
+# Chemins absolus pour cv2 (ne suit pas os.chdir)
+screamer_list = [
+    res('ressources/screamers/Screamer1.mp4'),
+    res('ressources/screamers/Screamer2.mp4'),
+    res('ressources/screamers/Screamer3-1.mp4'),
+    res('ressources/screamers/Screamer4.mp4')
+]
 
 cube_screamer = Entity(
     model='cube',
@@ -192,7 +194,6 @@ cube_screamer = Entity(
 )
 
 _screamer_timer = 0.0
-
 
 # ──────────────────────────────────────────────
 # HP
@@ -311,8 +312,8 @@ stamina_regen_rate = 15
 sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
-# Son ambiance gare (se déclenche aléatoirement toutes les 120-240 secondes)
-son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
+# Son ambiance gare — chemin absolu car Audio ne suit pas os.chdir
+son_gare = Audio(res('ressources/sounds/son_gare.ogg'), autoplay=False)
 _son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
@@ -476,12 +477,12 @@ def mouvement_joueur():
 
         # ── 6 raycasts : centre + gauche + droite, à 2 hauteurs ──
         origins = [
-            joueur.position + Vec3(0, 0.3, 0),   # bas centre
-            joueur.position + Vec3(0, 1.0, 0),   # milieu centre
-            joueur.position + Vec3(0, 0.3, 0) + right  * 0.4,  # bas droite
-            joueur.position + Vec3(0, 1.0, 0) + right  * 0.4,  # milieu droite
-            joueur.position + Vec3(0, 0.3, 0) - right  * 0.4,  # bas gauche
-            joueur.position + Vec3(0, 1.0, 0) - right  * 0.4,  # milieu gauche
+            joueur.position + Vec3(0, 0.3, 0),
+            joueur.position + Vec3(0, 1.0, 0),
+            joueur.position + Vec3(0, 0.3, 0) + right * 0.4,
+            joueur.position + Vec3(0, 1.0, 0) + right * 0.4,
+            joueur.position + Vec3(0, 0.3, 0) - right * 0.4,
+            joueur.position + Vec3(0, 1.0, 0) - right * 0.4,
         ]
 
         bloque = False
@@ -496,7 +497,11 @@ def mouvement_joueur():
         if not bloque:
             joueur.position = joueur.position + move
 
+
 def play_screamer(filename):
+    # cv2 ne suit pas os.chdir, donc on s'assure d'avoir le chemin absolu
+    if not os.path.isabs(filename):
+        filename = res(filename)
     def _play():
         cap = cv2.VideoCapture(filename)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
@@ -514,6 +519,7 @@ def play_screamer(filename):
         cv2.destroyAllWindows()
     threading.Thread(target=_play, daemon=True).start()
 
+
 def input(key):
     global is_jumping, vertical_velocity, rectangle_visible, on_ground
 
@@ -530,7 +536,7 @@ def input(key):
         if dist <= distance_interaction:
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
-        
+
         dist_s = distance(joueur.position, cube_screamer.position)
         if dist_s <= distance_interaction:
             chosen = random.choice(screamer_list)
