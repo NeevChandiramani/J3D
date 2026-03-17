@@ -159,6 +159,30 @@ rambarde_2 = Entity(
     scale=(23.57, 40.81, 0.2)
 )
 
+rambarde_3 = Entity(
+    model='cube',
+    collider='box',
+    visible=False,
+    position=(37.59, 67.61, -3.91),
+    scale=(0.2, 63.25, 31.31)
+)
+
+rambarde_4 = Entity(
+    model='cube',
+    collider='box',
+    visible=False,
+    position=(42.23, 67.61, -3.91),
+    scale=(0.2, 63.25, 31.31)
+)
+
+debug_text = Text(
+    text='pos: 0,0,0',
+    position=(-0.8, 0.35),
+    scale=1.2,
+    parent=camera.ui,
+    color=color.white
+)
+
 test_cube = Entity(
     model='cube',
     color=color.azure,
@@ -550,7 +574,7 @@ def input(key):
 
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
-
+    debug_text.text = f'pos: {round(joueur.x, 2)}, {round(joueur.y, 2)}, {round(joueur.z, 2)}'
     mouvement_joueur()
     mouvement_camera()
     saut()
