@@ -505,7 +505,7 @@ def play_screamer(filename):
     if not os.path.isabs(filename):
         filename = res(filename)
     def _play():
-        cap = cv2.VideoCapture(filename)
+        cap = cv2.VideoCapture(os.path.join(BASE_DIR, filename))
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
         delay = int(1000 / fps)
         cv2.namedWindow("", cv2.WND_PROP_FULLSCREEN)
