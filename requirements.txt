@@ -1,8 +1,8 @@
 ursina
 pygame
-random
-threading
-cv2
-sys
-json
-os
+#random
+#threading
+opencv-python
+#sys
+#json
+#os
