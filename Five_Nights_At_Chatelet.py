@@ -1,6 +1,6 @@
 #lignes à commenter pour désactiver le menu = -
 
-import cv2
+#import cv2
 import threading
 import math
 import os
