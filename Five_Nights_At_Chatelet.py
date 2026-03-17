@@ -4,6 +4,7 @@ import cv2
 import threading
 import math
 import os
+from pathlib import Path
 import json
 import sys
 from ursina import *
@@ -59,7 +60,7 @@ Five_nights_at_chatelet = Ursina()
 # On change le répertoire de travail vers BASE_DIR
 # pour que Ursina trouve les assets avec des chemins relatifs
 os.chdir(BASE_DIR)
-application.asset_folder = BASE_DIR
+application.asset_folder = Path(BASE_DIR)
 
 try:                                                                            #-
     pygame.quit()                                                               #-
