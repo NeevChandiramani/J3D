@@ -28,7 +28,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build Windows executable
-        run: pyinstaller --onefile --add-data "ressources;ressources" --collect-all panda3d --collect-all ursina --hidden-import panda3d.core --exclude-module panda3d.rocket --name "FiveNightsAtChatelet-Windows" Five_Nights_At_Chatelet.py
+        run: pyinstaller --onefile --windowed --add-data "ressources;ressources" --collect-all panda3d --collect-all ursina --hidden-import panda3d.core --exclude-module panda3d.rocket --name "FiveNightsAtChatelet-Windows" Five_Nights_At_Chatelet.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -96,7 +96,7 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.version || github.ref_name }}
           name: Release ${{ github.event.inputs.version || github.ref_name }}
-          prerelease: true
+          prerelease: ${{ contains(github.event.inputs.version || github.ref_name, '-pre') || contains(github.event.inputs.version || github.ref_name, '-beta') || contains(github.event.inputs.version || github.ref_name, '-rc') }}
           files: |
             windows-build/FiveNightsAtChatelet-Windows.exe
             linux-build/FiveNightsAtChatelet-Linux
