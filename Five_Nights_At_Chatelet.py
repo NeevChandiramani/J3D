@@ -23,7 +23,7 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def res(path):
-    return os.path.join(BASE_DIR, path)
+    return os.path.normpath(os.path.join(BASE_DIR, path))
 
 # touches par défaut
 touches = {
@@ -59,6 +59,7 @@ Five_nights_at_chatelet = Ursina()
 # On change le répertoire de travail vers BASE_DIR
 # pour que Ursina trouve les assets avec des chemins relatifs
 os.chdir(BASE_DIR)
+application.asset_folder = BASE_DIR
 
 try:                                                                            #-
     pygame.quit()                                                               #-
