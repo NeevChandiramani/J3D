@@ -28,13 +28,12 @@ def res(path):
 
 # touches par défaut
 touches = {
-    'Move Forward': 'z',
-    'Move Backward': 's',
-    'Move Left': 'q',
-    'Move Right': 'd',
-    'Interact': 'e',
-    'Jump': 'space',
-    'Sprint': 'left shift'
+    'Avancer': 'z',
+    'Reculer': 's',
+    'Gauche': 'q',
+    'Droite': 'd',
+    'Interagir': 'e',
+    'Sauter': 'space'
 }
 
 try:                                                                            #-
@@ -159,6 +158,7 @@ rambarde_2 = Entity(
     position=(-25.49, 23.38, -2.36),
     scale=(23.57, 40.81, 0.2)
 )
+
 rambarde_3 = Entity(
     model='cube',
     collider='box',
@@ -182,7 +182,6 @@ debug_text = Text(
     parent=camera.ui,
     color=color.white
 )
-
 
 test_cube = Entity(
     model='cube',
@@ -221,74 +220,6 @@ cube_screamer = Entity(
 
 _screamer_timer = 0.0
 
-#Interface de mort
-ecran_mort = Entity(parent=camera.ui, enabled=False)
-
-fond_mort = Entity(
-    parent=ecran_mort,
-    model='quad',
-    color=color.rgba(0, 0, 0, 0.75),
-    scale=(2, 1),
-    z=0.1
-)
-
-texte_mort = Text(
-    parent=ecran_mort,
-    text='YOU DIED!',
-    origin=(0, 0),
-    position=(0, 0.15),
-    scale=4,
-    color=color.rgb(180, 0, 0),
-    font='VeraMono.ttf'
-)
-
-ligne_mort = Entity(
-    parent=ecran_mort,
-    model='quad',
-    color=color.rgba(180, 0, 0, 0.8),
-    scale=(0.5, 0.003),
-    position=(0, 0.07)
-)
-
-def bouton_respawn():
-    respawn_player()
-
-def bouton_menu():
-    network.disconnect()
-    import subprocess, sys, os
-    subprocess.Popen([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "Five_Nights_At_Chatelet.py")])
-    application.quit()
-
-btn_respawn = Button(
-    parent=ecran_mort,
-    text='RESPAWN',
-    text_color= color.black,
-    position=(0, -0.05),
-    scale=(0.28, 0.07),
-    color=color.rgba(140, 0, 0, 0.9),
-    highlight_color=color.rgba(200, 30, 30, 1),
-    pressed_color=color.rgba(80, 0, 0, 1),
-    on_click=bouton_respawn
-)
-btn_respawn.text_entity.scale *= 0.9
-
-
-
-btn_menu = Button(
-    parent=ecran_mort,
-    text='TITLE SCREEN',
-    text_color= color.black,
-    position=(0, -0.16),
-    scale=(0.28, 0.07),
-    color=color.rgba(30, 30, 30, 0.9),
-    highlight_color=color.rgba(70, 70, 70, 1),
-    pressed_color=color.rgba(10, 10, 10, 1),
-    on_click=bouton_menu
-
-)
-btn_menu.text_entity.scale *= 0.9
-
-
 # ──────────────────────────────────────────────
 # HP
 # ──────────────────────────────────────────────
@@ -326,10 +257,6 @@ def player_death():
     hp_text.text = 'HP: 0  —  MORT'
     hp_text.color = color.red
 
-    ecran_mort.enabled = True
-    mouse.locked = False
-    mouse.visible = True
-
 def respawn_player():
     global is_dead, player_hp, _invincibility_timer
     is_dead = False
@@ -338,10 +265,6 @@ def respawn_player():
     joueur.position = (15, 3, 0)
     hp_text.color = color.lime
     update_hp_ui()
-
-    ecran_mort.enabled = False
-    mouse.locked = True
-    mouse.visible = False
 
 def update_hp_ui():
     ratio = player_hp / MAX_HP
@@ -496,8 +419,6 @@ camera.rotation = (15, 0, 0)
 
 # W.I.P C'est pas très fluide pour la rotation du perso
 def mouvement_camera():
-    if is_dead:
-        return
     joueur.rotation_y      += mouse.velocity[0] * 80
     camera_pivot.rotation_x -= mouse.velocity[1] * 80
     camera_pivot.rotation_x  = clamp(camera_pivot.rotation_x, -30, 45)
@@ -553,8 +474,8 @@ def mouvement_joueur():
     if is_dead:
         return
 
-    is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
-    is_sprinting = held_keys[touches['Sprint']] and current_stamina > 1 and is_moving
+    is_moving = held_keys[touches['Avancer']] or held_keys[touches['Reculer']] or held_keys[touches['Gauche']] or held_keys[touches['Droite']]
+    is_sprinting = held_keys['shift'] and current_stamina > 1 and is_moving
 
     if is_sprinting:
         current_stamina -= stamina_drain_rate * time.dt
@@ -568,10 +489,10 @@ def mouvement_joueur():
 
     stamina_text.text = f'Stamina: {int(current_stamina)}'
 
-    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Move Forward']]
-    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Move Backward']]
-    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Move Right']]
-    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Move Left']]
+    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Avancer']]
+    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Reculer']]
+    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Droite']]
+    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Gauche']]
     move_vec = avance + recule + droite + gauche
 
     if move_vec.length_squared() > 0:
@@ -626,11 +547,11 @@ def input(key):
         network.disconnect()
         application.quit()
 
-    if key == touches['Jump'] and on_ground and not is_dead:
+    if key == touches['Sauter'] and on_ground and not is_dead:
         is_jumping = True
         vertical_velocity = jump_force
 
-    if key == touches['Interact']:
+    if key == touches['Interagir']:
         dist = distance(joueur.position, cube_proche.position)
         if dist <= distance_interaction:
             rectangle_visible = not rectangle_visible
@@ -653,7 +574,6 @@ def input(key):
 
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
-    
     debug_text.text = f'pos: {round(joueur.x, 2)}, {round(joueur.y, 2)}, {round(joueur.z, 2)}'
     mouvement_joueur()
     mouvement_camera()
@@ -669,6 +589,11 @@ def update():
     if _invincibility_timer > 0:
         _invincibility_timer -= time.dt
 
+    # Timer de respawn
+    if is_dead and _death_timer > 0:
+        _death_timer -= time.dt
+        if _death_timer <= 0:
+            respawn_player()
 
     # Interaction cube orange
     dist = distance(joueur.position, cube_proche.position)
@@ -696,7 +621,6 @@ def update():
     if _son_timer <= 0:
         son_gare.play()
         _son_timer = random.uniform(30, 60)
-
 
 
 Five_nights_at_chatelet.run()
