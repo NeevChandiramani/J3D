@@ -499,26 +499,21 @@ def mouvement_joueur():
             joueur.position = joueur.position + move
 
 
-def play_screamer(filename):
-    # cv2 ne suit pas os.chdir, donc on s'assure d'avoir le chemin absolu
-    if not os.path.isabs(filename):
-        filename = res(filename)
-    def _play():
-        cap = cv2.VideoCapture(os.path.join(BASE_DIR, filename))
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30
-        delay = int(1000 / fps)
-        cv2.namedWindow("", cv2.WND_PROP_FULLSCREEN)
-        cv2.setWindowProperty("", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            cv2.imshow("", frame)
-            if cv2.waitKey(delay) & 0xFF == ord('q'):
-                break
-        cap.release()
-        cv2.destroyAllWindows()
-    threading.Thread(target=_play, daemon=True).start()
+def play_screamer(data):
+    if "|" not in data:
+        return
+    img_path, snd_path = data.split("|", 1)
+    overlay = Entity(
+        model='quad',
+        texture=res(img_path),
+        scale=(camera.aspect_ratio * 2, 2),
+        position=(0, 0),
+        parent=camera.ui,
+        z=-1
+    )
+    snd = Audio(res(snd_path), autoplay=True)
+    destroy(overlay, delay=1.15)
+    destroy(snd, delay=1.15)
 
 
 def input(key):
