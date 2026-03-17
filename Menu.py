@@ -57,7 +57,8 @@ class Menu:
         self.selected_index = 0
         self.volume = 7
 
-        # gestion des touches — mapping par défaut
+        # gestion des touches
+        # touches par défaut
         self.keybinds = {
             'Avancer': pygame.K_z,
             'Reculer': pygame.K_s,
@@ -223,14 +224,14 @@ def run_menu():
     clock = pygame.time.Clock()
 
     try:
-        # musique ambiente — chemin absolu pour pygame
+        # musique ambiente
         pygame.mixer.music.load(res("ressources/sounds/menu_music.ogg"))
         pygame.mixer.music.set_volume(0.7)
         pygame.mixer.music.play(-1)
     except: pass
 
     try:
-        # arrière plan — chemin absolu pour pygame
+        # arrière plan
         bg = pygame.image.load(res("ressources/images/chatelet.jpg"))
         bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
         has_background = True
