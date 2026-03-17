@@ -535,9 +535,9 @@ def input(key):
 
         dist_s = distance(joueur.position, cube_screamer.position)
         if dist_s <= distance_interaction:
-            chosen = random.choice(screamer_list)
+            img, snd = random.choice(screamer_list)
             if network.connected:
-                network.send_screamer(chosen)
+                network.send_screamer(img + "|" + snd)
 
     if key == 'left mouse down':
         do_attack()
