@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import os
 import json
 
 # configuration de base
@@ -11,6 +12,15 @@ COLOR_BG = (5, 5, 10)
 COLOR_TEXT = (140, 140, 140)
 COLOR_SELECTED = (255, 255, 255)
 COLOR_WAITING = (255, 100, 100) # pour indiquer l'attente d'une touche
+
+# Chemin de base pour les ressources (compatibilité PyInstaller)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def res(path):
+    return os.path.join(BASE_DIR, path)
 
 def draw_fnaf_static(surface):
     """génère l'effet visuel de grain/neige pour l'immersion"""
@@ -41,14 +51,13 @@ def glitch_offset(chance=0.04, power=8):
 class Menu:
     def __init__(self):
         # permet de switch entre l'écran principal et les paramètres
-        self.state = "MAIN" 
+        self.state = "MAIN"
         self.main_options = ["START", "OPTIONS", "EXIT"]
         self.options = []
         self.selected_index = 0
         self.volume = 7
-        
-        # gestions des touches
-        # mapping par défaut
+
+        # gestion des touches — mapping par défaut
         self.keybinds = {
             'Avancer': pygame.K_z,
             'Reculer': pygame.K_s,
@@ -63,12 +72,12 @@ class Menu:
         self.font_title = pygame.font.SysFont(FONT_MAIN, 90, bold=True)
         self.font_menu = pygame.font.SysFont(FONT_MAIN, 50, bold=True)
         self.font_small = pygame.font.SysFont(FONT_MAIN, 22)
-        
+
         self.option_rects = []
         self.vol_rect = pygame.Rect(0, 0, 0, 0)
         self.align_x = 100
-        self.last_vol_change = 0 
-        
+        self.last_vol_change = 0
+
         self.update_options_list()
 
     def update_options_list(self):
@@ -96,7 +105,7 @@ class Menu:
     def set_volume_by_mouse(self, mouse_x):
         """modifie le volume avec la souris"""
         rel_x = mouse_x - self.vol_rect.x
-        new_vol = int((rel_x / self.vol_rect.width) * 11) 
+        new_vol = int((rel_x / self.vol_rect.width) * 11)
         self.volume = max(0, min(10, new_vol))
         pygame.mixer.music.set_volume(self.volume / 10.0)
 
@@ -109,7 +118,7 @@ class Menu:
                 self.selected_index = 0
                 self.update_options_list()
             else:
-                return opt 
+                return opt
         elif self.state == "OPTIONS":
             if self.selected_index == len(self.bind_order):
                 self.state = "MAIN"
@@ -124,8 +133,8 @@ class Menu:
         # changement de touche
         if self.waiting_for_key:
             if event.type == pygame.KEYDOWN:
-                if event.key != pygame.K_ESCAPE: 
-                    # vérifie si la touche est déjà utilisée 
+                if event.key != pygame.K_ESCAPE:
+                    # vérifie si la touche est déjà utilisée
                     if event.key not in self.keybinds.values():
                         self.keybinds[self.waiting_for_key] = event.key
                     else:
@@ -163,13 +172,13 @@ class Menu:
     def draw(self, surface):
         """rendu graphique du menu et des effets"""
         t_off_x, t_off_y = glitch_offset(0.1, 5)
-        
+
         if self.state == "MAIN":
             title_lines = ["FIVE", "NIGHTS", "AT", "CHATELET"]
             start_y, spacing = 440, 60
         else:
             title_lines = ["OPTIONS"]
-            start_y, spacing = 220, 50 
+            start_y, spacing = 220, 50
 
         for idx, line in enumerate(title_lines):
             color = COLOR_SELECTED if random.random() > 0.05 else (180, 180, 180)
@@ -183,10 +192,10 @@ class Menu:
                 color = COLOR_WAITING
             else:
                 color = COLOR_SELECTED if is_sel else COLOR_TEXT
-            
+
             m_off_x, _ = glitch_offset(0.02, 3) if is_sel else (0, 0)
             y_pos = start_y + (i * spacing)
-            
+
             if is_sel:
                 prefix_surf = self.font_menu.render(">> ", True, color)
                 opt_text_surf = self.font_menu.render(option, True, color)
@@ -214,13 +223,15 @@ def run_menu():
     clock = pygame.time.Clock()
 
     try:
-        pygame.mixer.music.load("ressources/sounds/menu_music.mp3")
+        # musique ambiente — chemin absolu pour pygame
+        pygame.mixer.music.load(res("ressources/sounds/menu_music.ogg"))
         pygame.mixer.music.set_volume(0.7)
         pygame.mixer.music.play(-1)
     except: pass
 
     try:
-        bg = pygame.image.load("ressources/images/chatelet.jpg")
+        # arrière plan — chemin absolu pour pygame
+        bg = pygame.image.load(res("ressources/images/chatelet.jpg"))
         bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
         has_background = True
     except:
@@ -240,13 +251,13 @@ def run_menu():
             if event.type == pygame.QUIT:
                 action = 'exit'
                 running = False
-            
-            res = menu.handle_input(event)
-            if res:
-                if res == "EXIT":
+
+            result = menu.handle_input(event)
+            if result:
+                if result == "EXIT":
                     action = 'exit'
                     running = False
-                elif res == "START":
+                elif result == "START":
                     action = 'start'
                     running = False
 
@@ -267,13 +278,11 @@ def run_menu():
     if action == 'start':
         try:
             azerty_to_ursina = {
-                # lettres dont la position diffère entre azerty et qwerty
                 "a": "q",
                 "q": "a",
                 "z": "w",
                 "w": "z",
                 "m": ";",
-                # touches spéciales pygame → ursina
                 "up": "up arrow",
                 "down": "down arrow",
                 "left": "left arrow",
@@ -290,15 +299,15 @@ def run_menu():
             # sauvegarde dans un fichier json
             with open("config_touches.json", "w") as f:
                 json.dump(binds_export, f)
-                
+
             screen.fill((0, 0, 0))
             font = pygame.font.SysFont(FONT_MAIN, 40)
             txt = font.render('LOADING...', True, (200, 200, 200))
             screen.blit(txt, txt.get_rect(center=(WIDTH//2, HEIGHT//2)))
             pygame.display.flip()
-            pygame.time.delay(1000)
+            pygame.time.delay(1000)  # Délai pour l'effet de chargement
         except: pass
-        
+
     pygame.quit()
     return action
 
