@@ -340,8 +340,8 @@ def respawn_player():
     update_hp_ui()
 
     ecran_mort.enabled = False
-    mouse.locked = False
-    mouse.visible = True
+    mouse.locked = True
+    mouse.visible = False
 
 def update_hp_ui():
     ratio = player_hp / MAX_HP
