@@ -480,7 +480,7 @@ damage_flash = Entity(
 
 # Indicateur d'attaque (cooldown visuel, coin bas-droite)
 attack_indicator = Text(
-    text='[CLIC] Attaque',
+    text='[CLICK] Attack',
     position=(0.55, -0.45),
     scale=1.3,
     parent=camera.ui,
