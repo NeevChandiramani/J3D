@@ -315,7 +315,7 @@ sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
 # Son ambiance gare — chemin absolu car Audio ne suit pas os.chdir
-son_gare = Audio(res('ressources/sounds/son_gare.ogg'), autoplay=False)
+son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
 _son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
