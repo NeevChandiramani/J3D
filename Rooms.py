@@ -1,4 +1,5 @@
 from ursina import *
+import random
 
 class Rooms:
 
