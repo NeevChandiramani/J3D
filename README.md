@@ -11,7 +11,7 @@
 | Membre | Rôle |
 |---|---|
 | Neev Chandiramani | Multijoueur réseau, site web |
-| Maximilien Cochet | Logique des événements, interactions |
+| Maximilien Cochet | Logique des événements, interactions (a quitté l'école) |
 | Gauthier Roland | Modèles 3D, map design, character design |
 | Maxime Ye | Audio, ambiance sonore |
 | Maxime Gontran | Déplacements, UI, gameplay |
