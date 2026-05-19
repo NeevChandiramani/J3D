@@ -23,6 +23,9 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def res(path):
+    return os.path.normpath(os.path.join(BASE_DIR, path))
+
 # touches par défaut
 touches = {
     'Move Forward': 'z',
@@ -76,8 +79,9 @@ ghost_hp = {}         # {player_id: int}
 
 SEND_INTERVAL = 0.05
 _send_timer = 0
+
 # ──────────────────────────────────────────────
-# RÔLES
+# RÔLES ET ATTRIBUTION
 # ──────────────────────────────────────────────
 # Définition des rôles disponibles
 ROLES = {
@@ -102,7 +106,7 @@ ROLES = {
 }
 
 player_role = None
-all_assigned_roles = {} # Stocke les rôles de tous les joueurs pour les fantômes
+all_assigned_roles = {} # Stocke les rôles de tous les joueurs pour l'affichage correct des modèles
 _role_announced = False
 _role_announce_timer = 0.0
 ROLE_ANNOUNCE_DURATION = 4.0
@@ -111,19 +115,19 @@ _announce_fade  = 0.0
 FADE_SPEED      = 2.2
 
 def assign_role():
-    """Attribution aleatoire du role au lancement."""
+    """Attribution aléatoire et équilibrée des rôles au lancement."""
     global player_role, MAX_HP, base_speed, _role_announced, _role_announce_timer, all_assigned_roles
 
     players = network.get_other_players() if network.connected else {}
     nb_players = len(players) + 1
 
     if nb_players <= 1:
-        # Solo : tirage biaise
+        # En solo : tirage aléatoire
         player_role = random.choices(["Survivor", "Infected"], weights=[70, 30])[0]
         if network.my_id is not None:
             all_assigned_roles[str(network.my_id)] = player_role
     else:
-        # Multijoueur : S'assurer qu'il y a au moins 1 Infecté et au moins 1 Survivant
+        # En multijoueur : S'assurer qu'il y a au moins 1 Infecté et au moins 1 Survivant
         nb_infectes = max(1, min(nb_players - 1, round(nb_players * 0.35)))
         
         all_ids = sorted([str(pid) for pid in players.keys()])
@@ -133,7 +137,7 @@ def assign_role():
             
         random.seed(sum(ord(c) for c in "".join(all_ids)))
         infectes_ids = random.sample(all_ids, nb_infectes)
-        random.seed()  # reset seed
+        random.seed()  # Réinitialise la seed pour la suite du jeu
         
         # Enregistrer les rôles de tous les joueurs présents
         for pid in all_ids:
@@ -142,17 +146,17 @@ def assign_role():
         my_str = str(network.my_id) if network.my_id is not None else all_ids[0]
         player_role = all_assigned_roles.get(my_str, "Survivor")
 
-    # Appliquer les stats et le MODEL
+    # Appliquer les statistiques et le modèle 3D selon le rôle
     role_data = ROLES[player_role]
     MAX_HP = role_data["max_hp"]
     base_speed = 6.7 * role_data["speed_mult"]
     joueur_model.color = role_data["model_color"]
-    joueur_model.model = role_data["model_path"] # Applique le modèle choisi
+    joueur_model.model = role_data["model_path"] 
 
     _role_announced = True
     _role_announce_timer = ROLE_ANNOUNCE_DURATION
     show_role_announce()
-    print(f"[ROLE] Role attribue : {player_role}")
+    print(f"[ROLE] Role attribué : {player_role}")
 
 
 def show_role_announce():
@@ -172,6 +176,7 @@ def show_role_announce():
 
 
 def update_role_announce():
+    """Gère l'animation d'apparition/disparition de l'annonce du rôle"""
     global _announce_phase, _announce_fade, _role_announce_timer, _role_announced
     if not _role_announced:
         return
@@ -212,6 +217,7 @@ def update_role_announce():
 
 
 def update_role_indicator():
+    """Met à jour le petit texte affichant le rôle en haut à droite"""
     if player_role:
         role_data = ROLES[player_role]
         r, g_c, b = role_data["color_rgb"]
@@ -230,7 +236,7 @@ def update_ghosts(other_players):
             continue
 
         if pid not in ghost_entities:
-            # Récupérer le rôle (ou "Survivor" par défaut si tardif)
+            # Récupération du rôle du joueur distant pour lui assigner le bon modèle
             ghost_role = all_assigned_roles.get(str(pid), "Survivor")
             ghost_model = ROLES[ghost_role]["model_path"]
             ghost_color = ROLES[ghost_role]["model_color"]
@@ -264,6 +270,7 @@ def update_ghosts(other_players):
                 orig_color = ROLES[ghost_role]["model_color"]
                 
                 g.color = color.white
+                # Le fantôme redevient de sa couleur d'origine après le coup
                 invoke(setattr, g, 'color', orig_color, delay=0.15)
 
 
@@ -274,11 +281,6 @@ sol = Entity(
     scale=Vec3(0.5, 1.5, 0.5)
 )
 
-sun = DirectionalLight()
-sun.look_at(Vec3(1, -1, -1))
-sun.color = color.rgb(1, 1, 1)
-sun.shadows = False
-
 joueur = Entity(
     position=(15, 3, 0),
     collider='box',
@@ -288,19 +290,17 @@ joueur = Entity(
 # Ambiance globale plus froide et plus sombre
 AmbientLight(color=Vec4(0.035, 0.04, 0.05, 1))
 
-# Lumière ambiante très faible, teintée bleu froid (néons de métro mourants)
-AmbientLight(color=Vec4(0.12, 0.13, 0.16, 1))
-
-# Néons du métro répartis dans la station (PointLights placés au plafond)
+# Lumières du métro (moins marron, plus gris/bleu)
 metro_lights = [
-    (Vec3(15, 8, 0),    Vec4(0.5, 0.35, 0.25, 1), 20),
-    (Vec3(-10, 8, 10),  Vec4(0.3, 0.5, 0.3, 1),   22),
-    (Vec3(-30, 8, -8),  Vec4(0.45, 0.2, 0.2, 1),  22),
-    (Vec3(0, 8, -20),   Vec4(0.4, 0.4, 0.45, 1),  22),
-    (Vec3(30, 8, 15),   Vec4(0.5, 0.4, 0.2, 1),   20),
-    (Vec3(-45, 35, 0),  Vec4(0.4, 0.15, 0.15, 1), 25),
-    (Vec3(0, 35, 0),    Vec4(0.3, 0.35, 0.4, 1),  25),
+    (Vec3(15, 8, 0),    Vec4(0.20, 0.22, 0.24, 1), 12),
+    (Vec3(-10, 8, 10),  Vec4(0.16, 0.22, 0.18, 1), 13),
+    (Vec3(-30, 8, -8),  Vec4(0.22, 0.12, 0.12, 1), 13),
+    (Vec3(0, 8, -20),   Vec4(0.18, 0.20, 0.24, 1), 13),
+    (Vec3(30, 8, 15),   Vec4(0.22, 0.22, 0.18, 1), 12),
+    (Vec3(-45, 35, 0),  Vec4(0.15, 0.06, 0.06, 1), 16),
+    (Vec3(0, 35, 0),    Vec4(0.14, 0.18, 0.22, 1), 16),
 ]
+
 for _pos, _col, _rad in metro_lights:
     _pl = PointLight(position=_pos)
     _pl.color = _col
@@ -308,13 +308,13 @@ for _pos, _col, _rad in metro_lights:
 
 # Halo personnel du joueur — comme un téléphone allumé
 halo_joueur = PointLight(parent=joueur, position=(0, 2, 0))
-halo_joueur.color = Vec4(0.04, 0.12, 0.06, 1)
-halo_joueur.radius = 4
+halo_joueur.color = Vec4(0.6, 0.55, 0.4, 1)
+halo_joueur.radius = 10
 
 
 joueur_model = Entity(
     parent=joueur,
-    model='ressources/Perso.obj', # Par défaut. Sera changé lors de assign_role()
+    model='ressources/Perso.obj', # Modèle par défaut, sera mis à jour par assign_role()
     rotation_y=180,
     position=(-0.5, 0, 0)
 )
@@ -415,7 +415,7 @@ cube_screamer = Entity(
 
 _screamer_timer = 0.0
 
-# Interface de mort
+#Interface de mort
 ecran_mort = Entity(parent=camera.ui, enabled=False)
 
 fond_mort = Entity(
@@ -517,7 +517,7 @@ def player_death():
     global is_dead, _death_timer
     is_dead = True
     _death_timer = RESPAWN_DELAY
-    hp_text.text = 'HP: 0  —  DEAD'
+    hp_text.text = 'HP: 0  —  MORT'
     hp_text.color = color.red
 
     ecran_mort.enabled = True
@@ -594,6 +594,7 @@ def do_attack():
                 ghost_role = all_assigned_roles.get(str(pid), "Survivor")
                 orig_color = ROLES[ghost_role]["model_color"]
                 ghost.color = color.white
+                # Le fantôme redevient de sa couleur d'origine après avoir pris le coup
                 invoke(setattr, ghost, 'color', orig_color, delay=0.15)
 
             if network.connected:
@@ -665,7 +666,7 @@ attack_indicator = Text(
 )
 
 network_text = Text(
-    text='Network: connecting...',
+    text='Réseau: connexion...',
     position=(-0.8, 0.45),
     scale=1.2,
     parent=camera.ui,
@@ -673,10 +674,10 @@ network_text = Text(
 )
 
 #salle_ui = Text(
-#   text="",
-#   position=(-0.85,0.45),
-#   scale=2,
-#   parent=camera.ui
+#    text="",
+#    position=(-0.85,0.45),
+#    scale=2,
+#    parent=camera.ui
 #)
 
 # ──────────────────────────────────────────────
@@ -732,7 +733,7 @@ role_announce_sub = Text(
     font='VeraMono.ttf'
 )
 
-# Indicateur de role permanent (coin haut droit)
+# Indicateur de rôle permanent (coin haut droit)
 role_indicator = Text(
     text='',
     position=(0.62, 0.44),
@@ -937,7 +938,7 @@ def update():
 
     # Réseau
     if network.connected:
-        network_text.text = f'Network: connected ({len(ghost_entities) + 1} player(s))'
+        network_text.text = f'Réseau: connecté ({len(ghost_entities) + 1} joueur(s))'
         network_text.color = color.lime
 
         _send_timer += time.dt
@@ -947,7 +948,7 @@ def update():
 
         update_ghosts(network.get_other_players())
     else:
-        network_text.text = 'Network: disconnected'
+        network_text.text = 'Réseau: déconnecté'
         network_text.color = color.red
 
     # Son ambiance aléatoire
@@ -955,7 +956,7 @@ def update():
     if _son_timer <= 0:
         son_gare.play()
         _son_timer = random.uniform(30, 60)
-
+    
     # Rôle : animation d'annonce + indicateur
     update_role_announce()
     update_role_indicator()
@@ -966,5 +967,6 @@ def update():
 # ──────────────────────────────────────────────
 # Petit délai pour laisser le réseau s'initialiser avant de tirer les rôles
 invoke(assign_role, delay=1.5)
+
 
 Five_nights_at_chatelet.run()
