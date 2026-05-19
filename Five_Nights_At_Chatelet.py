@@ -132,6 +132,11 @@ sun.look_at(Vec3(1, -1, -1))
 sun.color = color.rgb(1, 1, 1)
 sun.shadows = False
 
+joueur = Entity(
+    position=(15, 3, 0),
+    collider='box',
+    scale_y=3
+)
 
 # ──────────────────────────────────────────────
 # AMBIANCE LUMINEUSE — STYLE HORREUR
@@ -149,11 +154,6 @@ halo_joueur.color = Vec4(0.04, 0.12, 0.06, 1)
 halo_joueur.radius = 4
 
 
-joueur = Entity(
-    position=(15, 3, 0),
-    collider='box',
-    scale_y=3
-)
 joueur_model = Entity(
     parent=joueur,
     model='ressources/Perso.obj',
