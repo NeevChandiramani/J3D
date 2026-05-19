@@ -15,6 +15,7 @@ from Rooms import Rooms
 from NetworkClient import NetworkClient
 #pip install ursina on oublie pas tu connais
 
+
 # ──────────────────────────────────────────────
 # CHEMINS RESSOURCES (compatibilité PyInstaller)
 # ──────────────────────────────────────────────
@@ -25,6 +26,7 @@ else:
 
 def res(path):
     return os.path.normpath(os.path.join(BASE_DIR, path))
+
 
 # touches par défaut
 touches = {
@@ -287,6 +289,18 @@ joueur = Entity(
     scale_y=3
 )
 
+# ──────────────────────────────────────────────
+# EFFETS SONORES (SFX)
+# ──────────────────────────────────────────────
+son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
+son_saut = Audio('ressources/sounds/jump.ogg', autoplay=False)
+son_attaque = Audio('ressources/sounds/attack.ogg', autoplay=False)
+son_hit = Audio('ressources/sounds/hit.ogg', autoplay=False)
+son_degats = Audio('ressources/sounds/hurt.ogg', autoplay=False)
+son_mort = Audio('ressources/sounds/death.ogg', autoplay=False)
+son_interaction = Audio('ressources/sounds/interact.ogg', autoplay=False)
+
+
 # Ambiance globale plus froide et plus sombre
 AmbientLight(color=Vec4(0.035, 0.04, 0.05, 1))
 
@@ -500,6 +514,10 @@ def receive_damage(amount):
     if _invincibility_timer > 0 or is_dead:
         print("[DAMAGE] Ignoré (invincible ou mort)")
         return
+    
+    # SFX Dégâts reçus
+    son_degats.play()
+
     player_hp -= amount
     player_hp = max(0, player_hp)
     _invincibility_timer = INVINCIBILITY_DURATION
@@ -519,6 +537,9 @@ def player_death():
     _death_timer = RESPAWN_DELAY
     hp_text.text = 'HP: 0  —  MORT'
     hp_text.color = color.red
+
+    # SFX Mort
+    son_mort.play()
 
     ecran_mort.enabled = True
     mouse.locked = False
@@ -563,6 +584,9 @@ def do_attack():
         return
     _attack_timer = ATTACK_COOLDOWN
 
+    # SFX Attaque
+    son_attaque.play()
+
     forward = Vec3(joueur.forward.x, 0, joueur.forward.z).normalized()
     right   = Vec3(joueur.right.x,   0, joueur.right.z  ).normalized()
 
@@ -576,6 +600,8 @@ def do_attack():
     )
     destroy(hitbox_vis, delay=0.12)
 
+    hit_someone = False
+
     for pid, ghost in list(ghost_entities.items()):
         delta  = ghost.position - joueur.position
         f_dist = delta.dot(forward)
@@ -583,6 +609,7 @@ def do_attack():
         h_dist = abs((ghost.position.y + 1.5) - (joueur.position.y + 1.5))
 
         if (0 < f_dist <= ATTACK_RANGE) and (s_dist <= ATTACK_WIDTH * 0.5) and (h_dist <= ATTACK_HEIGHT * 0.5):
+            hit_someone = True
             ghost_hp[pid] = max(0, ghost_hp.get(pid, MAX_HP) - ATTACK_DAMAGE)
             print(f"[ATTACK] HIT sur {pid} ! HP restant : {ghost_hp[pid]}")
 
@@ -600,6 +627,10 @@ def do_attack():
             if network.connected:
                 network.send_damage(pid, ATTACK_DAMAGE)
 
+        # Si on touche quelqu'un, on joue le son d'impact en plus du swingx
+    if hit_someone:
+        son_hit.play()
+
 
 # ──────────────────────────────────────────────
 # STAMINA
@@ -611,8 +642,6 @@ stamina_regen_rate = 15
 sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
-# Son ambiance gare — chemin absolu car Audio ne suit pas os.chdir
-son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
 _son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
@@ -890,15 +919,22 @@ def input(key):
     if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True
         vertical_velocity = jump_force
+        # SFX Saut
+        son_saut.play()
 
     if key == touches['Interact']:
         dist = distance(joueur.position, cube_proche.position)
+        dist_s = distance(joueur.position, cube_screamer.position)
+
         if dist <= distance_interaction:
+            # SFX Interaction
+            son_interaction.play()
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
 
-        dist_s = distance(joueur.position, cube_screamer.position)
         if dist_s <= distance_interaction:
+            # L'interaction avec le screamer joue son propre son, mais on peut rajouter le bruit d'interaction
+            son_interaction.play()
             img, snd = random.choice(screamer_list)
             if network.connected:
                 network.send_screamer(img + "|" + snd)
