@@ -32,7 +32,7 @@ Five Nights At Châtelet est un jeu d'horreur multijoueur asymétrique inspiré 
 - **Moteur 3D** : Ursina Engine
 - **Menu** : Pygame
 - **Langage** : Python 3.11
-- **Réseau** : Sockets TCP (stdlib Python)
+- **Réseau** : Sockets TCP
 - **Modélisation** : Blender
 - **Build** : PyInstaller + GitHub Actions
 
