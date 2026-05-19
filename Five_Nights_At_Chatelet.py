@@ -132,6 +132,23 @@ sun.look_at(Vec3(1, -1, -1))
 sun.color = color.rgb(1, 1, 1)
 sun.shadows = False
 
+
+# ──────────────────────────────────────────────
+# AMBIANCE LUMINEUSE — STYLE HORREUR
+# ──────────────────────────────────────────────
+
+# Lumière ambiante très faible, teintée bleu-vert (néons de métro mourants)
+AmbientLight(color=Vec4(0.05, 0.05, 0.04, 1))
+# Lumière directionnelle froide et rasante — simule les néons du plafond
+neon_global = DirectionalLight()
+neon_global.look_at(Vec3(0.3, -1, 0.2))
+neon_global.color = Vec4(0.18, 0.08, 0.08, 1)
+
+halo_joueur = PointLight(parent=joueur, position=(0, 2, 0))
+halo_joueur.color = Vec4(0.04, 0.12, 0.06, 1)
+halo_joueur.radius = 4
+
+
 joueur = Entity(
     position=(15, 3, 0),
     collider='box',
