@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J3D - Five Nights At Châtelet</title>
+    <meta name="description" content="Five Nights At Châtelet — jeu d'horreur et de survie multijoueur en vue à la troisième personne, projet J3D EPITA développé sous Ursina Engine.">
+    <meta property="og:title" content="Five Nights At Châtelet">
+    <meta property="og:description" content="Jeu d'horreur multijoueur dans une station de métro abandonnée — projet J3D EPITA.">
+    <meta property="og:image" content="img.jpg">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="img.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" aria-label="Navigation principale">
+        <a href="#accueil">Accueil</a>
+        <a href="#about">À propos</a>
+        <a href="#credits">Crédits</a>
+        <a href="ressources.html">Ressources</a>
+        <a href="rapports.html">Rapports</a>
+    </nav>
+
+    <main>
+    <!-- Section Accueil -->
+    <section id="accueil" class="section hero-section">
+        <div class="overlay">
+            <img src="img.jpg" alt="J3D Logo" class="logo" loading="lazy">
+            <h1>Five Nights At Châtelet.</h1>
+            <p class="hero-tagline">Multijoueur · Horreur · Survie</p>
+
+            <a class="download-btn"
+               href="https://github.com/NeevChandiramani/J3D/releases/">
+                Télécharger maintenant
+            </a>
+
+            <a class="scroll-cue" href="#about" aria-label="Voir le contenu">&#9662;</a>
+        </div>
+    </section>
+
+    <!-- Section À propos -->
+    <section id="about" class="section about-section">
+        <div class="section-content fade-in">
+            <h2>À propos</h2>
+
+            <div class="about-game">
+                <h3>Le Jeu</h3>
+                <p>
+                    <strong>Five Nights At Châtelet</strong> est un jeu d'horreur et de survie inspiré
+                    de la célèbre franchise Five Nights at Freddy's. Ce projet s'inscrit dans un cadre strictement scolaire et académique. Il a pour objectif la conception et la réalisation d'un jeu vidéo en équipe, permettant de mobiliser des compétences en conception fonctionnelle, organisation de projet et développement logiciel.
+                </p>
+                <p>
+                    Le jeu Five Nights at Châtelet est un jeu d'horreur et de survie multijoueur en vue à la troisième personne, destiné à des joueurs occasionnels appréciant les ambiances angoissantes et les mécaniques simples mais immersives. Le mode multijoueur en réseau est désormais fonctionnel grâce à une architecture client-serveur TCP hébergée sur un serveur dédié.
+                </p>
+            </div>
+
+            <div class="about-team">
+                <h3>L'Équipe</h3>
+                <p class="team-intro">Une équipe d'étudiants passionnés par le jeu vidéo, le design et l'audio, réunie pour concevoir ce prototype académique et expérimenter des mécaniques immersives.</p>
+                <div class="team-members">
+                    <div class="team-member">
+                        <div class="member-avatar">NC</div>
+                        <h4>Neev Chandiramani</h4>
+                        <p class="member-role">Développeur</p>
+                        <p class="member-description">
+                            Responsable du multijoueur réseau (architecture client-serveur TCP), du site web et de la direction technique du projet.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">GR</div>
+                        <h4>Gauthier Roland</h4>
+                        <p class="member-role">Développeur</p>
+                        <p class="member-description">
+                            Responsable des modèles 3D, du map design et du character design. Crée l'identité visuelle du jeu sous Blender.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">MY</div>
+                        <h4>Maxime Ye</h4>
+                        <p class="member-role">Développeur</p>
+                        <p class="member-description">
+                            Chargé des sons et de l'ambiance audio du jeu. Responsable de l'intégration des effets sonores et de la musique d'ambiance.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">MG</div>
+                        <h4>Maxime Gontran</h4>
+                        <p class="member-role">Développeur</p>
+                        <p class="member-description">
+                            Responsable des déplacements du joueur, de l'interface utilisateur (HUD) et des mécaniques de gameplay comme le sprint et la stamina.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Crédits -->
+    <section id="credits" class="section credits-section">
+        <div class="section-content fade-in">
+            <h2>Crédits</h2>
+
+            <div class="credits-category">
+                <h3>Développement</h3>
+                <ul>
+                    <li><strong>Moteur de jeu :</strong> Ursina Engine (rendu 3D) + Pygame (menu)</li>
+                    <li><strong>Langage de programmation :</strong> Python</li>
+                    <li><strong>Réseau :</strong> Sockets TCP Python </li>
+                    <li><strong>Versionnage :</strong> Git / GitHub</li>
+                </ul>
+            </div>
+
+            <div class="credits-category">
+                <h3>Assets & Ressources</h3>
+                <ul>
+                    <li><strong>Modèles 3D :</strong> Intégralement réalisés par l'équipe de développement sous Blender</li>
+                    <li><strong>Audio :</strong> Sons issus de Freesound.org et enregistrements de l'équipe</li>
+                </ul>
+            </div>
+
+            <div class="credits-category">
+                <h3>Inspiration</h3>
+                <ul>
+                    <li><strong>Five Nights at Freddy's</strong> par Scott Cawthon - Pour l'inspiration du gameplay et du concept</li>
+                </ul>
+            </div>
+
+            <div class="credits-category">
+                <h3>Remerciements spéciaux</h3>
+                <ul>
+                    <li>La communauté Ursina Engine pour leur documentation</li>
+                    <li>Freesound.org pour les ressources audio libres de droits</li>
+                    <li>Tous les testeurs qui ont contribué à améliorer le jeu</li>
+                </ul>
+            </div>
+
+            <div class="credits-footer">
+                <p>&copy; 2026 BambouX Studio - Tous droits réservés</p>
+                <p>Distribué sous licence MIT</p>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <button class="back-to-top" type="button" aria-label="Retour en haut">&uarr;</button>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
