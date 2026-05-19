@@ -1,1 +1,1 @@
-{"Avancer": "w", "Reculer": "s", "Gauche": "a", "Droite": "d", "Interagir": "e", "Sauter": "space"}
+{"Move Forward": "w", "Move Backward": "s", "Move Left": "a", "Move Right": "d", "Interact": "e", "Sprint": "left shift", "Jump": "space"}

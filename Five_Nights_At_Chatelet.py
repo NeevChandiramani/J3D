@@ -127,11 +127,6 @@ sol = Entity(
     scale=Vec3(0.5, 1.5, 0.5)
 )
 
-sun = DirectionalLight()
-sun.look_at(Vec3(1, -1, -1))
-sun.color = color.rgb(1, 1, 1)
-sun.shadows = False
-
 joueur = Entity(
     position=(15, 3, 0),
     collider='box',
@@ -142,16 +137,28 @@ joueur = Entity(
 # AMBIANCE LUMINEUSE — STYLE HORREUR
 # ──────────────────────────────────────────────
 
-# Lumière ambiante très faible, teintée bleu-vert (néons de métro mourants)
-AmbientLight(color=Vec4(0.05, 0.05, 0.04, 1))
-# Lumière directionnelle froide et rasante — simule les néons du plafond
-neon_global = DirectionalLight()
-neon_global.look_at(Vec3(0.3, -1, 0.2))
-neon_global.color = Vec4(0.18, 0.08, 0.08, 1)
+# Lumière ambiante très faible, teintée bleu froid (néons de métro mourants)
+AmbientLight(color=Vec4(0.12, 0.13, 0.16, 1))
 
+# Néons du métro répartis dans la station (PointLights placés au plafond)
+metro_lights = [
+    (Vec3(15, 8, 0),    Vec4(0.5, 0.35, 0.25, 1), 20),
+    (Vec3(-10, 8, 10),  Vec4(0.3, 0.5, 0.3, 1),   22),
+    (Vec3(-30, 8, -8),  Vec4(0.45, 0.2, 0.2, 1),  22),
+    (Vec3(0, 8, -20),   Vec4(0.4, 0.4, 0.45, 1),  22),
+    (Vec3(30, 8, 15),   Vec4(0.5, 0.4, 0.2, 1),   20),
+    (Vec3(-45, 35, 0),  Vec4(0.4, 0.15, 0.15, 1), 25),
+    (Vec3(0, 35, 0),    Vec4(0.3, 0.35, 0.4, 1),  25),
+]
+for _pos, _col, _rad in metro_lights:
+    _pl = PointLight(position=_pos)
+    _pl.color = _col
+    _pl.radius = _rad
+
+# Halo personnel du joueur — comme un téléphone allumé
 halo_joueur = PointLight(parent=joueur, position=(0, 2, 0))
-halo_joueur.color = Vec4(0.04, 0.12, 0.06, 1)
-halo_joueur.radius = 4
+halo_joueur.color = Vec4(0.6, 0.55, 0.4, 1)
+halo_joueur.radius = 10
 
 
 joueur_model = Entity(
