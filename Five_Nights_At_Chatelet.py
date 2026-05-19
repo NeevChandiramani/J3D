@@ -133,23 +133,20 @@ joueur = Entity(
     scale_y=3
 )
 
-# ──────────────────────────────────────────────
-# AMBIANCE LUMINEUSE — STYLE HORREUR
-# ──────────────────────────────────────────────
+# Ambiance globale plus froide et plus sombre
+AmbientLight(color=Vec4(0.035, 0.04, 0.05, 1))
 
-# Lumière ambiante très faible, teintée bleu froid (néons de métro mourants)
-AmbientLight(color=Vec4(0.12, 0.13, 0.16, 1))
-
-# Néons du métro répartis dans la station (PointLights placés au plafond)
+# Lumières du métro (moins marron, plus gris/bleu)
 metro_lights = [
-    (Vec3(15, 8, 0),    Vec4(0.5, 0.35, 0.25, 1), 20),
-    (Vec3(-10, 8, 10),  Vec4(0.3, 0.5, 0.3, 1),   22),
-    (Vec3(-30, 8, -8),  Vec4(0.45, 0.2, 0.2, 1),  22),
-    (Vec3(0, 8, -20),   Vec4(0.4, 0.4, 0.45, 1),  22),
-    (Vec3(30, 8, 15),   Vec4(0.5, 0.4, 0.2, 1),   20),
-    (Vec3(-45, 35, 0),  Vec4(0.4, 0.15, 0.15, 1), 25),
-    (Vec3(0, 35, 0),    Vec4(0.3, 0.35, 0.4, 1),  25),
+    (Vec3(15, 8, 0),    Vec4(0.20, 0.22, 0.24, 1), 12),
+    (Vec3(-10, 8, 10),  Vec4(0.16, 0.22, 0.18, 1), 13),
+    (Vec3(-30, 8, -8),  Vec4(0.22, 0.12, 0.12, 1), 13),
+    (Vec3(0, 8, -20),   Vec4(0.18, 0.20, 0.24, 1), 13),
+    (Vec3(30, 8, 15),   Vec4(0.22, 0.22, 0.18, 1), 12),
+    (Vec3(-45, 35, 0),  Vec4(0.15, 0.06, 0.06, 1), 16),
+    (Vec3(0, 35, 0),    Vec4(0.14, 0.18, 0.22, 1), 16),
 ]
+
 for _pos, _col, _rad in metro_lights:
     _pl = PointLight(position=_pos)
     _pl.color = _col
