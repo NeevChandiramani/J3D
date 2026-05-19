@@ -30,11 +30,60 @@ jobs:
       - name: Build Windows executable
         run: pyinstaller --onefile --windowed --add-data "ressources;ressources" --collect-all panda3d --collect-all ursina --hidden-import panda3d.core --exclude-module panda3d.rocket --name "FiveNightsAtChatelet-Windows" Five_Nights_At_Chatelet.py
 
-      - name: Upload artifact
+      # ─────────────────────────────────────────────────────────────
+      # NOUVEAU : compilation de l'installateur Inno Setup
+      # ─────────────────────────────────────────────────────────────
+      - name: Compute installer version
+        id: ver
+        shell: pwsh
+        run: |
+          $raw = "${{ github.event.inputs.version || github.ref_name }}"
+          $full = $raw.TrimStart('v')
+          # Version numérique pour les métadonnées Windows (strip "-pre", "-beta", etc.)
+          $numeric = ($full -split '-')[0]
+          echo "FULL=$full" >> $env:GITHUB_OUTPUT
+          echo "NUMERIC=$numeric" >> $env:GITHUB_OUTPUT
+          echo "Installer version: $full (numeric: $numeric)"
+
+      - name: Prepare installer source folder
+        shell: pwsh
+        run: |
+          # Le .iss attend build\FiveNightsAtChatelet.exe (sans suffixe -Windows)
+          New-Item -ItemType Directory -Force -Path build | Out-Null
+          Copy-Item dist\FiveNightsAtChatelet-Windows.exe build\FiveNightsAtChatelet.exe
+
+          # Si pas de dossier site/ dans le repo, créer un placeholder minimal
+          # pour que le composant "site web local" du .iss ne fasse pas planter le build
+          if (-not (Test-Path site)) {
+            New-Item -ItemType Directory -Force -Path site | Out-Null
+            Copy-Item site_placeholder\index.html site\index.html -ErrorAction SilentlyContinue
+            if (-not (Test-Path site\index.html)) {
+              # Fallback inline si même le placeholder n'existe pas
+              Set-Content -Path site\index.html -Value '<!DOCTYPE html><meta charset="utf-8"><title>Five Nights At Châtelet</title><meta http-equiv="refresh" content="0;url=https://fivenightsatchatelet.neevchandiramani.com/"><p>Redirection vers le site officiel...</p>'
+            }
+          }
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            /DMyAppVersion=${{ steps.ver.outputs.NUMERIC }} `
+            Installer.iss
+
+      - name: Upload bare executable artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: dist/FiveNightsAtChatelet-Windows.exe
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/FiveNightsAtChatelet-Setup-*.exe
 
   build-linux:
     runs-on: ubuntu-latest
@@ -99,19 +148,20 @@ jobs:
           prerelease: ${{ contains(github.event.inputs.version || github.ref_name, '-pre') || contains(github.event.inputs.version || github.ref_name, '-beta') || contains(github.event.inputs.version || github.ref_name, '-rc') }}
           files: |
             windows-build/FiveNightsAtChatelet-Windows.exe
+            windows-installer/FiveNightsAtChatelet-Setup-*.exe
             linux-build/FiveNightsAtChatelet-Linux
             macos-build/FiveNightsAtChatelet-macOS
           body: |
             ## Five Nights At Châtelet - ${{ github.event.inputs.version || github.ref_name }}
 
             ### Téléchargement
-            - **Windows** : `FiveNightsAtChatelet-Windows.exe`
+            - **Windows (installateur)** : `FiveNightsAtChatelet-Setup-X.Y.Z.exe` *(recommandé)*
+            - **Windows (portable)** : `FiveNightsAtChatelet-Windows.exe`
             - **Linux** : `FiveNightsAtChatelet-Linux` (chmod +x avant de lancer)
             - **macOS** : `FiveNightsAtChatelet-macOS`
 
             ### Installation
-            1. Télécharger l'exécutable correspondant à votre OS
-            2. Placer dans un dossier dédié
-            3. Lancer directement (aucune installation de Python requise)
+            - **Avec l'installateur Windows** : double-cliquer sur `FiveNightsAtChatelet-Setup-X.Y.Z.exe` et suivre l'assistant. Désinstallation possible depuis Paramètres → Applications.
+            - **Versions portables** : télécharger l'exécutable et le lancer directement.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
