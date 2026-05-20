@@ -163,7 +163,7 @@ jobs:
             - [**Manuel d'utilisation**](https://github.com/NeevChandiramani/J3D/raw/main/docs/manuel_utilisation_J3D.pdf)
 
             ### Installation
-            - **Avec l'installateur Windows** : double-cliquer sur `FiveNightsAtChatelet-Setup-X.Y.Z.exe` et suivre l'assistant. Désinstallation possible depuis Paramètres → Applications.
+            - **Avec l'installateur Windows** : double-cliquer sur `FiveNightsAtChatelet-Setup-X.Y.Z.exe` et suivre l'assistant. Désinstallation simplifiée.
             - **Versions portables** : télécharger l'exécutable et le lancer directement.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
