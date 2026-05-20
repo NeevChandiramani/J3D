@@ -101,8 +101,8 @@ Name: "websitedesktopicon"; Description: "Créer un raccourci vers le site web s
 Source: "build\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Components: main
 Source: "LICENSE";                DestDir: "{app}"; Flags: ignoreversion; Components: main
 Source: "README.md";              DestDir: "{app}"; Flags: ignoreversion; Components: main
-Source: "docs\manuel_installation.pdf"; DestDir: "{app}\docs"; Flags: ignoreversion; Components: main
-Source: "docs\manuel_utilisation.pdf";  DestDir: "{app}\docs"; Flags: ignoreversion; Components: main
+Source: "docs\manuel_installation_J3D.pdf"; DestDir: "{app}\docs"; Flags: ignoreversion; Components: main
+Source: "docs\manuel_utilisation_J3D.pdf";  DestDir: "{app}\docs"; Flags: ignoreversion; Components: main
 
 ; --- Composant optionnel : copie locale du site ---
 Source: "site\*"; DestDir: "{app}\site"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: website
