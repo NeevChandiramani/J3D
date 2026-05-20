@@ -367,6 +367,9 @@ _footstep_timer = 0.0
 _whisper_timer = random.uniform(15.0, 40.0)
 _son_timer = random.uniform(60, 120)
 _anim_timer = 0.0
+_is_attack_anim = False
+_attack_anim_timer = 0.0
+
 
 # Ambiance globale plus froide et plus sombre
 AmbientLight(color=Vec4(0.035, 0.04, 0.05, 1))
@@ -650,11 +653,13 @@ ATTACK_COOLDOWN = 0.6
 _attack_timer   = 0.0
 
 def do_attack():
-    global _attack_timer
+    global _attack_timer, _attack_anim_timer, _is_attack_anim
     if _attack_timer > 0 or is_dead:
         return
     _attack_timer = ATTACK_COOLDOWN
-
+    _is_attack_anim = True
+    _attack_anim_timer = 0.0
+   
 
     forward = Vec3(joueur.forward.x, 0, joueur.forward.z).normalized()
     right   = Vec3(joueur.right.x,   0, joueur.right.z  ).normalized()
@@ -1028,7 +1033,7 @@ def input(key):
 
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
-    global _heartbeat_playing, _breath_playing, _whisper_timer, _anim_timer
+    global _heartbeat_playing, _breath_playing, _whisper_timer, _anim_timer, _attack_anim_timer, _is_attack_anim
 
     navigo_task.update()
     enigme.update()
@@ -1114,7 +1119,7 @@ def update():
 
     anim_speed = 12 if is_sprinting else 7
 
-    if is_moving and on_ground:
+    if is_moving and on_ground and not _is_attack_anim:
         _anim_timer += time.dt * anim_speed
 
         joueur_jambe_g.rotation_x =  math.sin(_anim_timer) * 6
@@ -1124,15 +1129,42 @@ def update():
         joueur_model.y             =  math.sin(_anim_timer * 2) * 0.01
         joueur_corps.rotation_z    =  math.sin(_anim_timer) * 0.5
 
-    else:
+    elif not _is_attack_anim:
         _anim_timer += time.dt * 1.5
         joueur_jambe_g.rotation_x = lerp(joueur_jambe_g.rotation_x, 0, time.dt * 8)
         joueur_jambe_d.rotation_x = lerp(joueur_jambe_d.rotation_x, 0, time.dt * 8)
         joueur_bras_g.rotation_x  = lerp(joueur_bras_g.rotation_x,  0, time.dt * 8)
         joueur_bras_d.rotation_x  = lerp(joueur_bras_d.rotation_x,  0, time.dt * 8)
         joueur_corps.rotation_z   = lerp(joueur_corps.rotation_z,   0, time.dt * 8)
-        joueur_corps.y = math.sin(_anim_timer) * 0.002
-        joueur_tete.y  = math.sin(_anim_timer) * 0.001
+        joueur_corps.y = math.sin(_anim_timer) * 0.021
+        joueur_tete.y  = math.sin(_anim_timer) * 0.019
+        joueur_bras_g.y = math.sin(_anim_timer) * 0.019
+        joueur_bras_d.y = math.sin(_anim_timer) * 0.019
+
+    if _is_attack_anim:
+        _attack_anim_timer += time.dt * 14
+
+        t = math.sin(_attack_anim_timer)
+
+        # Les deux bras vers l'avant
+        joueur_bras_g.rotation_x = -t * 45
+        joueur_bras_d.rotation_x = -t * 45
+
+        # Corps et tête légèrement vers l'avant
+        joueur_corps.rotation_x = t * 10
+        joueur_tete.rotation_x  = t * 8
+
+        if _attack_anim_timer >= math.pi:
+            _is_attack_anim = False
+            _attack_anim_timer = 0.0
+            joueur_bras_g.rotation_x = 0
+            joueur_bras_d.rotation_x = 0
+            joueur_corps.rotation_x  = 0
+            joueur_tete.rotation_x   = 0
+
+
+
+        
 
 
 # ──────────────────────────────────────────────
