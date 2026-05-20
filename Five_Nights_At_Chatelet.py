@@ -13,6 +13,7 @@ import random
 from ursina.shaders import lit_with_shadows_shader
 from Rooms import Rooms
 from NetworkClient import NetworkClient
+from enigme_electrique import EnigmeElectrique
 #pip install ursina on oublie pas tu connais
 
 
@@ -288,6 +289,19 @@ joueur = Entity(
     collider='box',
     scale_y=3
 )
+
+def enigme_resolue():
+    print("[GAME] Puzzle électrique validé !")
+    # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
+
+cube_electrique = Entity(
+    model='cube',
+    color=color.yellow,
+    position=(11, 3, -6),  # ajuste à ta map
+    collider='box',
+    shader=lit_with_shadows_shader
+)
+enigme = EnigmeElectrique(on_success=enigme_resolue)
 
 # ──────────────────────────────────────────────
 # EFFETS SONORES (SFX)
@@ -948,7 +962,9 @@ def input(key):
             play_screamer(screamer_data)
             if network.connected:
                 network.send_screamer(screamer_data)
-
+        if enigme.can_interact(joueur.position, cube_electrique.position):
+            enigme.open()
+        enigme.handle_input(key) 
     if key == 'left mouse down':
         do_attack()
 
@@ -961,6 +977,7 @@ def input(key):
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
 
+    enigme.update()
     mouvement_joueur()
     mouvement_camera()
     saut()
