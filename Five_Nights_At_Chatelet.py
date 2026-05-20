@@ -15,7 +15,6 @@ from Rooms import Rooms
 from NetworkClient import NetworkClient
 #pip install ursina on oublie pas tu connais
 
-
 # ──────────────────────────────────────────────
 # CHEMINS RESSOURCES (compatibilité PyInstaller)
 # ──────────────────────────────────────────────
@@ -26,7 +25,6 @@ else:
 
 def res(path):
     return os.path.normpath(os.path.join(BASE_DIR, path))
-
 
 # touches par défaut
 touches = {
@@ -129,7 +127,7 @@ def assign_role():
         if network.my_id is not None:
             all_assigned_roles[str(network.my_id)] = player_role
     else:
-        # En multijoueur : au moins 1 Infecté et au moins 1 Survivant
+        # En multijoueur : S'assurer qu'il y a au moins 1 Infecté et au moins 1 Survivant
         nb_infectes = max(1, min(nb_players - 1, round(nb_players * 0.35)))
         
         all_ids = sorted([str(pid) for pid in players.keys()])
@@ -289,17 +287,42 @@ joueur = Entity(
     scale_y=3
 )
 
-# ──────────────────────────────────────────────
-# EFFETS SONORES (SFX)
-# ──────────────────────────────────────────────
-son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
-son_saut = Audio('ressources/sounds/jump.ogg', autoplay=False)
-son_attaque = Audio('ressources/sounds/attack.ogg', autoplay=False)
-son_hit = Audio('ressources/sounds/hit.ogg', autoplay=False)
-son_degats = Audio('ressources/sounds/hurt.ogg', autoplay=False)
-son_mort = Audio('ressources/sounds/death.ogg', autoplay=False)
-son_interaction = Audio('ressources/sounds/interact.ogg', autoplay=False)
 
+if not pygame.mixer.get_init():
+    pygame.mixer.init()
+
+channel_ambiance = pygame.mixer.Channel(0)
+channel_heartbeat = pygame.mixer.Channel(1)
+channel_infected_breath = pygame.mixer.Channel(2)
+channel_footsteps = pygame.mixer.Channel(3)
+
+AUDIO_GAME = {
+    'gare': pygame.mixer.Sound(res('ressources/sounds/son_gare.ogg')),
+    'jump': pygame.mixer.Sound(res('ressources/sounds/jump.ogg')),
+    'attack': pygame.mixer.Sound(res('ressources/sounds/attack.ogg')),
+    'hit': pygame.mixer.Sound(res('ressources/sounds/hit.ogg')),
+    'hurt': pygame.mixer.Sound(res('ressources/sounds/hurt.ogg')),
+    'death': pygame.mixer.Sound(res('ressources/sounds/death.ogg')),
+    'interact': pygame.mixer.Sound(res('ressources/sounds/interact.ogg')),
+    'heartbeat': pygame.mixer.Sound(res('ressources/sounds/heartbeat.ogg')),
+    'pas_survivor': pygame.mixer.Sound(res('ressources/sounds/footsteps_survivor.ogg')),
+    'pas_infected': pygame.mixer.Sound(res('ressources/sounds/footsteps_infected.ogg')),
+    'rale_infected': pygame.mixer.Sound(res('ressources/sounds/infected_breath.ogg')),
+    'chuchotement': pygame.mixer.Sound(res('ressources/sounds/whispers.ogg'))
+}
+
+def play_sfx(name, volume=1.0):
+    if name in AUDIO_GAME:
+        s = AUDIO_GAME[name]
+        s.set_volume(volume)
+        s.play()
+
+# Variables pour le suivi des boucles et timers audio
+_heartbeat_playing = False
+_breath_playing = False
+_footstep_timer = 0.0
+_whisper_timer = random.uniform(15.0, 40.0)
+_son_timer = random.uniform(60, 120)
 
 # Ambiance globale plus froide et plus sombre
 AmbientLight(color=Vec4(0.035, 0.04, 0.05, 1))
@@ -515,8 +538,7 @@ def receive_damage(amount):
         print("[DAMAGE] Ignoré (invincible ou mort)")
         return
     
-    # SFX Dégâts reçus
-    son_degats.play()
+    play_sfx('hurt')
 
     player_hp -= amount
     player_hp = max(0, player_hp)
@@ -538,8 +560,7 @@ def player_death():
     hp_text.text = 'HP: 0  —  MORT'
     hp_text.color = color.red
 
-    # SFX Mort
-    son_mort.play()
+    play_sfx('death')
 
     ecran_mort.enabled = True
     mouse.locked = False
@@ -584,9 +605,6 @@ def do_attack():
         return
     _attack_timer = ATTACK_COOLDOWN
 
-    # SFX Attaque
-    son_attaque.play()
-
     forward = Vec3(joueur.forward.x, 0, joueur.forward.z).normalized()
     right   = Vec3(joueur.right.x,   0, joueur.right.z  ).normalized()
 
@@ -621,15 +639,11 @@ def do_attack():
                 ghost_role = all_assigned_roles.get(str(pid), "Survivor")
                 orig_color = ROLES[ghost_role]["model_color"]
                 ghost.color = color.white
-                # Le fantôme redevient de sa couleur d'origine après avoir pris le coup
                 invoke(setattr, ghost, 'color', orig_color, delay=0.15)
 
             if network.connected:
                 network.send_damage(pid, ATTACK_DAMAGE)
 
-        # Si on touche quelqu'un, on joue le son d'impact en plus du swingx
-    if hit_someone:
-        son_hit.play()
 
 
 # ──────────────────────────────────────────────
@@ -641,8 +655,6 @@ stamina_drain_rate = 25
 stamina_regen_rate = 15
 sprint_speed_multiplier = 2.0
 base_speed = 6.7
-
-_son_timer = random.uniform(120, 240)
 
 # ──────────────────────────────────────────────
 # UI
@@ -701,13 +713,6 @@ network_text = Text(
     parent=camera.ui,
     color=color.yellow
 )
-
-#salle_ui = Text(
-#    text="",
-#    position=(-0.85,0.45),
-#    scale=2,
-#    parent=camera.ui
-#)
 
 # ──────────────────────────────────────────────
 # UI — ANNONCE DU RÔLE
@@ -782,7 +787,6 @@ camera.parent = camera_pivot
 camera.fov = 90
 camera.rotation = (15, 0, 0)
 
-# W.I.P C'est pas très fluide pour la rotation du perso
 def mouvement_camera():
     if is_dead:
         return
@@ -802,13 +806,11 @@ on_ground = True
 def saut():
     global is_jumping, vertical_velocity, on_ground
 
-    # Toujours appliquer la gravité
     vertical_velocity += gravity * time.dt
     joueur.y += vertical_velocity * time.dt
 
-    # Raycast vers le bas depuis le centre du joueur
     col_info = raycast(
-        joueur.position + Vec3(0, 0.1, 0),  # légèrement au-dessus des pieds
+        joueur.position + Vec3(0, 0.1, 0), 
         Vec3(0, -1, 0),
         distance=1.5,
         ignore=[joueur]
@@ -817,9 +819,8 @@ def saut():
     if col_info and col_info.hit:
         ground_y = col_info.world_point.y
 
-        # Si le joueur est proche du sol ou en dessous
         if joueur.y <= ground_y + 0.6:
-            joueur.y = ground_y + 0.5  # snap précis au sol
+            joueur.y = ground_y + 0.5  
             vertical_velocity = 0
             is_jumping = False
             on_ground = True
@@ -828,7 +829,6 @@ def saut():
     else:
         on_ground = False
 
-    # Sécurité : si le joueur tombe hors de la map
     if joueur.y < -50:
         joueur.position = (15, 3, 0)
         vertical_velocity = 0
@@ -837,7 +837,7 @@ def saut():
 
 
 def mouvement_joueur():
-    global current_stamina
+    global current_stamina, _footstep_timer
     if is_dead:
         return
 
@@ -856,6 +856,26 @@ def mouvement_joueur():
 
     stamina_text.text = f'Stamina: {int(current_stamina)}'
 
+    # Gestion dynamique du rythme et type des bruits de pas (SFX)
+    if is_moving and on_ground:
+        _footstep_timer += time.dt
+        # L'Infected ou le sprint réduit l'intervalle entre les pas (rythme plus rapide)
+        step_interval = 0.25 if is_sprinting else 0.45
+        if player_role == "Infected":
+            step_interval *= 0.85 # Rythme légèrement plus frénétique pour le monstre
+
+        if _footstep_timer >= step_interval:
+            _footstep_timer = 0.0
+            # Sélection du type de pas selon le rôle
+            sound_type = 'pas_infected' if player_role == "Infected" else 'pas_survivor'
+            vol = 0.5 if is_sprinting else 0.4
+            play_sfx(sound_type, volume=vol)
+    else:
+        _footstep_timer = 0.0
+    if not is_moving:
+        AUDIO_GAME['pas_survivor'].stop()
+        AUDIO_GAME['pas_infected'].stop()
+        
     avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Move Forward']]
     recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Move Backward']]
     droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Move Right']]
@@ -865,9 +885,8 @@ def mouvement_joueur():
     if move_vec.length_squared() > 0:
         direction = move_vec.normalized()
         move = direction * time.dt * current_speed
-        right = Vec3(direction.z, 0, -direction.x)  # vecteur perpendiculaire
+        right = Vec3(direction.z, 0, -direction.x) 
 
-        # ── 6 raycasts : centre + gauche + droite, à 2 hauteurs ──
         origins = [
             joueur.position + Vec3(0, 0.3, 0),
             joueur.position + Vec3(0, 1.0, 0),
@@ -882,7 +901,7 @@ def mouvement_joueur():
             col = raycast(origin, direction, distance=1.0, ignore=[joueur, sol])
             if col and col.hit:
                 normal = col.world_normal
-                if normal.y < 0.7:  # c'est un mur, pas une rampe
+                if normal.y < 0.7:  
                     bloque = True
                     break
 
@@ -895,23 +914,22 @@ def play_screamer(data):
         return
     img_path, snd_path = data.split("|", 1)
     
-    if not pygame.mixer.get_init():
-        pygame.mixer.init()
-
+    # Texture UI relative pour Ursina
     overlay = Entity(
         model='quad',
-        texture=img_path,
+        texture=img_path, 
         scale=(camera.aspect_ratio * 2, 2),
         position=(0, 0),
         parent=camera.ui,
         z=-1
     )
-
+    
+    # Lecture stable via le Mixeur Pygame
     try:
         pygame_sound = pygame.mixer.Sound(res(snd_path))
         pygame_sound.play()
     except Exception as e:
-        print(f"Impossible de lire le son : {e}")
+        print(f"[SCREAMER ERROR] Erreur audio Pygame : {e}")
 
     destroy(overlay, delay=1.15)
 
@@ -928,23 +946,20 @@ def input(key):
     if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True
         vertical_velocity = jump_force
-        # SFX Saut
-        son_saut.play()
 
     if key == touches['Interact']:
         dist = distance(joueur.position, cube_proche.position)
         dist_s = distance(joueur.position, cube_screamer.position)
 
         if dist <= distance_interaction:
-            # SFX Interaction
-            son_interaction.play()
             rectangle_visible = not rectangle_visible
             rectangle_ui.enabled = rectangle_visible
 
         if dist_s <= distance_interaction:
-            # Screamer
+            play_sfx('interact')
             img, snd = random.choice(screamer_list)
             screamer_data = img + "|" + snd
+            
             play_screamer(screamer_data)
             if network.connected:
                 network.send_screamer(screamer_data)
@@ -952,7 +967,6 @@ def input(key):
     if key == 'left mouse down':
         do_attack()
 
-    # ← Touche T pour tester la mort en solo (debug)
     if key == 't':
         print("[DEBUG] Test dégâts forcé")
         receive_damage(999)
@@ -960,12 +974,13 @@ def input(key):
 
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
+    global _heartbeat_playing, _breath_playing, _whisper_timer
 
     mouvement_joueur()
     mouvement_camera()
     saut()
 
-    # Cooldown attaque (feedback couleur)
+    # Cooldown attaque
     if _attack_timer > 0:
         _attack_timer -= time.dt
         ratio = max(0.0, _attack_timer / ATTACK_COOLDOWN)
@@ -974,7 +989,6 @@ def update():
     # Invincibilité
     if _invincibility_timer > 0:
         _invincibility_timer -= time.dt
-
 
     # Interaction cube orange
     dist = distance(joueur.position, cube_proche.position)
@@ -997,11 +1011,36 @@ def update():
         network_text.text = 'Réseau: déconnecté'
         network_text.color = color.red
 
-    # Son ambiance aléatoire
-    _son_timer -= time.dt
-    if _son_timer <= 0:
-        son_gare.play()
-        _son_timer = random.uniform(30, 60)
+
+    
+    # Heartbeat (Battements de cœur si hp < 30%)
+    if player_hp <= 30 and not is_dead:
+        if not _heartbeat_playing:
+            channel_heartbeat.play(AUDIO_GAME['heartbeat'], loops=-1)
+            channel_heartbeat.set_volume(0.8)
+            _heartbeat_playing = True
+    else:
+        if _heartbeat_playing:
+            channel_heartbeat.stop()
+            _heartbeat_playing = False
+
+    # Infected Breathing 
+    if player_role == "Infected" and not is_dead:
+        if not _breath_playing:
+            channel_infected_breath.play(AUDIO_GAME['rale_infected'], loops=-1)
+            channel_infected_breath.set_volume(0.4)
+            _breath_playing = True
+    else:
+        if _breath_playing:
+            channel_infected_breath.stop()
+            _breath_playing = False
+
+    # Distant Whispers
+    _whisper_timer -= time.dt
+    if _whisper_timer <= 0 and not is_dead:
+        play_sfx('chuchotement', volume=0.2)
+        _whisper_timer = random.uniform(20.0, 50.0)
+
     
     # Rôle : animation d'annonce + indicateur
     update_role_announce()
@@ -1011,8 +1050,6 @@ def update():
 # ──────────────────────────────────────────────
 # ATTRIBUTION DES RÔLES AU DÉMARRAGE
 # ──────────────────────────────────────────────
-# Petit délai pour laisser le réseau s'initialiser avant de tirer les rôles
 invoke(assign_role, delay=1.5)
-
 
 Five_nights_at_chatelet.run()
