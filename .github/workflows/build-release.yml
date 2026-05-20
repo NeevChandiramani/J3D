@@ -30,9 +30,7 @@ jobs:
       - name: Build Windows executable
         run: pyinstaller --onefile --windowed --add-data "ressources;ressources" --collect-all panda3d --collect-all ursina --hidden-import panda3d.core --exclude-module panda3d.rocket --name "FiveNightsAtChatelet-Windows" Five_Nights_At_Chatelet.py
 
-      # ─────────────────────────────────────────────────────────────
-      # NOUVEAU : compilation de l'installateur Inno Setup
-      # ─────────────────────────────────────────────────────────────
+      # compilation de l'installateur Inno Setup
       - name: Compute installer version
         id: ver
         shell: pwsh
