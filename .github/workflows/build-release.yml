@@ -158,6 +158,10 @@ jobs:
             - **Linux** : `FiveNightsAtChatelet-Linux` (chmod +x avant de lancer)
             - **macOS** : `FiveNightsAtChatelet-macOS`
 
+            ### Documentation
+            - **Manuel d'installation** : `docs/manuel_installation_J3D.pdf`
+            - **Manuel d'utilisation** :  `docs/manuel_utilisation_J3D.pdf`
+
             ### Installation
             - **Avec l'installateur Windows** : double-cliquer sur `FiveNightsAtChatelet-Setup-X.Y.Z.exe` et suivre l'assistant. Désinstallation possible depuis Paramètres → Applications.
             - **Versions portables** : télécharger l'exécutable et le lancer directement.
