@@ -258,7 +258,7 @@ class EnigmeElectrique:
         # ── Bouton Fermer ──
         self._close_btn = Button(
             parent          = self._root,
-            text            = 'FERMER  [ESC]',
+            text            = 'FERMER',
             text_color      = self._COL_LABEL,
             color           = color.rgba(15, 30, 15, 200),
             highlight_color = color.rgba(25, 60, 25, 220),

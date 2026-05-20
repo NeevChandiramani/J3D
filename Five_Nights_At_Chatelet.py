@@ -14,6 +14,7 @@ from ursina.shaders import lit_with_shadows_shader
 from Rooms import Rooms
 from NetworkClient import NetworkClient
 from enigme_electrique import EnigmeElectrique
+from NavigoTask import NavigoTask
 #pip install ursina on oublie pas tu connais
 
 # ──────────────────────────────────────────────
@@ -286,6 +287,13 @@ joueur = Entity(
     position=(15, 3, 0),
     collider='box',
     scale_y=3
+)
+
+navigo_task = NavigoTask(
+    player=joueur,
+    position=(15, 5, -8),  # place ça où tu veux dans Châtelet
+    on_complete=lambda: print("Accès validé !"),  # remplace par ta logique
+    interaction_key=touches['Interact'],  # branche sur ta touche 'e' configurable
 )
 
 # ──────────────────────────────────────────────
@@ -999,7 +1007,12 @@ def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
     global _heartbeat_playing, _breath_playing, _whisper_timer
 
+    navigo_task.update()
     enigme.update()
+
+    if navigo_task.is_open or enigme.is_open:
+        return
+
     mouvement_joueur()
     mouvement_camera()
     saut()
