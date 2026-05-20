@@ -156,7 +156,7 @@ jobs:
             - **Windows (installateur)** : `FiveNightsAtChatelet-Setup-X.Y.Z.exe` *(recommandé)*
             - **Windows (portable)** : `FiveNightsAtChatelet-Windows.exe`
             - **Linux** : `FiveNightsAtChatelet-Linux` (chmod +x avant de lancer)
-            - **macOS** : `FiveNightsAtChatelet-macOS`
+            - **macOS** : `FiveNightsAtChatelet-macOS` (cassé, ne fonctionne pas pour le moment)
 
             ### Documentation
             - [**Manuel d'installation**](https://github.com/NeevChandiramani/J3D/raw/main/docs/manuel_installation_J3D.pdf)

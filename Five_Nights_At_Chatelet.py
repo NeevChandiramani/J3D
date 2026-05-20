@@ -13,6 +13,7 @@ import random
 from ursina.shaders import lit_with_shadows_shader
 from Rooms import Rooms
 from NetworkClient import NetworkClient
+from enigme_electrique import EnigmeElectrique
 #pip install ursina on oublie pas tu connais
 
 # ──────────────────────────────────────────────
@@ -287,6 +288,32 @@ joueur = Entity(
     scale_y=3
 )
 
+<<<<<<< HEAD
+=======
+def enigme_resolue():
+    print("[GAME] Puzzle électrique validé !")
+    # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
+
+cube_electrique = Entity(
+    model='cube',
+    color=color.yellow,
+    position=(11, 3, -6),  # ajuste à ta map
+    collider='box',
+    shader=lit_with_shadows_shader
+)
+enigme = EnigmeElectrique(on_success=enigme_resolue)
+
+# ──────────────────────────────────────────────
+# EFFETS SONORES (SFX)
+# ──────────────────────────────────────────────
+son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
+son_saut = Audio('ressources/sounds/jump.ogg', autoplay=False)
+son_attaque = Audio('ressources/sounds/attack.ogg', autoplay=False)
+son_hit = Audio('ressources/sounds/hit.ogg', autoplay=False)
+son_degats = Audio('ressources/sounds/hurt.ogg', autoplay=False)
+son_mort = Audio('ressources/sounds/death.ogg', autoplay=False)
+son_interaction = Audio('ressources/sounds/interact.ogg', autoplay=False)
+>>>>>>> d5692bb18d6c4d85893f90ec98e819281e8cbafd
 
 if not pygame.mixer.get_init():
     pygame.mixer.init()
@@ -963,7 +990,9 @@ def input(key):
             play_screamer(screamer_data)
             if network.connected:
                 network.send_screamer(screamer_data)
-
+        if enigme.can_interact(joueur.position, cube_electrique.position):
+            enigme.open()
+        enigme.handle_input(key) 
     if key == 'left mouse down':
         do_attack()
 
@@ -976,6 +1005,7 @@ def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
     global _heartbeat_playing, _breath_playing, _whisper_timer
 
+    enigme.update()
     mouvement_joueur()
     mouvement_camera()
     saut()
