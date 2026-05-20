@@ -152,8 +152,24 @@ def assign_role():
     role_data = ROLES[player_role]
     MAX_HP = role_data["max_hp"]
     base_speed = 6.7 * role_data["speed_mult"]
-    joueur_model.color = role_data["model_color"]
-    joueur_model.model = role_data["model_path"] 
+    if player_role == "Infected":
+        joueur_corps.model   = 'ressources/C_body.obj'
+        joueur_tete.model    = 'ressources/C_head.obj'
+        joueur_bras_g.model  = 'ressources/C_left_arm.obj'
+        joueur_bras_d.model  = 'ressources/C_right_arm.obj'
+        joueur_jambe_g.model = 'ressources/C_left_leg.obj'
+        joueur_jambe_d.model = 'ressources/C_right_leg.obj'
+    else:
+        joueur_corps.model   = 'ressources/P_body.obj'
+        joueur_tete.model    = 'ressources/P_head.obj'
+        joueur_bras_g.model  = 'ressources/P_left_arm.obj'
+        joueur_bras_d.model  = 'ressources/P_right_arm.obj'
+        joueur_jambe_g.model = 'ressources/P_left_leg.obj'
+        joueur_jambe_d.model = 'ressources/P_right_leg.obj'
+
+    role_color = role_data["model_color"]
+    for part in [joueur_corps, joueur_tete, joueur_bras_g, joueur_bras_d, joueur_jambe_g, joueur_jambe_d]:
+        part.color = role_color
 
     _role_announced = True
     _role_announce_timer = ROLE_ANNOUNCE_DURATION
@@ -350,6 +366,7 @@ _breath_playing = False
 _footstep_timer = 0.0
 _whisper_timer = random.uniform(15.0, 40.0)
 _son_timer = random.uniform(60, 120)
+_anim_timer = 0.0
 
 # Ambiance globale plus froide et plus sombre
 AmbientLight(color=Vec4(0.035, 0.04, 0.05, 1))
@@ -377,11 +394,17 @@ halo_joueur.radius = 10
 
 
 joueur_model = Entity(
-    parent=joueur,
-    model='ressources/Perso.obj', # Modèle par défaut, sera mis à jour par assign_role()
-    rotation_y=180,
-    position=(-0.5, 0, 0)
+    parent=joueur, 
+    position=(-0.5, 0, 0), 
+    rotation_y=180
 )
+joueur_corps       = Entity(parent=joueur_model, model='ressources/C_body.obj')
+joueur_tete        = Entity(parent=joueur_model, model='ressources/C_head.obj')
+joueur_bras_g      = Entity(parent=joueur_model, model='ressources/C_left_arm.obj')
+joueur_bras_d      = Entity(parent=joueur_model, model='ressources/C_right_arm.obj')
+joueur_jambe_g     = Entity(parent=joueur_model, model='ressources/C_left_leg.obj')
+joueur_jambe_d     = Entity(parent=joueur_model, model='ressources/C_right_leg.obj')
+
 
 rambarde_1 = Entity(
     model='cube',
@@ -1005,7 +1028,7 @@ def input(key):
 
 def update():
     global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
-    global _heartbeat_playing, _breath_playing, _whisper_timer
+    global _heartbeat_playing, _breath_playing, _whisper_timer, _anim_timer
 
     navigo_task.update()
     enigme.update()
@@ -1082,6 +1105,34 @@ def update():
     # Rôle : animation d'annonce + indicateur
     update_role_announce()
     update_role_indicator()
+
+    # ── Animation personnage ──
+
+    is_moving = (held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']]
+                 or held_keys[touches['Move Left']] or held_keys[touches['Move Right']])
+    is_sprinting = held_keys[touches['Sprint']] and is_moving
+
+    anim_speed = 12 if is_sprinting else 7
+
+    if is_moving and on_ground:
+        _anim_timer += time.dt * anim_speed
+
+        joueur_jambe_g.rotation_x =  math.sin(_anim_timer) * 6
+        joueur_jambe_d.rotation_x = -math.sin(_anim_timer) * 6
+        joueur_bras_g.rotation_x  = -math.sin(_anim_timer) * 5
+        joueur_bras_d.rotation_x  =  math.sin(_anim_timer) * 5
+        joueur_model.y             =  math.sin(_anim_timer * 2) * 0.01
+        joueur_corps.rotation_z    =  math.sin(_anim_timer) * 0.5
+
+    else:
+        _anim_timer += time.dt * 1.5
+        joueur_jambe_g.rotation_x = lerp(joueur_jambe_g.rotation_x, 0, time.dt * 8)
+        joueur_jambe_d.rotation_x = lerp(joueur_jambe_d.rotation_x, 0, time.dt * 8)
+        joueur_bras_g.rotation_x  = lerp(joueur_bras_g.rotation_x,  0, time.dt * 8)
+        joueur_bras_d.rotation_x  = lerp(joueur_bras_d.rotation_x,  0, time.dt * 8)
+        joueur_corps.rotation_z   = lerp(joueur_corps.rotation_z,   0, time.dt * 8)
+        joueur_corps.y = math.sin(_anim_timer) * 0.002
+        joueur_tete.y  = math.sin(_anim_timer) * 0.001
 
 
 # ──────────────────────────────────────────────
