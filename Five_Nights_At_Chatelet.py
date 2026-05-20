@@ -129,7 +129,7 @@ def assign_role():
         if network.my_id is not None:
             all_assigned_roles[str(network.my_id)] = player_role
     else:
-        # En multijoueur : S'assurer qu'il y a au moins 1 Infecté et au moins 1 Survivant
+        # En multijoueur : au moins 1 Infecté et au moins 1 Survivant
         nb_infectes = max(1, min(nb_players - 1, round(nb_players * 0.35)))
         
         all_ids = sorted([str(pid) for pid in players.keys()])
@@ -894,17 +894,26 @@ def play_screamer(data):
     if "|" not in data:
         return
     img_path, snd_path = data.split("|", 1)
+    
+    if not pygame.mixer.get_init():
+        pygame.mixer.init()
+
     overlay = Entity(
         model='quad',
-        texture=res(img_path),
+        texture=img_path,
         scale=(camera.aspect_ratio * 2, 2),
         position=(0, 0),
         parent=camera.ui,
         z=-1
     )
-    snd = Audio(res(snd_path), autoplay=True)
+
+    try:
+        pygame_sound = pygame.mixer.Sound(res(snd_path))
+        pygame_sound.play()
+    except Exception as e:
+        print(f"Impossible de lire le son : {e}")
+
     destroy(overlay, delay=1.15)
-    destroy(snd, delay=1.15)
 
 
 def input(key):
@@ -933,11 +942,12 @@ def input(key):
             rectangle_ui.enabled = rectangle_visible
 
         if dist_s <= distance_interaction:
-            # L'interaction avec le screamer joue son propre son, mais on peut rajouter le bruit d'interaction
-            son_interaction.play()
+            # Screamer
             img, snd = random.choice(screamer_list)
+            screamer_data = img + "|" + snd
+            play_screamer(screamer_data)
             if network.connected:
-                network.send_screamer(img + "|" + snd)
+                network.send_screamer(screamer_data)
 
     if key == 'left mouse down':
         do_attack()
