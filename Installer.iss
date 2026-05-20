@@ -39,7 +39,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
 ; Emplacement par défaut : C:\Program Files\BambouX Studio\Five Nights At Châtelet
-DefaultDirName={autopf}\{#MyAppPublisher}\{#MyAppName}
+DefaultDirName={localappdata}\{#MyAppPublisher}\{#MyAppName}
 DefaultGroupName={#MyAppPublisher}
 DisableProgramGroupPage=yes
 
@@ -56,7 +56,7 @@ WizardStyle=modern
 ; Cible 64 bits (Windows 10/11)
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
 
 ; --- Intégration "Programmes et fonctionnalités" (Add/Remove Programs) ---
 ; Ces champs sont lus par Windows pour afficher l'entrée de désinstallation.
