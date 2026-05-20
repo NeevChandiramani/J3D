@@ -36,6 +36,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+SetupIconFile=icon.ico
 
 ; Installation par utilisateur (profil AppData) : aucun droit admin requis,
 ; et le jeu peut écrire son cache de modèles 3D sans erreur de permission.
