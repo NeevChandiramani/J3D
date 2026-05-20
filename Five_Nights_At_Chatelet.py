@@ -288,8 +288,9 @@ joueur = Entity(
     scale_y=3
 )
 
-<<<<<<< HEAD
-=======
+# ──────────────────────────────────────────────
+# ENIGME ELECTRIQUE
+# ──────────────────────────────────────────────
 def enigme_resolue():
     print("[GAME] Puzzle électrique validé !")
     # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
@@ -304,17 +305,8 @@ cube_electrique = Entity(
 enigme = EnigmeElectrique(on_success=enigme_resolue)
 
 # ──────────────────────────────────────────────
-# EFFETS SONORES (SFX)
+# SYSTEME AUDIO
 # ──────────────────────────────────────────────
-son_gare = Audio('ressources/sounds/son_gare.ogg', autoplay=False)
-son_saut = Audio('ressources/sounds/jump.ogg', autoplay=False)
-son_attaque = Audio('ressources/sounds/attack.ogg', autoplay=False)
-son_hit = Audio('ressources/sounds/hit.ogg', autoplay=False)
-son_degats = Audio('ressources/sounds/hurt.ogg', autoplay=False)
-son_mort = Audio('ressources/sounds/death.ogg', autoplay=False)
-son_interaction = Audio('ressources/sounds/interact.ogg', autoplay=False)
->>>>>>> d5692bb18d6c4d85893f90ec98e819281e8cbafd
-
 if not pygame.mixer.get_init():
     pygame.mixer.init()
 
@@ -632,6 +624,7 @@ def do_attack():
         return
     _attack_timer = ATTACK_COOLDOWN
 
+
     forward = Vec3(joueur.forward.x, 0, joueur.forward.z).normalized()
     right   = Vec3(joueur.right.x,   0, joueur.right.z  ).normalized()
 
@@ -670,6 +663,7 @@ def do_attack():
 
             if network.connected:
                 network.send_damage(pid, ATTACK_DAMAGE)
+
 
 
 
@@ -895,10 +889,11 @@ def mouvement_joueur():
             _footstep_timer = 0.0
             # Sélection du type de pas selon le rôle
             sound_type = 'pas_infected' if player_role == "Infected" else 'pas_survivor'
-            vol = 0.5 if is_sprinting else 0.4
+            vol = 0.8 if is_sprinting else 0.4
             play_sfx(sound_type, volume=vol)
     else:
         _footstep_timer = 0.0
+
     if not is_moving:
         AUDIO_GAME['pas_survivor'].stop()
         AUDIO_GAME['pas_infected'].stop()
@@ -983,7 +978,6 @@ def input(key):
             rectangle_ui.enabled = rectangle_visible
 
         if dist_s <= distance_interaction:
-            play_sfx('interact')
             img, snd = random.choice(screamer_list)
             screamer_data = img + "|" + snd
             
