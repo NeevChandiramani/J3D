@@ -13,7 +13,7 @@
 ;    README.md
 ;    build\FiveNightsAtChatelet.exe        ; produit par PyInstaller
 ;    site\index.html, site\...             ; copie locale du site web
-;    icon.ico                              ; (optionnel) icône du jeu
+;    icon.ico                              ; icône du jeu
 ;
 ;  Sortie :
 ;    dist\FiveNightsAtChatelet-Setup-1.0.0.exe
@@ -101,6 +101,8 @@ Name: "websitedesktopicon"; Description: "Créer un raccourci vers le site web s
 Source: "build\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion; Components: main
 Source: "LICENSE";                DestDir: "{app}"; Flags: ignoreversion; Components: main
 Source: "README.md";              DestDir: "{app}"; Flags: ignoreversion; Components: main
+Source: "docs\manuel_installation.pdf"; DestDir: "{app}\docs"; Flags: ignoreversion; Components: main
+Source: "docs\manuel_utilisation.pdf";  DestDir: "{app}\docs"; Flags: ignoreversion; Components: main
 
 ; --- Composant optionnel : copie locale du site ---
 Source: "site\*"; DestDir: "{app}\site"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: website
@@ -114,12 +116,15 @@ Name: "{group}\Site web (local)";            Filename: "{app}\site\index.html"; 
 Name: "{group}\Désinstaller {#MyAppName}";   Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}";          Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 Name: "{autodesktop}\{#MyAppName} - Site web"; Filename: "{app}\site\index.html"; Tasks: websitedesktopicon; Components: website
+Name: "{group}\Manuel d'installation"; Filename: "{app}\docs\manuel_installation.pdf"
+Name: "{group}\Manuel d'utilisation";  Filename: "{app}\docs\manuel_utilisation.pdf"
 
 ; ============================================================================
 ;  Action post-installation : proposer de lancer le jeu
 ; ============================================================================
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\docs\manuel_utilisation.pdf"; Description: "Ouvrir le manuel d'utilisation"; Flags: shellexec nowait postinstall skipifsilent unchecked
 
 ; ============================================================================
 ;  Nettoyage à la désinstallation
