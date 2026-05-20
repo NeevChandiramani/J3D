@@ -91,6 +91,7 @@ Name: "website"; Description: "Copie locale du site web (consultable hors-ligne)
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "websitedesktopicon"; Description: "Créer un raccourci vers le site web sur le Bureau"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; Components: website
 
 ; ============================================================================
 ;  Fichiers à installer
@@ -112,6 +113,7 @@ Name: "{group}\{#MyAppName}";                Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Site web (local)";            Filename: "{app}\site\index.html"; Components: website
 Name: "{group}\Désinstaller {#MyAppName}";   Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}";          Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName} - Site web"; Filename: "{app}\site\index.html"; Tasks: websitedesktopicon; Components: website
 
 ; ============================================================================
 ;  Action post-installation : proposer de lancer le jeu
