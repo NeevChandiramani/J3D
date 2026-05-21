@@ -15,6 +15,7 @@ from Rooms import Rooms
 from NetworkClient import NetworkClient
 from enigme_electrique import EnigmeElectrique
 from NavigoTask import NavigoTask
+from enigme_plomberie import EnigmePlomberie
 
 
 
@@ -311,6 +312,16 @@ navigo_task = NavigoTask(
     interaction_key=touches['Interact'],  # branche sur ta touche 'e' configurable
 )
 
+cube_vanne = Entity(
+    model='cube', color=color.cyan,
+    position=(17, 8, -11),
+    collider='box', shader=lit_with_shadows_shader
+)
+
+def purge_validee():
+    print("[GAME] Égouts purgés !")
+
+enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
 
 # ENIGME ELECTRIQUE
 
@@ -1147,9 +1158,15 @@ def input(key):
             play_screamer(screamer_data)
             if network.connected:
                 network.send_screamer(screamer_data)
+
         if enigme.can_interact(joueur.position, cube_electrique.position):
             enigme.open()
         enigme.handle_input(key) 
+
+        if enigme_plomberie.can_interact(joueur.position, cube_vanne.position):
+            enigme_plomberie.open()
+        enigme_plomberie.handle_input(key)
+
     if key == 'left mouse down':
         do_attack()
 
@@ -1164,6 +1181,7 @@ def update():
 
     navigo_task.update()
     enigme.update()
+    enigme_plomberie.update()
 
     if navigo_task.is_open or enigme.is_open:
         return
