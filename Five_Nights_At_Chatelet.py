@@ -173,6 +173,7 @@ def assign_role():
     for part in [joueur_corps, joueur_tete, joueur_bras_g, joueur_bras_d, joueur_jambe_g, joueur_jambe_d]:
         part.color = role_color
 
+    attack_indicator.enabled = role_data["can_attack"]
     _role_announced = True
     _role_announce_timer = ROLE_ANNOUNCE_DURATION
     show_role_announce()
@@ -677,6 +678,8 @@ _attack_timer   = 0.0
 
 def do_attack():
     global _attack_timer, _attack_anim_timer, _is_attack_anim
+    if player_role is None or not ROLES[player_role]["can_attack"]:
+        return
     if _attack_timer > 0 or is_dead:
         return
     _attack_timer = ATTACK_COOLDOWN
@@ -1070,7 +1073,7 @@ def mouvement_joueur():
             _footstep_timer = 0.0
             # Sélection du type de pas selon le rôle
             sound_type = 'pas_infected' if player_role == "Infected" else 'pas_survivor'
-            vol = 0.8 if is_sprinting else 0.4
+            vol = 0.4 if is_sprinting else 0.3
             play_sfx(sound_type, volume=vol)
     else:
         _footstep_timer = 0.0
@@ -1256,7 +1259,7 @@ def update():
     if player_role == "Infected" and not is_dead:
         if not _breath_playing:
             channel_infected_breath.play(AUDIO_GAME['rale_infected'], loops=-1)
-            channel_infected_breath.set_volume(0.4)
+            channel_infected_breath.set_volume(0.2)
             _breath_playing = True
     else:
         if _breath_playing:
