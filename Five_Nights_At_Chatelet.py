@@ -1,6 +1,6 @@
 #lignes à commenter pour désactiver le menu = -
 
-#import cv2
+
 import threading
 import math
 import os
@@ -15,11 +15,11 @@ from Rooms import Rooms
 from NetworkClient import NetworkClient
 from enigme_electrique import EnigmeElectrique
 from NavigoTask import NavigoTask
-#pip install ursina on oublie pas tu connais
 
-# ──────────────────────────────────────────────
+
+
 # CHEMINS RESSOURCES (compatibilité PyInstaller)
-# ──────────────────────────────────────────────
+
 if getattr(sys, 'frozen', False):
     BASE_DIR = sys._MEIPASS
 else:
@@ -70,9 +70,9 @@ try:                                                                            
 except Exception:                                                               #-
     pass                                                                        #-
 
-# ──────────────────────────────────────────────
+
 # RÉSEAU
-# ──────────────────────────────────────────────
+
 network = NetworkClient()
 network.connect()
 
@@ -82,9 +82,8 @@ ghost_hp = {}         # {player_id: int}
 SEND_INTERVAL = 0.05
 _send_timer = 0
 
-# ──────────────────────────────────────────────
 # RÔLES ET ATTRIBUTION
-# ──────────────────────────────────────────────
+
 # Définition des rôles disponibles
 ROLES = {
     "Survivor": {
@@ -312,9 +311,9 @@ navigo_task = NavigoTask(
     interaction_key=touches['Interact'],  # branche sur ta touche 'e' configurable
 )
 
-# ──────────────────────────────────────────────
+
 # ENIGME ELECTRIQUE
-# ──────────────────────────────────────────────
+
 def enigme_resolue():
     print("[GAME] Puzzle électrique validé !")
     # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
@@ -328,9 +327,9 @@ cube_electrique = Entity(
 )
 enigme = EnigmeElectrique(on_success=enigme_resolue)
 
-# ──────────────────────────────────────────────
+
 # SYSTEME AUDIO
-# ──────────────────────────────────────────────
+
 if not pygame.mixer.get_init():
     pygame.mixer.init()
 
@@ -484,9 +483,9 @@ cube_proche = Entity(
     shader=lit_with_shadows_shader
 )
 
-# ──────────────────────────────────────────────
+
 # CUBE SCREAMER
-# ──────────────────────────────────────────────
+
 screamer_list = [
     ('ressources/screamers/Snapshot_2.png', 'ressources/screamers/Snapshot2.ogg'),
     ('ressources/screamers/Snapshot_3.png', 'ressources/screamers/Snapshot3.ogg'),
@@ -573,9 +572,9 @@ btn_menu = Button(
 btn_menu.text_entity.scale *= 0.9
 
 
-# ──────────────────────────────────────────────
+
 # HP
-# ──────────────────────────────────────────────
+
 MAX_HP = 100
 player_hp = MAX_HP
 INVINCIBILITY_DURATION = 0.5
@@ -642,9 +641,9 @@ def update_hp_ui():
     else:
         hp_text.color = color.red
 
-# ──────────────────────────────────────────────
+
 # ATTAQUE
-# ──────────────────────────────────────────────
+
 ATTACK_DAMAGE   = 10
 ATTACK_RANGE    = 3.0
 ATTACK_WIDTH    = 2.0
@@ -703,9 +702,9 @@ def do_attack():
 
 
 
-# ──────────────────────────────────────────────
+
 # STAMINA
-# ──────────────────────────────────────────────
+
 max_stamina = 100
 current_stamina = max_stamina
 stamina_drain_rate = 25
@@ -713,9 +712,9 @@ stamina_regen_rate = 15
 sprint_speed_multiplier = 2.0
 base_speed = 6.7
 
-# ──────────────────────────────────────────────
+
 # UI
-# ──────────────────────────────────────────────
+
 distance_interaction = 3
 rectangle_visible = False
 
@@ -771,9 +770,9 @@ network_text = Text(
     color=color.yellow
 )
 
-# ──────────────────────────────────────────────
+
 # UI — ANNONCE DU RÔLE
-# ──────────────────────────────────────────────
+
 role_announce_root = Entity(parent=camera.ui, enabled=False, z=-0.5)
 
 role_announce_bg = Entity(
@@ -833,9 +832,9 @@ role_indicator = Text(
     color=color.white
 )
 
-# ──────────────────────────────────────────────
+
 # UI — OVERLAY D'AIDE
-# ──────────────────────────────────────────────
+
 help_overlay_root = Entity(parent=camera.ui, enabled=False, z=-0.6)
 
 # Fond plein écran assombri
@@ -955,9 +954,9 @@ def toggle_help():
     help_overlay_root.enabled = not help_overlay_root.enabled
 
 
-# ──────────────────────────────────────────────
+
 # CAMÉRA & JOUEUR
-# ──────────────────────────────────────────────
+
 mouse.locked = True
 mouse.visible = False
 
@@ -1295,9 +1294,9 @@ def update():
         
 
 
-# ──────────────────────────────────────────────
+
 # ATTRIBUTION DES RÔLES AU DÉMARRAGE
-# ──────────────────────────────────────────────
+
 invoke(assign_role, delay=1.5)
 
 Five_nights_at_chatelet.run()
