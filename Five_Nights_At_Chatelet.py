@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import json
 import sys
+from tomlkit import key
 from ursina import *
 import pygame
 import random
@@ -16,6 +17,7 @@ from NetworkClient import NetworkClient
 from enigme_electrique import EnigmeElectrique
 from NavigoTask import NavigoTask
 from enigme_plomberie import EnigmePlomberie
+from EnigmeLabyrintheSignalisation import EnigmeLabyrintheSignalisation
 
 
 
@@ -337,6 +339,17 @@ cube_electrique = Entity(
     shader=lit_with_shadows_shader
 )
 enigme = EnigmeElectrique(on_success=enigme_resolue)
+
+cube_panneau = Entity(
+    model='cube', color=color.blue,
+    position=(17, 10, -13),   # ← adapte à ta map
+    collider='box', shader=lit_with_shadows_shader
+)
+
+def signalisation_restauree():
+    print("[GAME] Signalisation restaurée !")
+
+enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
 
 
 # SYSTEME AUDIO
@@ -1167,6 +1180,10 @@ def input(key):
             enigme_plomberie.open()
         enigme_plomberie.handle_input(key)
 
+        if enigme_signalisation.can_interact(joueur.position, cube_panneau.position):
+            enigme_signalisation.open()
+        enigme_signalisation.handle_input(key)
+
     if key == 'left mouse down':
         do_attack()
 
@@ -1181,9 +1198,10 @@ def update():
 
     navigo_task.update()
     enigme.update()
+    enigme_signalisation.update()
     enigme_plomberie.update()
 
-    if navigo_task.is_open or enigme.is_open:
+    if navigo_task.is_open or enigme.is_open or enigme_signalisation.is_open or enigme_plomberie.is_open:
         return
 
     mouvement_joueur()
