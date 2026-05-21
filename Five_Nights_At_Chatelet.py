@@ -834,6 +834,128 @@ role_indicator = Text(
 )
 
 # ──────────────────────────────────────────────
+# UI — OVERLAY D'AIDE
+# ──────────────────────────────────────────────
+help_overlay_root = Entity(parent=camera.ui, enabled=False, z=-0.6)
+
+# Fond plein écran assombri
+Entity(
+    parent=help_overlay_root,
+    model='quad',
+    color=color.rgba(0, 0, 0, 0.82),
+    scale=(2, 1),
+    z=0.1,
+)
+
+# Panneau central
+Entity(
+    parent=help_overlay_root,
+    model='quad',
+    color=color.rgb32(28, 28, 36),
+    scale=(1.05, 0.86),
+    z=0.05,
+)
+
+help_title = Text(
+    parent=help_overlay_root,
+    text='AIDE  —  COMMANDES',
+    origin=(0, 0),
+    position=(0, 0.35),
+    scale=1.8,
+    color=color.white,
+    font='VeraMono.ttf',
+)
+
+help_body = Text(
+    parent=help_overlay_root,
+    text='',
+    origin=(-0.5, 0),
+    position=(-0.35, 0.03),
+    scale=1.1,
+    color=color.rgb32(220, 220, 220),
+    font='VeraMono.ttf',
+)
+
+help_objective = Text(
+    parent=help_overlay_root,
+    text='',
+    origin=(0, 0),
+    position=(0, -0.30),
+    scale=1.0,
+    color=color.rgb32(120, 200, 255),
+    font='VeraMono.ttf',
+)
+
+help_footer = Text(
+    parent=help_overlay_root,
+    text='Appuyez sur  H  pour fermer',
+    origin=(0, 0),
+    position=(0, -0.38),
+    scale=1.0,
+    color=color.yellow,
+    font='VeraMono.ttf',
+)
+
+# Indicateur permanent pour faire découvrir l'overlay
+help_hint = Text(
+    text='[H] Aide',
+    position=(0, -0.47),
+    origin=(0, 0),
+    scale=1.0,
+    parent=camera.ui,
+    color=color.rgba(1, 1, 1, 0.6),
+)
+
+
+def build_help_text():
+    """Génère le contenu de l'overlay d'aide à partir des touches courantes."""
+    noms_affichage = {
+        'space': 'Espace',
+        'left shift': 'Maj gauche',
+        'right shift': 'Maj droite',
+        'left control': 'Ctrl gauche',
+        'right control': 'Ctrl droite',
+        'enter': 'Entrée',
+    }
+
+    def libelle_touche(t):
+        return noms_affichage.get(t, t.upper())
+
+    lignes = [
+        ('Avancer',   libelle_touche(touches['Move Forward'])),
+        ('Reculer',   libelle_touche(touches['Move Backward'])),
+        ('Gauche',    libelle_touche(touches['Move Left'])),
+        ('Droite',    libelle_touche(touches['Move Right'])),
+        ('Sauter',    libelle_touche(touches['Jump'])),
+        ('Sprint',    libelle_touche(touches['Sprint'])),
+        ('Interagir', libelle_touche(touches['Interact'])),
+        ('Attaquer',  'Clic gauche'),
+        ('Aide',      'H'),
+        ('Quitter',   'Échap'),
+    ]
+    help_body.text = '\n'.join(
+        f"{nom.ljust(12)} :  {touche}" for nom, touche in lignes
+    )
+
+    if player_role and player_role in ROLES:
+        help_objective.text = (
+            f"Objectif ({player_role}) : {ROLES[player_role]['description']}"
+        )
+    else:
+        help_objective.text = (
+            "Objectif : Survivants, trouvez les sorties.  "
+            "Infectés, éliminez les survivants."
+        )
+
+
+def toggle_help():
+    """Affiche ou masque l'overlay d'aide."""
+    if not help_overlay_root.enabled:
+        build_help_text()
+    help_overlay_root.enabled = not help_overlay_root.enabled
+
+
+# ──────────────────────────────────────────────
 # CAMÉRA & JOUEUR
 # ──────────────────────────────────────────────
 mouse.locked = True
@@ -998,8 +1120,14 @@ def input(key):
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
     if key == 'escape':
-        network.disconnect()
-        application.quit()
+        if help_overlay_root.enabled:
+            help_overlay_root.enabled = False
+        else:
+            network.disconnect()
+            application.quit()
+
+    if key == 'h':
+        toggle_help()
 
     if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True
