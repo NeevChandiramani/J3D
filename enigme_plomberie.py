@@ -353,29 +353,3 @@ class EnigmePlomberie:
         bar_w = max(0.001, ratio * self._sp_w)
         self._speed_bar.scale_x = bar_w
         self._speed_bar.x = self._sp_left + bar_w * 0.5
-
-
-# ══════════════════════════════════════════════
-#  DÉMO STANDALONE
-#  Supprime ce bloc quand tu intègres dans
-#  Five_Nights_At_Chatelet.py
-# ══════════════════════════════════════════════
-if __name__ == '__main__':
-    app = Ursina()
-    window.title = 'Énigme plomberie — démo'
-    mouse.locked  = False
-    mouse.visible = True
-
-    def on_win():
-        print("[ENIGME] Purge validée ! Callback déclenché.")
-
-    enigme = EnigmePlomberie(on_success=on_win)
-    enigme.open()
-
-    def input(key):
-        enigme.handle_input(key)
-
-    def update():
-        enigme.update()
-
-    app.run()

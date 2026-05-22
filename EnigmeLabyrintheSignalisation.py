@@ -69,7 +69,7 @@ class EnigmeLabyrintheSignalisation:
     SOLUTIONS = {
         "Ligne 1":  "La Défense",
         "Ligne 4":  "Bagneux",
-        "Ligne 14": "Aéroport CDG",
+        "Ligne 14": "Aéroport d'Orly",
         "RER A":    "Marne-la-Vallée",
     }
 

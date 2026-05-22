@@ -280,27 +280,3 @@ class EnigmeElectrique:
             btn.color           = self._COL_ON  if on else self._COL_OFF
             btn.highlight_color = self._COL_ON_H if on else self._COL_OFF_H
             self._btn_texts[i].text = 'ON ' if on else 'OFF'
-
-# ══════════════════════════════════════════════
-#  DÉMO STANDALONE  —  supprime ce bloc quand
-#  tu intègres dans Five_Nights_At_Chatelet.py
-# ══════════════════════════════════════════════
-if __name__ == '__main__':
-    app = Ursina()
-    window.title = 'Énigme électrique — démo'
-    mouse.locked  = False
-    mouse.visible = True
-
-    def on_win():
-        print("[ENIGME] Puzzle résolu ! Callback déclenché.")
-
-    enigme = EnigmeElectrique(on_success=on_win)
-    enigme.open()
-
-    def input(key):
-        enigme.handle_input(key)
-
-    def update():
-        enigme.update()
-
-    app.run()
