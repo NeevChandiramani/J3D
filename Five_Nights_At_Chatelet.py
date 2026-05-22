@@ -394,55 +394,17 @@ joueur = Entity(
     scale_y=3
 )
 
-navigo_task = NavigoTask(
-    player=joueur,
-    position=(15, 5, -8),  # place ça où tu veux dans Châtelet
-    on_complete=lambda: print("Accès validé !"),  # remplace par ta logique
-    interaction_key=touches['Interact'],  # branche sur ta touche 'e' configurable
-)
-
 cube_vanne = Entity(
     model='cube', color=color.cyan,
     position=(17, 8, -11),
     collider='box', shader=lit_with_shadows_shader
 )
 
-def init_tasks():
-    temps_attente = 0
-    while network.my_id is None and temps_attente < 30:
-        import time as pytime
-        pytime.sleep(0.1)
-        temps_attente += 1
-    
-    seed_id = network.my_id
-    if seed_id is None:
-        seed_id = random.randint(1, 99999)
-        print("[TASKS] Mode Solo détecté : Utilisation d'une seed aléatoire.")
-    
-    try:
-        seed_int = int(seed_id)
-    except ValueError:
-        seed_int = sum(ord(c) for c in str(seed_id))
-
-    pos = choisir_salles_tasks(seed_int)
-    
-    navigo_task.position     = pos['navigo']     + Vec3(0, 2.5, 0)
-    cube_vanne.position      = pos['vanne']      + Vec3(0, 2.5, 0)
-    cube_electrique.position = pos['electrique'] + Vec3(0, 2.5, 0)
-    cube_panneau.position    = pos['panneau']    + Vec3(0, 2.5, 0)
-    
-    print(f"[TASKS] Les 4 tâches ont été réparties avec succès dans les salles !")
-
-# Lancement sécurisé dans le Thread
-threading.Thread(target=init_tasks, daemon=True).start()
-
-
 def purge_validee():
     print("[GAME] Égouts purgés !")
 
 enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
 
-# ENIGME ELECTRIQUE
 
 def enigme_resolue():
     print("[GAME] Puzzle électrique validé !")
@@ -455,6 +417,7 @@ cube_electrique = Entity(
     collider='box',
     shader=lit_with_shadows_shader
 )
+
 enigme = EnigmeElectrique(on_success=enigme_resolue)
 
 cube_panneau = Entity(
@@ -467,6 +430,40 @@ def signalisation_restauree():
     print("[GAME] Signalisation restaurée !")
 
 enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
+
+navigo_task = None  # On prépare la variable globale pour le jeu
+
+def init_tasks():
+    global navigo_task
+    import time as pytime
+    
+    attente = 0
+    while network.my_id is None and attente < 30:
+        pytime.sleep(0.1)
+        attente += 1
+    
+    seed_id = network.my_id if network.my_id is not None else random.randint(1, 99999)
+    try:
+        seed_int = int(seed_id)
+    except ValueError:
+        seed_int = sum(ord(c) for c in str(seed_id))
+    
+    pos = choisir_salles_tasks(seed_int)
+    
+    navigo_task = NavigoTask(
+        player=joueur,
+        position=pos['navigo'] + Vec3(0, 2.5, 0),  # Position finale tirée au sort
+        on_complete=lambda: print("Accès validé !"),
+        interaction_key=touches['Interact'],
+    )
+    
+    cube_vanne.position      = pos['vanne']      + Vec3(0, 2.5, 0)
+    cube_electrique.position = pos['electrique'] + Vec3(0, 2.5, 0)
+    cube_panneau.position    = pos['panneau']    + Vec3(0, 2.5, 0)
+    
+    print("[TASKS] Succès : Les 4 tâches (y compris le Pass Navigo) ont été réparties !")
+
+threading.Thread(target=init_tasks, daemon=True).start()
 
 
 # SYSTEME AUDIO
@@ -716,10 +713,10 @@ cube_proche = Entity(
 # CUBE SCREAMER
 
 screamer_list = [
-    ('ressources/screamers/Snapshot_2.png', 'ressources/screamers/Snapshot2.ogg'),
-    ('ressources/screamers/Snapshot_3.png', 'ressources/screamers/Snapshot3.ogg'),
-    ('ressources/screamers/Snapshot_4.png', 'ressources/screamers/Snapshot4.ogg'),
-    ('ressources/screamers/Snapshot_5.png', 'ressources/screamers/Snapshot5.ogg'),
+    ('ressources/screamers/Snapshot_2.PNG', 'ressources/screamers/Snapshot2.ogg'),
+    ('ressources/screamers/Snapshot_3.PNG', 'ressources/screamers/Snapshot3.ogg'),
+    ('ressources/screamers/Snapshot_4.PNG', 'ressources/screamers/Snapshot4.ogg'),
+    ('ressources/screamers/Snapshot_5.PNG', 'ressources/screamers/Snapshot5.ogg'),
 ]
 
 cube_screamer = Entity(
