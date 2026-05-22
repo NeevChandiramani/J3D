@@ -1468,6 +1468,8 @@ def update():
         joueur_tete.y  = math.sin(_anim_timer) * 0.019
         joueur_bras_g.y = math.sin(_anim_timer) * 0.019
         joueur_bras_d.y = math.sin(_anim_timer) * 0.019
+        joueur_jambe_g.y =  math.sin(_anim_timer) * 0.014
+        joueur_jambe_d.y = math.sin(_anim_timer) * 0.014
 
     if _is_attack_anim:
         _attack_anim_timer += time.dt * 14
