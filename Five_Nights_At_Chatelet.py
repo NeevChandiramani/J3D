@@ -344,6 +344,42 @@ def update_ghosts(other_players):
                 # Le fantôme redevient de sa couleur d'origine après le coup
                 invoke(setattr, g, 'color', orig_color, delay=0.15)
 
+SALLES = [
+    Vec3(-71.07, 35.98,  8.87),
+    Vec3(-50.86, 35.98, 44.05),
+    Vec3( 18.72, 35.98, 71.86),
+    Vec3( 60.63, 35.98, 41.77),
+    Vec3( 73.92, 35.98,  0.62),
+    Vec3( 61.24, 35.98,-43.25),
+    Vec3( 17.97, 35.98,-65.99),
+    Vec3(-28.19, 35.98,-59.08),
+    Vec3(-62.25, 35.98,-33.37),
+    Vec3( 58.08, 93.36, 40.26),
+]
+DISTANCE_MIN = 60
+
+def choisir_salles_tasks(player_id):
+    rng = random.Random(int(player_id))
+    
+    tasks = ['navigo', 'vanne', 'electrique', 'panneau']
+    
+    for _ in range(1000):
+        choix = rng.sample(range(len(SALLES)), 4)
+        valide = True
+        for i in range(len(choix)):
+            for j in range(i + 1, len(choix)):
+                a, b = SALLES[choix[i]], SALLES[choix[j]]
+                dist = math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
+                if dist < DISTANCE_MIN:
+                    valide = False
+                    break
+            if not valide:
+                break
+        if valide:
+            return dict(zip(tasks, [SALLES[i] for i in choix]))
+    
+    return dict(zip(tasks, rng.sample(SALLES, 4)))
+
 
 sol = Entity(
     model="ressources/Mall.obj",
@@ -370,6 +406,36 @@ cube_vanne = Entity(
     position=(17, 8, -11),
     collider='box', shader=lit_with_shadows_shader
 )
+
+def init_tasks():
+    temps_attente = 0
+    while network.my_id is None and temps_attente < 30:
+        import time as pytime
+        pytime.sleep(0.1)
+        temps_attente += 1
+    
+    seed_id = network.my_id
+    if seed_id is None:
+        seed_id = random.randint(1, 99999)
+        print("[TASKS] Mode Solo détecté : Utilisation d'une seed aléatoire.")
+    
+    try:
+        seed_int = int(seed_id)
+    except ValueError:
+        seed_int = sum(ord(c) for c in str(seed_id))
+
+    pos = choisir_salles_tasks(seed_int)
+    
+    navigo_task.position     = pos['navigo']     + Vec3(0, 2.5, 0)
+    cube_vanne.position      = pos['vanne']      + Vec3(0, 2.5, 0)
+    cube_electrique.position = pos['electrique'] + Vec3(0, 2.5, 0)
+    cube_panneau.position    = pos['panneau']    + Vec3(0, 2.5, 0)
+    
+    print(f"[TASKS] Les 4 tâches ont été réparties avec succès dans les salles !")
+
+# Lancement sécurisé dans le Thread
+threading.Thread(target=init_tasks, daemon=True).start()
+
 
 def purge_validee():
     print("[GAME] Égouts purgés !")
