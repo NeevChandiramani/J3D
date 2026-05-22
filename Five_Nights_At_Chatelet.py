@@ -431,7 +431,7 @@ def signalisation_restauree():
 
 enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
 
-navigo_task = None  # On prépare la variable globale pour le jeu
+navigo_task = None
 
 def init_tasks():
     global navigo_task
@@ -452,7 +452,7 @@ def init_tasks():
     
     navigo_task = NavigoTask(
         player=joueur,
-        position=pos['navigo'] + Vec3(0, 2.5, 0),  # Position finale tirée au sort
+        position=pos['navigo'] + Vec3(0, 2.5, 0),
         on_complete=lambda: print("Accès validé !"),
         interaction_key=touches['Interact'],
     )
@@ -461,7 +461,22 @@ def init_tasks():
     cube_electrique.position = pos['electrique'] + Vec3(0, 2.5, 0)
     cube_panneau.position    = pos['panneau']    + Vec3(0, 2.5, 0)
     
-    print("[TASKS] Succès : Les 4 tâches (y compris le Pass Navigo) ont été réparties !")
+    est_infecte = hasattr(joueur, 'is_infected') and joueur.is_infected
+    
+    if est_infecte:
+        # Masquer les 3 cubes simples
+        cube_vanne.visible = False
+        cube_electrique.visible = False
+        cube_panneau.visible = False
+        
+        if hasattr(navigo_task, 'visible'):
+            navigo_task.visible = False
+        if hasattr(navigo_task, 'model') and navigo_task.model:
+            navigo_task.model.visible = False
+            
+        print("[TASKS] Joueur Infecté détecté : Masquage des tâches visuelles.")
+    else:
+        print("[TASKS] Joueur Survivant détecté : Les tâches sont visibles.")
 
 threading.Thread(target=init_tasks, daemon=True).start()
 
