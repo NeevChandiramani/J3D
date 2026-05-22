@@ -540,6 +540,59 @@ rambardes_cylindre = [
     Entity(model='cube', collider='box', visible=False, position=(-34.17, 72.99, 12.08), scale=(0.3, 74.02, 8.5), rotation_y=-153.43),
     Entity(model='cube', collider='box', visible=False, position=(-36.55, 73.11, 5.86), scale=(0.3, 73.78, 4.94), rotation_y=-168.67),
 ]
+murs_coordonnees = [
+    # Mur 1
+    (Vec3(-54.68, 35.98, -18.7), Vec3(-58.42, 35.98, -8.51)),
+    (Vec3(-58.42, 35.98, -8.51), Vec3(-59.49, 35.56, -0.42)),
+    # Mur 2
+    (Vec3(-56.84, 35.98, 13.17), Vec3(-52.88, 35.98, 22.37)),
+    (Vec3(-52.88, 35.98, 22.37), Vec3(-47.23, 35.98, 29.86)),
+    # Mur 3
+    (Vec3(-36.4, 35.98, 38.83), Vec3(-15.64, 35.98, 47.47)),
+    (Vec3(-15.64, 35.98, 47.47), Vec3(8.06, 35.98, 49.17)),
+    # Mur 4
+    (Vec3(22.52, 35.98, 45.41), Vec3(31.38, 35.98, 41.93)),
+    (Vec3(31.38, 35.98, 41.93), Vec3(41.83, 35.98, 35.04)),
+    # Mur 5
+    (Vec3(51.21, 35.98, 24.59), Vec3(55.45, 35.98, 17.38)),
+    (Vec3(55.45, 35.98, 17.38), Vec3(58.68, 35.98, 7.43)),
+    # Mur 6
+    (Vec3(58.77, 35.98, -6.47), Vec3(55.36, 35.98, -16.81)),
+    (Vec3(55.36, 35.98, -16.81), Vec3(51.15, 35.98, -24.6)),
+    # Mur 7
+    (Vec3(41.61, 35.98, -34.68), Vec3(34.01, 35.98, -40.23)),
+    (Vec3(34.01, 35.98, -40.23), Vec3(23.05, 35.98, -45.35)),
+    # Mur 8
+    (Vec3(8.42, 35.98, -48.57), Vec3(-4.52, 35.98, -48.73)),
+    (Vec3(-4.52, 35.98, -48.73), Vec3(-15.51, 35.98, -47.52)),
+    # Mur 9
+    (Vec3(-30.0, 35.98, -42.63), Vec3(-36.88, 35.98, -38.68)),
+    (Vec3(-36.88, 35.98, -38.68), Vec3(-47.14, 35.98, -30.29))
+]
+
+mur_cylindre = []
+
+for p1, p2 in murs_coordonnees:
+    centre = (p1 + p2) / 2
+    
+    hauteur_mur = 150.0 - p1.y
+    centre.y += hauteur_mur / 2
+    
+    longueur = math.sqrt((p2.x - p1.x)**2 + (p2.z - p1.z)**2)
+    
+    angle_radians = math.atan2(p2.x - p1.x, p2.z - p1.z)
+    angle_degres = math.degrees(angle_radians)
+    
+    mur = Entity(
+        model='cube',
+        collider='box',
+        visible=False,
+        position=centre,
+        scale=(0.3, hauteur_mur, longueur),
+        rotation_y=angle_degres,
+        color=color.rgba32(0, 255, 100, 90) # Vert de debug prêt
+    )
+    mur_cylindre.append(mur)
 
 test_cube = Entity(
     model='cube',
@@ -1295,6 +1348,10 @@ def input(key):
     if key == 't':
         print("[DEBUG] Test dégâts forcé")
         receive_damage(999)
+
+    if key == 'k':
+        for mur in mur_cylindre:
+            mur.visible = not mur.visible
 
 
 def update():
