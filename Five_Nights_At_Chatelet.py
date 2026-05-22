@@ -122,7 +122,8 @@ FADE_SPEED      = 2.2
 _connection_screen_active = True
 _connection_phase = 0            # 0=fondu entrée, 1=palier, 2=fondu sortie
 _connection_fade  = 0.0
-_connection_timer = 2.5          # durée du palier "hold" en secondes
+_connection_timer = 0.5          # durée du palier "hold" en secondes
+CONNECTION_FADE_SPEED = 3.5      # fondu entrée/sortie de l'écran de connexion
 _connection_status_rgb = (80, 220, 100)
 
 def assign_role():
@@ -215,7 +216,7 @@ def update_connection_screen():
     dt = time.dt
 
     if _connection_phase == 0:
-        _connection_fade = min(1.0, _connection_fade + dt * FADE_SPEED)
+        _connection_fade = min(1.0, _connection_fade + dt * CONNECTION_FADE_SPEED)
         a_bg   = int(_connection_fade * 210)
         a_text = int(_connection_fade * 255)
         connection_screen_bg.color     = color.rgba(0, 0, 0, a_bg)
@@ -232,7 +233,7 @@ def update_connection_screen():
             _connection_fade  = 1.0
 
     elif _connection_phase == 2:
-        _connection_fade = max(0.0, _connection_fade - dt * FADE_SPEED)
+        _connection_fade = max(0.0, _connection_fade - dt * CONNECTION_FADE_SPEED)
         a_bg   = int(_connection_fade * 210)
         a_text = int(_connection_fade * 255)
         connection_screen_bg.color     = color.rgba(0, 0, 0, a_bg)
