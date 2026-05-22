@@ -77,7 +77,7 @@ except Exception:                                                               
 # RÉSEAU
 
 network = NetworkClient()
-network.connect()
+connection_ok = network.connect()
 
 ghost_entities = {}   # {player_id: Entity}
 ghost_hp = {}         # {player_id: int}
@@ -117,6 +117,13 @@ ROLE_ANNOUNCE_DURATION = 4.0
 _announce_phase = 0
 _announce_fade  = 0.0
 FADE_SPEED      = 2.2
+
+# État de l'écran de connexion (affiché au démarrage)
+_connection_screen_active = True
+_connection_phase = 0            # 0=fondu entrée, 1=palier, 2=fondu sortie
+_connection_fade  = 0.0
+_connection_timer = 2.5          # durée du palier "hold" en secondes
+_connection_status_rgb = (80, 220, 100)
 
 def assign_role():
     """Attribution aléatoire et équilibrée des rôles au lancement."""
@@ -194,6 +201,48 @@ def show_role_announce():
     role_announce_root.enabled = True
     _announce_phase = 0
     _announce_fade  = 0.0
+
+
+def update_connection_screen():
+    """Écran de connexion au démarrage : fondu entrée / palier / fondu sortie,
+    puis enchaîne sur l'attribution du rôle."""
+    global _connection_phase, _connection_fade, _connection_timer
+    global _connection_screen_active
+    if not _connection_screen_active:
+        return
+
+    r, g_c, b = _connection_status_rgb
+    dt = time.dt
+
+    if _connection_phase == 0:
+        _connection_fade = min(1.0, _connection_fade + dt * FADE_SPEED)
+        a_bg   = int(_connection_fade * 210)
+        a_text = int(_connection_fade * 255)
+        connection_screen_bg.color     = color.rgba(0, 0, 0, a_bg)
+        connection_screen_title.color  = color.rgba(180, 180, 180, a_text)
+        connection_screen_status.color = color.rgba(r, g_c, b, a_text)
+        connection_screen_sub.color    = color.rgba(120, 120, 120, int(a_text * 0.7))
+        if _connection_fade >= 1.0:
+            _connection_phase = 1
+
+    elif _connection_phase == 1:
+        _connection_timer -= dt
+        if _connection_timer <= 0:
+            _connection_phase = 2
+            _connection_fade  = 1.0
+
+    elif _connection_phase == 2:
+        _connection_fade = max(0.0, _connection_fade - dt * FADE_SPEED)
+        a_bg   = int(_connection_fade * 210)
+        a_text = int(_connection_fade * 255)
+        connection_screen_bg.color     = color.rgba(0, 0, 0, a_bg)
+        connection_screen_title.color  = color.rgba(180, 180, 180, a_text)
+        connection_screen_status.color = color.rgba(r, g_c, b, a_text)
+        connection_screen_sub.color    = color.rgba(120, 120, 120, int(a_text * 0.7))
+        if _connection_fade <= 0.0:
+            connection_screen_root.enabled = False
+            _connection_screen_active = False
+            assign_role()   # enchaîne sur l'annonce du rôle
 
 
 def update_role_announce():
@@ -850,6 +899,59 @@ role_announce_sub = Text(
     font='VeraMono.ttf'
 )
 
+
+# UI — ÉCRAN DE CONNEXION AU SERVEUR (démarrage)
+
+connection_screen_root = Entity(parent=camera.ui, enabled=True, z=-0.5)
+
+connection_screen_bg = Entity(
+    parent=connection_screen_root,
+    model='quad',
+    color=color.rgba(0, 0, 0, 0),
+    scale=(3, 2),
+    z=0.1
+)
+
+connection_screen_title = Text(
+    parent=connection_screen_root,
+    text='CONNEXION',
+    origin=(0, 0),
+    position=(0, 0.10),
+    scale=3,
+    color=color.rgba(180, 180, 180, 0),
+    font='VeraMono.ttf'
+)
+
+connection_screen_status = Text(
+    parent=connection_screen_root,
+    text='',
+    origin=(0, 0),
+    position=(0, -0.02),
+    scale=2,
+    color=color.rgba(80, 220, 100, 0),
+    font='VeraMono.ttf'
+)
+
+connection_screen_sub = Text(
+    parent=connection_screen_root,
+    text='',
+    origin=(0, 0),
+    position=(0, -0.14),
+    scale=1.4,
+    color=color.rgba(120, 120, 120, 0),
+    font='VeraMono.ttf'
+)
+
+if connection_ok:
+    connection_screen_status.text = 'Serveur connecté'
+    connection_screen_sub.text    = 'Mode multijoueur'
+    _connection_status_rgb        = (80, 220, 100)
+else:
+    connection_screen_status.text = 'Connexion échouée'
+    connection_screen_sub.text    = 'Mode solo'
+    _connection_status_rgb        = (220, 50, 50)
+
+
 # Indicateur de rôle permanent (coin haut droit)
 role_indicator = Text(
     text='',
@@ -1204,6 +1306,8 @@ def update():
     enigme_signalisation.update()
     enigme_plomberie.update()
 
+    update_connection_screen()
+
     if navigo_task.is_open or enigme.is_open or enigme_signalisation.is_open or enigme_plomberie.is_open:
         return
 
@@ -1335,7 +1439,7 @@ def update():
 
 
 # ATTRIBUTION DES RÔLES AU DÉMARRAGE
-
-invoke(assign_role, delay=1.5)
+# assign_role() est appelé par update_connection_screen() une fois
+# l'écran de connexion disparu, pour éviter le chevauchement des deux écrans.
 
 Five_nights_at_chatelet.run()
