@@ -716,10 +716,10 @@ cube_proche = Entity(
 # CUBE SCREAMER
 
 screamer_list = [
-    ('ressources/screamers/Snapshot_2.png', 'ressources/screamers/Snapshot2.ogg'),
-    ('ressources/screamers/Snapshot_3.png', 'ressources/screamers/Snapshot3.ogg'),
-    ('ressources/screamers/Snapshot_4.png', 'ressources/screamers/Snapshot4.ogg'),
-    ('ressources/screamers/Snapshot_5.png', 'ressources/screamers/Snapshot5.ogg'),
+    ('ressources/screamers/Snapshot_2.PNG', 'ressources/screamers/Snapshot2.ogg'),
+    ('ressources/screamers/Snapshot_3.PNG', 'ressources/screamers/Snapshot3.ogg'),
+    ('ressources/screamers/Snapshot_4.PNG', 'ressources/screamers/Snapshot4.ogg'),
+    ('ressources/screamers/Snapshot_5.PNG', 'ressources/screamers/Snapshot5.ogg'),
 ]
 
 cube_screamer = Entity(
