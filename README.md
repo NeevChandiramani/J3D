@@ -40,7 +40,7 @@ Five Nights At Châtelet est un jeu d'horreur multijoueur asymétrique inspiré 
 
 ```bash
 # Cloner le repo
-git clone https://github.com/votre-repo/J3D.git
+git clone https://github.com/NeevChandiramani/J3D
 cd J3D
 
 # Créer un environnement virtuel Python 3.11
