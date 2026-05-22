@@ -550,7 +550,10 @@ blocs_murs = [
     [Vec3(51.67, 35.98, -25.32), Vec3(56.2, 35.98, -21.98), Vec3(82.42, 35.98, -46.73), Vec3(68.02, 35.98, -62.81), Vec3(41.61, 35.98, -38.81), Vec3(42.36, 35.98, -35.21)],
     [Vec3(22.6, 35.98, -46.26), Vec3(27.26, 35.98, -46.62), Vec3(33.98, 35.98, -76.26), Vec3(12.45, 35.98, -80.95), Vec3(5.38, 35.98, -51.59), Vec3(8.56, 35.98, -49.4)],
     [Vec3(-16.11, 35.98, -48.61), Vec3(-12.94, 35.98, -51.98), Vec3(-21.83, 35.98, -77.37), Vec3(-43.33, 35.98, -68.5), Vec3(-34.72, 35.98, -43.41), Vec3(-30.45, 35.98, -43.57)],
-    [Vec3(-47.72, 35.98, -30.76), Vec3(-45.69, 35.98, -35.89), Vec3(-67.14, 35.98, -51.22), Vec3(-80.07, 35.98, -30.47), Vec3(-58.93, 35.98, -15.29), Vec3(-55.54, 35.98, -19.31)]
+    [Vec3(-47.72, 35.98, -30.76), Vec3(-45.69, 35.98, -35.89), Vec3(-67.14, 35.98, -51.22), Vec3(-80.07, 35.98, -30.47), Vec3(-58.93, 35.98, -15.29), Vec3(-55.54, 35.98, -19.31)],
+    
+    [Vec3(42.81, 93.36, 34.87), Vec3(60.31, 93.36, 50.99), Vec3(68.72, 93.36, 41.28), Vec3(50.98, 93.54, 25.25)],
+    [Vec3(55.0, 93.54, 15.13), Vec3(44.5, 93.54, 15.36), Vec3(44.78, 93.54, 10.56), Vec3(43.04, 93.54, 11.91)]
 ]
 
 points_ordonnes = [
@@ -574,21 +577,24 @@ murs_coordonnees = [
     (Vec3(58.77, 35.98, -6.47), Vec3(55.36, 35.98, -16.81)), (Vec3(55.36, 35.98, -16.81), Vec3(51.15, 35.98, -24.6)),
     (Vec3(41.61, 35.98, -34.68), Vec3(34.01, 35.98, -40.23)), (Vec3(34.01, 35.98, -40.23), Vec3(23.05, 35.98, -45.35)),
     (Vec3(8.42, 35.98, -48.57), Vec3(-4.52, 35.98, -48.73)), (Vec3(-4.52, 35.98, -48.73), Vec3(-15.51, 35.98, -47.52)),
-    (Vec3(-30.0, 35.98, -42.63), Vec3(-36.88, 35.98, -38.68)), (Vec3(-36.88, 35.98, -38.68), Vec3(-47.14, 35.98, -30.29))
+    (Vec3(-30.0, 35.98, -42.63), Vec3(-36.88, 35.98, -38.68)), (Vec3(-36.88, 35.98, -38.68), Vec3(-47.14, 35.98, -30.29)),
+    (Vec3(-15.93, 93.54, 29.18), Vec3(-13.53, 93.54, 46.81))
+]
+
+murs_boucles = [
+    [Vec3(7.9, 93.54, 48.54), Vec3(21.78, 93.54, 45.87), Vec3(27.65, 93.49, 69.08), Vec3(13.89, 93.49, 71.36)]
 ]
 
 mur_cylindre = []
 
 def ajouter_segment(p1, p2, force_hauteur=None, force_y_centre=None):
-    """Calcule et ajoute un mur physique parfait entre deux points."""
     centre = (p1 + p2) / 2
-    
     if force_hauteur is not None and force_y_centre is not None:
         hauteur = force_hauteur
         centre.y = force_y_centre
     else:
         hauteur = 150.0 - p1.y
-        centre.y += hauteur / 2
+        centre.y = p1.y + (hauteur / 2)
         
     longueur = math.sqrt((p2.x - p1.x)**2 + (p2.z - p1.z)**2)
     angle = math.degrees(math.atan2(p2.x - p1.x, p2.z - p1.z))
@@ -611,12 +617,16 @@ for points_du_mur in blocs_murs:
 h_totale = 35.0 - 2.97
 y_mid = 2.97 + (h_totale / 2)
 nb_points = len(points_ordonnes)
-
 for idx in range(nb_points):
     ajouter_segment(points_ordonnes[idx], points_ordonnes[(idx + 1) % nb_points], force_hauteur=h_totale, force_y_centre=y_mid)
 
 for p1, p2 in murs_coordonnees:
     ajouter_segment(p1, p2)
+
+for points_du_mur in murs_boucles:
+    nb = len(points_du_mur)
+    for idx in range(nb):
+        ajouter_segment(points_du_mur[idx], points_du_mur[(idx + 1) % nb])
 
 test_cube = Entity(
     model='cube',
