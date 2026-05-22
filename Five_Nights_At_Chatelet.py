@@ -117,6 +117,7 @@ ROLE_ANNOUNCE_DURATION = 4.0
 _announce_phase = 0
 _announce_fade  = 0.0
 FADE_SPEED      = 2.2
+_pos_vanne = _pos_electrique = _pos_panneau = _pos_navigo = None
 
 # État de l'écran de connexion (affiché au démarrage)
 _connection_screen_active = True
@@ -396,45 +397,43 @@ joueur = Entity(
 
 cube_vanne = Entity(
     model='cube', color=color.cyan,
-    position=(17, 8, -11),
+    position=(0, 35, 0),
     collider='box', shader=lit_with_shadows_shader
 )
+
+cube_electrique = Entity(
+    model='cube', color=color.yellow,
+    position=(0, 35, 0),
+    collider='box', shader=lit_with_shadows_shader
+)
+
+cube_panneau = Entity(
+    model='cube', color=color.blue,
+    position=(0, 35, 0),
+    collider='box', shader=lit_with_shadows_shader
+)
+
+calcul_termine = False # Nouvelle variable de sécurité
+navigo_task = None
 
 def purge_validee():
     print("[GAME] Égouts purgés !")
 
 enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
 
-
 def enigme_resolue():
     print("[GAME] Puzzle électrique validé !")
     # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
 
-cube_electrique = Entity(
-    model='cube',
-    color=color.yellow,
-    position=(11, 3, -6),  # ajuste à ta map
-    collider='box',
-    shader=lit_with_shadows_shader
-)
-
 enigme = EnigmeElectrique(on_success=enigme_resolue)
-
-cube_panneau = Entity(
-    model='cube', color=color.blue,
-    position=(17, 10, -13),   # ← adapte à ta map
-    collider='box', shader=lit_with_shadows_shader
-)
 
 def signalisation_restauree():
     print("[GAME] Signalisation restaurée !")
 
 enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
 
-navigo_task = None
-
-def init_tasks():
-    global navigo_task
+def init_tasks_math():
+    global _pos_vanne, _pos_electrique, _pos_panneau, _pos_navigo, calcul_termine
     import time as pytime
     
     attente = 0
@@ -450,35 +449,16 @@ def init_tasks():
     
     pos = choisir_salles_tasks(seed_int)
     
-    navigo_task = NavigoTask(
-        player=joueur,
-        position=pos['navigo'] + Vec3(0, 2.5, 0),
-        on_complete=lambda: print("Accès validé !"),
-        interaction_key=touches['Interact'],
-    )
+    # On sauvegarde juste les coordonnées finales !
+    _pos_vanne      = pos['vanne']      + Vec3(0, 2.5, 0)
+    _pos_electrique = pos['electrique'] + Vec3(0, 2.5, 0)
+    _pos_panneau    = pos['panneau']    + Vec3(0, 2.5, 0)
+    _pos_navigo     = pos['navigo']     + Vec3(0, 2.5, 0)
     
-    cube_vanne.position      = pos['vanne']      + Vec3(0, 2.5, 0)
-    cube_electrique.position = pos['electrique'] + Vec3(0, 2.5, 0)
-    cube_panneau.position    = pos['panneau']    + Vec3(0, 2.5, 0)
-    
-    est_infecte = hasattr(joueur, 'is_infected') and joueur.is_infected
-    
-    if est_infecte:
-        # Masquer les 3 cubes simples
-        cube_vanne.visible = False
-        cube_electrique.visible = False
-        cube_panneau.visible = False
-        
-        if hasattr(navigo_task, 'visible'):
-            navigo_task.visible = False
-        if hasattr(navigo_task, 'model') and navigo_task.model:
-            navigo_task.model.visible = False
-            
-        print("[TASKS] Joueur Infecté détecté : Masquage des tâches visuelles.")
-    else:
-        print("[TASKS] Joueur Survivant détecté : Les tâches sont visibles.")
+    calcul_termine = True
+    print("[TASKS] Positions calculées avec succès en arrière-plan !")
 
-threading.Thread(target=init_tasks, daemon=True).start()
+threading.Thread(target=init_tasks_math, daemon=True).start()
 
 
 # SYSTEME AUDIO
@@ -1467,21 +1447,67 @@ def input(key):
         for mur in mur_cylindre:
             mur.visible = not mur.visible
 
+tasks_placees = False
 
 def update():
-    global rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
+    global tasks_placees, navigo_task, rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
     global _heartbeat_playing, _breath_playing, _whisper_timer, _anim_timer, _attack_anim_timer, _is_attack_anim
 
-    navigo_task.update()
+
     enigme.update()
     enigme_signalisation.update()
     enigme_plomberie.update()
 
     update_connection_screen()
 
-    if navigo_task.is_open or enigme.is_open or enigme_signalisation.is_open or enigme_plomberie.is_open:
-        return
+    if calcul_termine and player_role is not None and not tasks_placees:
+        
+        # 1. On déplace les cubes simples
+        cube_vanne.position      = _pos_vanne
+        cube_electrique.position = _pos_electrique
+        cube_panneau.position    = _pos_panneau
+        
+        # 2. ON CRÉE LA BORNE DIRECTEMENT À SA PLACE (Règle le problème du vol !)
+        navigo_task = NavigoTask(
+            player=joueur,
+            position=_pos_navigo,
+            on_complete=lambda: print("Accès validé !"),
+            interaction_key=touches['Interact'],
+        )
+        
+        # 3. Masquage pour l'Infecté
+        if player_role == "Infected":
+            cube_vanne.visible = False
+            cube_vanne.collider = None
+            cube_electrique.visible = False
+            cube_electrique.collider = None
+            cube_panneau.visible = False
+            cube_panneau.collider = None
+            
+            if hasattr(navigo_task, 'visible'):
+                navigo_task.visible = False
+            for attr in ['entity', 'model', 'cube', 'borne']:
+                if hasattr(navigo_task, attr) and getattr(navigo_task, attr):
+                    obj = getattr(navigo_task, attr)
+                    obj.visible = False
+                    obj.collider = None
+                    
+            print("[GAME] Infecté : Tâches masquées correctement.")
+        else:
+            print("[GAME] Survivant : Tâches visibles et en place.")
+            
+        tasks_placees = True
 
+
+    if enigme.is_open or enigme_signalisation.is_open or enigme_plomberie.is_open:
+        return
+    
+    if navigo_task:
+        if hasattr(navigo_task, 'update'):
+            navigo_task.update()
+        elif navigo_task.is_open:
+            return
+        
     mouvement_joueur()
     mouvement_camera()
     saut()
