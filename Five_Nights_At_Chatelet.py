@@ -31,26 +31,6 @@ else:
 def res(path):
     return os.path.normpath(os.path.join(BASE_DIR, path))
 
-# Log fichier (utile en mode --windowed où stdout/stderr sont coupés)
-import logging
-_log_path = os.path.join(os.path.expanduser('~'), 'fnac_debug.log')
-logging.basicConfig(filename=_log_path, level=logging.DEBUG, filemode='w',
-                    format='%(asctime)s [%(levelname)s] %(message)s')
-logging.info("==== FNAC start ====")
-logging.info(f"frozen={getattr(sys, 'frozen', False)}  BASE_DIR={BASE_DIR}")
-logging.info(f"CWD={os.getcwd()}")
-_probe = os.path.join(BASE_DIR, 'ressources', 'visuel-epita.png')
-logging.info(f"sample png exists: {os.path.isfile(_probe)}  ({_probe})")
-
-# IMPORTANT: dire à Panda3D où chercher les modèles/textures
-# Sans ça, en mode --onefile PyInstaller, _MEIPASS n'est pas dans son model-path
-# et toutes les textures retombent en mauve (texture manquante).
-from panda3d.core import getModelPath, Filename, loadPrcFileData
-_panda_base = Filename.fromOsSpecific(BASE_DIR)
-loadPrcFileData("", f"model-path {_panda_base.getFullpath()}")
-getModelPath().prependDirectory(_panda_base)
-logging.info(f"panda model-path: {getModelPath()}")
-
 # touches par défaut
 touches = {
     'Move Forward': 'z',
@@ -89,16 +69,16 @@ os.chdir(BASE_DIR)
 application.asset_folder = Path(BASE_DIR)
 application.compressed_textures_folder = Path(BASE_DIR) / 'textures_compressed'
 
-# IMPORTANT: la liste `folders` dans ursina.texture_importer est figée à l'import
-# avec l'ancien asset_folder. Sans cette ligne, load_texture continue de chercher
-# dans le dossier d'install (ou de sys.argv[0].parent) au lieu de _MEIPASS.
+# La liste `folders` de ursina.texture_importer est figée à l'import du module
+# avec l'ancien asset_folder (sys.argv[0].parent). Sans ce reset, load_texture
+# continue de chercher dans le dossier d'install au lieu de _MEIPASS et toutes
+# les textures PNG tombent en mauve dans l'exe PyInstaller.
 from ursina import texture_importer as _tex_imp
 _tex_imp.folders = [
     application.compressed_textures_folder,
     application.asset_folder,
     application.internal_textures_folder,
 ]
-logging.info(f"ursina texture folders: {_tex_imp.folders}")
 
 try:                                                                            #-
     pygame.quit()                                                               #-
@@ -1649,9 +1629,6 @@ def play_screamer(data):
         return
     img_path, snd_path = data.split("|", 1)
 
-    abs_img = os.path.join(BASE_DIR, img_path)
-    logging.info(f"[SCREAMER] img_path={img_path}  exists={os.path.isfile(abs_img)}  abs={abs_img}")
-
     overlay = Entity(
         model='quad',
         texture=img_path,
@@ -1660,7 +1637,6 @@ def play_screamer(data):
         parent=camera.ui,
         z=-1
     )
-    logging.info(f"[SCREAMER] overlay.texture={overlay.texture}")
     
     # Lecture stable via le Mixeur Pygame
     try:
