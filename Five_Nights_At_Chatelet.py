@@ -127,6 +127,19 @@ _connection_timer = 0.5          # durée du palier "hold" en secondes
 CONNECTION_FADE_SPEED = 3.5      # fondu entrée/sortie de l'écran de connexion
 _connection_status_rgb = (80, 220, 100)
 
+# --- SYSTÈME DE TÂCHES ---
+mes_taches_accomplies = 0
+total_de_mes_taches = 4
+mon_statut_fini = False
+
+# Liste des IDs des survivants qui ont tout fini
+survivants_ayant_fini = set()
+
+# --- SYSTÈME DE VICTOIRE ---
+mur_victoire = None
+mur_cree = False
+victoire_declenchee = False
+
 def assign_role():
     """Attribution aléatoire et équilibrée des rôles au lancement."""
     global player_role, MAX_HP, base_speed, _role_announced, _role_announce_timer, all_assigned_roles
@@ -298,6 +311,8 @@ def update_role_indicator():
 
 
 def update_ghosts(other_players):
+    global mur_victoire, mur_cree
+    
     for pid in list(ghost_entities.keys()):
         if pid not in other_players:
             destroy(ghost_entities.pop(pid))
@@ -327,9 +342,41 @@ def update_ghosts(other_players):
 
     if hasattr(network, 'get_damage_events'):
         for event in network.get_damage_events():
+            if not isinstance(event, dict):
+                continue
+                
+            # --- INTERCEPTION DU MESSAGE TÂCHES FINIES ---
+            if event.get('type') == 'survivant_fini':
+                id_joueur = event.get('id')
+                survivants_ayant_fini.add(id_joueur)
+                print(f"[RESEAU] Le joueur {id_joueur} a fini ses tâches !")
+                
+                # Calcul dynamique du nombre de survivants connectés
+                nombre_total_survivants = sum(1 for p in all_assigned_roles.values() if p == 'Survivor')
+                if nombre_total_survivants == 0:  # Sécurité si l'enchaînement n'est pas encore prêt
+                    nombre_total_survivants = 1
+                    
+                print(f"Survivants prêts : {len(survivants_ayant_fini)} / {nombre_total_survivants}")
+                
+                # Si tous les survivants ont fini, apparition du mur vert
+                if len(survivants_ayant_fini) >= nombre_total_survivants:
+                    if not mur_cree:
+                        mur_victoire = Entity(
+                            model='cube',
+                            color=color.green,
+                            alpha=0.4,              # Semi-transparent 
+                            position=(56.4, 2.97, 0.28),
+                            scale=(0.5, 6.0, 22.68), # Dimensions basées sur tes positions
+                            collider=None           # Pas de collider physique pour entrer dedans
+                        )
+                        mur_cree = True
+                        print("[GAME] Le mur vert de la victoire est apparu ! Fuyez !")
+                continue # Passe à l'événement suivant
+
             if event.get("type") == "screamer":
                 play_screamer(event.get("screamer"))
                 continue
+                
             print(f"[NET] Event dégât reçu : {event}")
             if network.my_id is not None and str(event.get("target_id")) == str(network.my_id):
                 print(f"[NET] Je suis la cible ! Appel receive_damage({event.get('amount', 10)})")
@@ -342,7 +389,6 @@ def update_ghosts(other_players):
                 orig_color = ROLES[ghost_role]["model_color"]
                 
                 g.color = color.white
-                # Le fantôme redevient de sa couleur d'origine après le coup
                 invoke(setattr, g, 'color', orig_color, delay=0.15)
 
 SALLES = [
@@ -418,17 +464,20 @@ navigo_task = None
 
 def purge_validee():
     print("[GAME] Égouts purgés !")
+    valider_une_tache()
 
 enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
 
 def enigme_resolue():
     print("[GAME] Puzzle électrique validé !")
+    valider_une_tache()
     # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
 
 enigme = EnigmeElectrique(on_success=enigme_resolue)
 
 def signalisation_restauree():
     print("[GAME] Signalisation restaurée !")
+    valider_une_tache()
 
 enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
 
@@ -460,6 +509,24 @@ def init_tasks_math():
 
 threading.Thread(target=init_tasks_math, daemon=True).start()
 
+def valider_une_tache():
+    global mes_taches_accomplies, mon_statut_fini
+    
+    mes_taches_accomplies += 1
+    print(f"[TÂCHES] Progression : {mes_taches_accomplies}/{total_de_mes_taches}")
+    
+    if mes_taches_accomplies >= total_de_mes_taches and not mon_statut_fini:
+        mon_statut_fini = True
+        print("[GAME] Toutes mes tâches finies, message envoyé !")
+        if network and network.connected and network.my_id is not None:
+            network.sock.sendall((json.dumps({"type": "survivant_fini", "id": network.my_id}) + "\n").encode())
+
+def declencher_retour_menu():
+    if run_menu:
+        result = run_menu()
+        if result == 'start':
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+    sys.exit()
 
 # SYSTEME AUDIO
 
@@ -1567,6 +1634,7 @@ tasks_placees = False
 def update():
     global tasks_placees, navigo_task, rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
     global _heartbeat_playing, _breath_playing, _whisper_timer, _anim_timer, _attack_anim_timer, _is_attack_anim
+    global mur_victoire, mur_cree
 
 
     enigme.update()
@@ -1582,11 +1650,10 @@ def update():
         cube_electrique.position = _pos_electrique
         cube_panneau.position    = _pos_panneau
         
-        # 2. ON CRÉE LA BORNE DIRECTEMENT À SA PLACE (Règle le problème du vol !)
         navigo_task = NavigoTask(
             player=joueur,
             position=_pos_navigo,
-            on_complete=lambda: print("Accès validé !"),
+            on_complete=valider_une_tache,
             interaction_key=touches['Interact'],
         )
         
@@ -1752,6 +1819,51 @@ def update():
             joueur_bras_d.rotation_x = 0
             joueur_corps.rotation_x  = 0
             joueur_tete.rotation_x   = 0
+        
+    for msg in network.get_game_events():
+        if msg['type'] == 'survivant_fini':
+            id_joueur = msg['id']
+            survivants_ayant_fini.add(id_joueur)
+            print(f"[RESEAU] Le joueur {id_joueur} a fini ses tâches !")
+
+    if not mur_cree and player_role == 'Survivor':
+        nombre_total_survivants = sum(1 for p in network.other_players.values() if p.get('role') == 'Survivor') + 1
+
+        if mon_statut_fini:
+            survivants_ayant_fini.add(str(network.my_id))
+
+        if len(survivants_ayant_fini) >= nombre_total_survivants and nombre_total_survivants > 0:
+            print("--- TOUTES LES TÂCHES SONT REUSSITES ! ---")
+            mur_victoire = Entity(
+                model='cube',
+                color=color.green,
+                alpha=0.4,
+                position=(56.4, 2.97, 0.28),
+                scale=(0.5, 32.0, 22.68),
+                collider=None
+            )
+            mur_cree = True
+            print("[GAME] Le mur vert de la victoire est apparu ! Fuyez !")
+
+    global victoire_declenchee
+    if mur_cree and not victoire_declenchee:
+        # On vérifie si le joueur est proche du mur (X proche de 56.4)
+        # Et s'il est bien situé sur la longueur du mur (Z entre -11.5 et 12.0)
+        if abs(joueur.x - 56.4) < 1.3 and -11.5 <= joueur.z <= 12.0:
+            victoire_declenchee = True
+            print("[VICTOIRE] Vous avez traversé le mur !")
+            
+            # 1. Message de victoire
+            Text(
+                text="VICTOIRE ! Vous vous êtes échappés du Châtelet !",
+                origin=(0, 0),
+                scale=2.3,
+                color=color.green,
+                background=True
+            )
+            
+            # 2. Retour au menu après un délai de 4 secondes
+            invoke(declencher_retour_menu, delay=4.0)
 
 
 

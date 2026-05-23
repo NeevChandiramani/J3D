@@ -14,6 +14,7 @@ class NetworkClient:
         self.connected = False
         self._lock = threading.Lock()
         self._buffer = ""
+        self.game_event_queue = []
 
     def connect(self):
         try:
@@ -61,6 +62,10 @@ class NetworkClient:
                         elif isinstance(msg, dict) and msg.get("type") == "screamer":
                             with self._lock:
                                 self.damage_queue.append(msg)
+
+                        elif isinstance(msg, dict) and msg.get("type") == "survivant_fini":
+                            with self._lock:
+                                self.game_event_queue.append(msg)
 
                         # Cas 4 : C'est la liste des positions/rotations des joueurs
                         else:
@@ -134,3 +139,9 @@ class NetworkClient:
     def disconnect(self):
         self.connected = False
         if self.sock: self.sock.close()
+    
+    def get_game_events(self):
+        with self._lock:
+            events = list(self.game_event_queue)
+            self.game_event_queue.clear()
+            return events
