@@ -1887,7 +1887,7 @@ def input(key):
     if key == 'f11':
         from panda3d.core import WindowProperties
         wp = WindowProperties()
-        currently_full = bool(base.win.getProperties().getFullscreen())
+        currently_full = bool(application.base.win.getProperties().getFullscreen())
         new_full = not currently_full
         wp.setFullscreen(new_full)
         if new_full:
@@ -1898,7 +1898,7 @@ def input(key):
                 pass
         else:
             wp.setSize(1280, 720)
-        base.win.requestProperties(wp)
+        application.base.win.requestProperties(wp)
 
     if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True
