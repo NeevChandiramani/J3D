@@ -129,7 +129,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Pictures/image.png
+map_Kd image.png
 
 newmtl Material.014
 Ns 250.000000
@@ -139,7 +139,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Pictures/ChatGPT_Image_May_22_2026_03_37_41_PM.png
+map_Kd affiche.png
 
 newmtl Material.015
 Ns 250.000000
@@ -149,7 +149,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Pictures/260408-karina-for-kloud-krush-light-v0-0e3u9uoyzutg1.png
+map_Kd 260408-karina-for-kloud-krush-light-v0-0e3u9uoyzutg1.png
 
 newmtl Material.016
 Ns 250.000000
@@ -159,7 +159,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Pictures/un_juif_pour__exemple_thierry_piquet_theatre_mathurins_affiche_1741610827.png
+map_Kd un_juif_pour__exemple_thierry_piquet_theatre_mathurins_affiche_1741610827.png
 
 newmtl Material.017
 Ns 250.000000
@@ -169,7 +169,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Downloads/visuel-epita.png
+map_Kd visuel-epita.png
 
 newmtl Material.018
 Ns 250.000000
@@ -179,7 +179,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Downloads/vignette-brochure-Epita.jpg
+map_Kd vignette-brochure-Epita.jpg
 
 newmtl Material.019
 Ns 250.000000
@@ -189,7 +189,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Downloads/Epita.png
+map_Kd Epita.png
 
 newmtl Material.020
 Ns 250.000000
@@ -199,7 +199,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Downloads/merlin_144336495_10bd9321-e5d9-40c3-b83d-d6a4b38f6685-superJumbo.png
+map_Kd merlin_144336495_10bd9321-e5d9-40c3-b83d-d6a4b38f6685-superJumbo.png
 
 newmtl Material.021
 Ns 250.000000
@@ -209,7 +209,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Downloads/news-p.v1.20260313.16306f6b54204a0390509c44508b55e3_P2.png
+map_Kd news-p.v1.20260313.16306f6b54204a0390509c44508b55e3_P2.png
 
 newmtl Material.022
 Ns 250.000000
@@ -219,7 +219,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Pictures/Affiche J3D.png
+map_Kd Affiche J3D.png
 
 newmtl Material.023
 Ns 250.000000
@@ -229,7 +229,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd C:/Users/Go/Downloads/leonardo.png
+map_Kd leonardo.png
 
 newmtl Material.024
 Ns 250.000000
