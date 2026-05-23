@@ -434,7 +434,11 @@ sol = Entity(
     shader=lit_with_shadows_shader,
     scale=Vec3(0.5, 1.5, 0.5)
 )
-
+meubles = Entity(
+    model="ressources/Meubles.obj",
+    shader=lit_with_shadows_shader,
+    scale=Vec3(0.5, 1.5, 0.5)
+)
 joueur = Entity(
     position=(15, 3, 0),
     collider='box',
