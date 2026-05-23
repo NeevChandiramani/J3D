@@ -69,10 +69,6 @@ os.chdir(BASE_DIR)
 application.asset_folder = Path(BASE_DIR)
 application.compressed_textures_folder = Path(BASE_DIR) / 'textures_compressed'
 
-# La liste `folders` de ursina.texture_importer est figée à l'import du module
-# avec l'ancien asset_folder (sys.argv[0].parent). Sans ce reset, load_texture
-# continue de chercher dans le dossier d'install au lieu de _MEIPASS et toutes
-# les textures PNG tombent en mauve dans l'exe PyInstaller.
 from ursina import texture_importer as _tex_imp
 _tex_imp.folders = [
     application.compressed_textures_folder,
@@ -418,13 +414,18 @@ SALLES = [
 DISTANCE_MIN = 60
 
 def choisir_salles_tasks(player_id):
-    rng = random.Random(int(player_id))
+    try:
+        rng = random.Random(int(player_id))
+    except:
+        seed_int = sum(ord(c) for c in str(player_id))
+        rng = random.Random(seed_int)
     
-    tasks = ['navigo', 'vanne', 'electrique', 'panneau']
+    tasks = ['navigo', 'vanne', 'electrique', 'panneau', 'screamer1', 'screamer2']
     
     for _ in range(1000):
-        choix = rng.sample(range(len(SALLES)), 4)
+        choix = rng.sample(range(len(SALLES)), 6)
         valide = True
+        
         for i in range(len(choix)):
             for j in range(i + 1, len(choix)):
                 a, b = SALLES[choix[i]], SALLES[choix[j]]
@@ -434,10 +435,11 @@ def choisir_salles_tasks(player_id):
                     break
             if not valide:
                 break
+                
         if valide:
             return dict(zip(tasks, [SALLES[i] for i in choix]))
     
-    return dict(zip(tasks, rng.sample(SALLES, 4)))
+    return dict(zip(tasks, rng.sample(SALLES, 6)))
 
 
 sol = Entity(
@@ -536,6 +538,21 @@ cube_panneau = Entity(
     collider='box', shader=lit_with_shadows_shader
 )
 
+cube_screamer1 = Entity(
+    model='cube', color=color.red, 
+    position=(0, 0, 0),
+    collider='box', shader=lit_with_shadows_shader
+)
+
+cube_screamer2 = Entity(
+    model='cube', color=color.red,
+    position=(0, 0, 0),
+    collider='box', shader=lit_with_shadows_shader
+)
+
+_pos_screamer1 = None
+_pos_screamer2 = None
+
 calcul_termine = False # Nouvelle variable de sécurité
 navigo_task = None
 
@@ -560,6 +577,7 @@ enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_re
 
 def init_tasks_math():
     global _pos_vanne, _pos_electrique, _pos_panneau, _pos_navigo, calcul_termine
+    global _pos_screamer1, _pos_screamer2
     import time as pytime
     
     attente = 0
@@ -575,11 +593,13 @@ def init_tasks_math():
     
     pos = choisir_salles_tasks(seed_int)
     
-    # On sauvegarde juste les coordonnées finales !
     _pos_vanne      = pos['vanne']      + Vec3(0, 2.5, 0)
     _pos_electrique = pos['electrique'] + Vec3(0, 2.5, 0)
     _pos_panneau    = pos['panneau']    + Vec3(0, 2.5, 0)
     _pos_navigo     = pos['navigo']     + Vec3(0, 2.5, 0)
+    
+    _pos_screamer1  = pos['screamer1']  + Vec3(0, 2.5, 0)
+    _pos_screamer2  = pos['screamer2']  + Vec3(0, 2.5, 0)
     
     calcul_termine = True
     print("[TASKS] Positions calculées avec succès en arrière-plan !")
@@ -1637,7 +1657,7 @@ def play_screamer(data):
         parent=camera.ui,
         z=-1
     )
-    
+
     # Lecture stable via le Mixeur Pygame
     try:
         pygame_sound = pygame.mixer.Sound(res(snd_path))
@@ -1679,8 +1699,6 @@ def input(key):
             screamer_data = img + "|" + snd
             
             play_screamer(screamer_data)
-            if network.connected:
-                network.send_screamer(screamer_data)
 
         if enigme.can_interact(joueur.position, cube_electrique.position):
             enigme.open()
@@ -1693,6 +1711,16 @@ def input(key):
         if enigme_signalisation.can_interact(joueur.position, cube_panneau.position):
             enigme_signalisation.open()
         enigme_signalisation.handle_input(key)
+
+        if cube_screamer1.visible and distance(joueur.position, cube_screamer1.position) < 3.5:
+            cube_screamer1.visible = False
+            cube_screamer1.collider = None
+            play_screamer(screamer_data)
+            
+        if cube_screamer2.visible and distance(joueur.position, cube_screamer2.position) < 3.5:
+            cube_screamer2.visible = False
+            cube_screamer2.collider = None
+            play_screamer(screamer_data)
 
     if key == 'left mouse down':
         do_attack()
@@ -1725,6 +1753,9 @@ def update():
         cube_vanne.position      = _pos_vanne
         cube_electrique.position = _pos_electrique
         cube_panneau.position    = _pos_panneau
+        if _pos_screamer1 is not None and _pos_screamer2 is not None:
+            cube_screamer1.position  = _pos_screamer1
+            cube_screamer2.position  = _pos_screamer2
         
         navigo_task = NavigoTask(
             player=joueur,
