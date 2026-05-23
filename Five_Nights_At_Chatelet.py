@@ -62,6 +62,7 @@ if os.path.exists("config_touches.json"):
         print("Erreur lors du chargement des touches:", e)
 
 Five_nights_at_chatelet = Ursina()
+window.fullscreen = True
 
 # On change le répertoire de travail vers BASE_DIR
 # pour que Ursina trouve les assets avec des chemins relatifs
@@ -1386,6 +1387,7 @@ def build_help_text():
         ('Interagir', libelle_touche(touches['Interact'])),
         ('Attaquer',  'Clic gauche'),
         ('Aide',      'H'),
+        ('Plein écran','F11'),
         ('Pause',     'Échap'),
     ]
     help_body.text = '\n'.join(
@@ -1681,6 +1683,9 @@ def input(key):
 
     if key == 'h':
         toggle_help()
+
+    if key == 'f11':
+        window.fullscreen = not window.fullscreen
 
     if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True

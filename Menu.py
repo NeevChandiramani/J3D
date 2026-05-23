@@ -216,10 +216,14 @@ class Menu:
         ver_surf = self.font_small.render("v 1.0 (RER B)", True, (60, 60, 60))
         surface.blit(ver_surf, (30, HEIGHT - 40))
 
+        if self.state == "OPTIONS":
+            info_surf = self.font_small.render("F11 : Plein ecran / Fenetre", True, (120, 120, 120))
+            surface.blit(info_surf, (30, HEIGHT - 70))
+
 def run_menu():
     pygame.init()
     pygame.mixer.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN | pygame.SCALED)
     pygame.display.set_caption("FIVE NIGHTS AT CHATELET")
     clock = pygame.time.Clock()
 
@@ -252,6 +256,10 @@ def run_menu():
             if event.type == pygame.QUIT:
                 action = 'exit'
                 running = False
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_F11 and not menu.waiting_for_key:
+                pygame.display.toggle_fullscreen()
+                continue
 
             result = menu.handle_input(event)
             if result:
