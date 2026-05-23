@@ -1222,7 +1222,7 @@ def build_help_text():
         ('Interagir', libelle_touche(touches['Interact'])),
         ('Attaquer',  'Clic gauche'),
         ('Aide',      'H'),
-        ('Quitter',   'Échap'),
+        ('Pause',     'Échap'),
     ]
     help_body.text = '\n'.join(
         f"{nom.ljust(12)} :  {touche}" for nom, touche in lignes
@@ -1243,7 +1243,107 @@ def toggle_help():
     """Affiche ou masque l'overlay d'aide."""
     if not help_overlay_root.enabled:
         build_help_text()
-    help_overlay_root.enabled = not help_overlay_root.enabled
+        help_overlay_root.enabled = True
+        mouse.locked = False
+        mouse.visible = True
+    else:
+        help_overlay_root.enabled = False
+        if not is_dead and not pause_overlay_root.enabled:
+            mouse.locked = True
+            mouse.visible = False
+
+
+# UI — MENU PAUSE
+
+pause_overlay_root = Entity(parent=camera.ui, enabled=False, z=-0.7)
+
+Entity(
+    parent=pause_overlay_root,
+    model='quad',
+    color=color.rgba(0, 0, 0, 0.82),
+    scale=(2, 1),
+    z=0.1,
+)
+
+Entity(
+    parent=pause_overlay_root,
+    model='quad',
+    color=color.rgb32(28, 28, 36),
+    scale=(0.65, 0.7),
+    z=0.05,
+)
+
+Text(
+    parent=pause_overlay_root,
+    text='PAUSE',
+    origin=(0, 0),
+    position=(0, 0.22),
+    scale=2.2,
+    color=color.white,
+    font='VeraMono.ttf',
+)
+
+
+def quitter_jeu():
+    network.disconnect()
+    application.quit()
+
+
+def toggle_pause():
+    """Affiche ou masque le menu pause et gère la souris."""
+    pause_overlay_root.enabled = not pause_overlay_root.enabled
+    if pause_overlay_root.enabled:
+        mouse.locked = False
+        mouse.visible = True
+    elif not is_dead and not help_overlay_root.enabled:
+        mouse.locked = True
+        mouse.visible = False
+
+
+def ouvrir_aide_depuis_pause():
+    pause_overlay_root.enabled = False
+    if not help_overlay_root.enabled:
+        build_help_text()
+        help_overlay_root.enabled = True
+    mouse.locked = False
+    mouse.visible = True
+
+
+Button(
+    parent=pause_overlay_root,
+    text='Reprendre',
+    text_color=color.black,
+    position=(0, 0.05),
+    scale=(0.36, 0.08),
+    color=color.rgba(180, 180, 180, 0.95),
+    highlight_color=color.rgba(220, 220, 220, 1),
+    pressed_color=color.rgba(140, 140, 140, 1),
+    on_click=toggle_pause,
+)
+
+Button(
+    parent=pause_overlay_root,
+    text='Aide',
+    text_color=color.black,
+    position=(0, -0.06),
+    scale=(0.36, 0.08),
+    color=color.rgba(180, 180, 180, 0.95),
+    highlight_color=color.rgba(220, 220, 220, 1),
+    pressed_color=color.rgba(140, 140, 140, 1),
+    on_click=ouvrir_aide_depuis_pause,
+)
+
+Button(
+    parent=pause_overlay_root,
+    text='Quitter',
+    text_color=color.black,
+    position=(0, -0.17),
+    scale=(0.36, 0.08),
+    color=color.rgba(140, 0, 0, 0.95),
+    highlight_color=color.rgba(200, 30, 30, 1),
+    pressed_color=color.rgba(80, 0, 0, 1),
+    on_click=quitter_jeu,
+)
 
 
 
@@ -1412,10 +1512,9 @@ def input(key):
 
     if key == 'escape':
         if help_overlay_root.enabled:
-            help_overlay_root.enabled = False
+            toggle_help()
         else:
-            network.disconnect()
-            application.quit()
+            toggle_pause()
 
     if key == 'h':
         toggle_help()
