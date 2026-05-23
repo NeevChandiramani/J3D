@@ -159,6 +159,11 @@ mur_victoire = None
 mur_cree = False
 victoire_declenchee = False
 
+_liberation_timer = 0.0
+LIBERATION_DUREE = 5.0
+_liberation_en_cours = False
+_liberation_cible = None  # le joueur mort qu'on est en train de libérer
+
 def assign_role():
     """Attribution aléatoire et équilibrée des rôles au lancement."""
     global player_role, MAX_HP, base_speed, _role_announced, _role_announce_timer, all_assigned_roles
@@ -1091,33 +1096,6 @@ def update_embuscadeur():
         _emb_tension_timer -= time.dt
         if _emb_tension_timer <= 0:
             _emb_trigger()
-ecran_mort = Entity(parent=camera.ui, enabled=False)
-
-fond_mort = Entity(
-    parent=ecran_mort,
-    model='quad',
-    color=color.rgba(0, 0, 0, 0.75),
-    scale=(2, 1),
-    z=0.1
-)
-
-texte_mort = Text(
-    parent=ecran_mort,
-    text='YOU DIED!',
-    origin=(0, 0),
-    position=(0, 0.15),
-    scale=4,
-    color=color.rgb(180, 0, 0),
-    font='VeraMono.ttf'
-)
-
-ligne_mort = Entity(
-    parent=ecran_mort,
-    model='quad',
-    color=color.rgba(180, 0, 0, 0.8),
-    scale=(0.5, 0.003),
-    position=(0, 0.07)
-)
 
 def bouton_respawn():
     respawn_player()
@@ -1128,36 +1106,15 @@ def bouton_menu():
     subprocess.Popen([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "Five_Nights_At_Chatelet.py")])
     application.quit()
 
-btn_respawn = Button(
-    parent=ecran_mort,
-    text='RESPAWN',
-    text_color= color.black,
-    position=(0, -0.05),
-    scale=(0.28, 0.07),
-    color=color.rgba(140, 0, 0, 0.9),
-    highlight_color=color.rgba(200, 30, 30, 1),
-    pressed_color=color.rgba(80, 0, 0, 1),
-    on_click=bouton_respawn
+interaction_text = Text(
+    text='',
+    origin=(0, 0),
+    position=(0, -0.35),
+    scale=1.5,
+    color=color.white,
+    background=False,
+    enabled=False
 )
-btn_respawn.text_entity.scale *= 0.9
-
-
-
-btn_menu = Button(
-    parent=ecran_mort,
-    text='TITLE SCREEN',
-    text_color= color.black,
-    position=(0, -0.16),
-    scale=(0.28, 0.07),
-    color=color.rgba(30, 30, 30, 0.9),
-    highlight_color=color.rgba(70, 70, 70, 1),
-    pressed_color=color.rgba(10, 10, 10, 1),
-    on_click=bouton_menu
-
-)
-btn_menu.text_entity.scale *= 0.9
-
-
 
 # HP
 
@@ -1192,17 +1149,19 @@ def receive_damage(amount):
         player_death()
 
 def player_death():
-    global is_dead, _death_timer
+    global is_dead
     is_dead = True
-    _death_timer = RESPAWN_DELAY
-    hp_text.text = 'HP: 0  —  MORT'
+    hp_text.text = 'HP: 0  —  EMPRISONNÉ'
     hp_text.color = color.red
-
     play_sfx('death')
-
-    ecran_mort.enabled = True
-    mouse.locked = False
-    mouse.visible = True
+    
+    # Téléporter en prison
+    joueur.position = (17.34, 98.17, 60.4)
+    vertical_velocity = 0
+    
+    # Garder la souris locked (pas de menu)
+    mouse.locked = True
+    mouse.visible = False
 
 def respawn_player():
     global is_dead, player_hp, _invincibility_timer
@@ -1212,10 +1171,59 @@ def respawn_player():
     joueur.position = (15, 3, 0)
     hp_text.color = color.lime
     update_hp_ui()
-
-    ecran_mort.enabled = False
     mouse.locked = True
     mouse.visible = False
+
+def update_liberation():
+    global _liberation_timer, _liberation_en_cours, _liberation_cible, is_dead
+
+    POS_LEVIER = Vec3(14.89, 93.54, 45.97)
+    RAYON = 3.0
+
+    # Si le joueur local est mort, il ne peut pas libérer
+    if player_role != 'Survivor' or is_dead:
+        _liberation_en_cours = False
+        _liberation_timer = 0.0
+        return
+
+    # Chercher un joueur mort proche du levier
+    cible_trouvee = None
+    for pid, ghost in ghost_entities.items():
+        if ghost_hp.get(pid, 100) <= 0:
+            dist_levier = distance(ghost.position, POS_LEVIER)
+            dist_joueur = distance(joueur.position, POS_LEVIER)
+            if dist_levier < RAYON and dist_joueur < RAYON:
+                cible_trouvee = pid
+                break
+
+    if held_keys[touches['Interact']] and cible_trouvee:
+        if not _liberation_en_cours or _liberation_cible != cible_trouvee:
+            _liberation_en_cours = True
+            _liberation_cible = cible_trouvee
+            _liberation_timer = 0.0
+
+        _liberation_timer += time.dt
+        # Afficher progression
+        pct = int((_liberation_timer / LIBERATION_DUREE) * 100)
+        interaction_text.text = f'Libération : {pct}%'
+        interaction_text.enabled = True
+
+        if _liberation_timer >= LIBERATION_DUREE:
+            # Libérer le joueur via réseau
+            if network and network.connected:
+                network.sock.sendall((json.dumps({
+                    "type": "liberer_joueur",
+                    "target_id": _liberation_cible
+                }) + "\n").encode())
+            _liberation_en_cours = False
+            _liberation_timer = 0.0
+            _liberation_cible = None
+            interaction_text.enabled = False
+    else:
+        _liberation_en_cours = False
+        _liberation_timer = 0.0
+        if cible_trouvee is None:
+            interaction_text.enabled = False
 
 def update_hp_ui():
     ratio = player_hp / MAX_HP
@@ -2170,10 +2178,7 @@ def update():
     if not mur_cree and player_role == 'Survivor':
         nombre_total_survivants = sum(1 for r in all_assigned_roles.values() if r == 'Survivor')
         if nombre_total_survivants == 0:
-            nombre_total_survivants = 1  # sécurité solo
-
-        if mon_statut_fini:
-            survivants_ayant_fini.add(str(network.my_id))
+            nombre_total_survivants = 1
 
         if len(survivants_ayant_fini) >= nombre_total_survivants:
             print("--- TOUTES LES TÂCHES SONT REUSSITES ! ---")
@@ -2207,6 +2212,8 @@ def update():
             
             # 2. Retour au menu après un délai de 4 secondes
             invoke(declencher_retour_menu, delay=4.0)
+        
+    update_liberation()
 
 
 

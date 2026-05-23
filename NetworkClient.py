@@ -66,6 +66,10 @@ class NetworkClient:
                         elif isinstance(msg, dict) and msg.get("type") == "survivant_fini":
                             with self._lock:
                                 self.game_event_queue.append(msg)
+                        
+                        elif isinstance(msg, dict) and msg.get("type") == "liberer_joueur":
+                            with self._lock:
+                                self.game_event_queue.append(msg)
 
                         # Cas 4 : C'est la liste des positions/rotations des joueurs
                         else:
