@@ -1715,11 +1715,19 @@ def input(key):
         if cube_screamer1.visible and distance(joueur.position, cube_screamer1.position) < 3.5:
             cube_screamer1.visible = False
             cube_screamer1.collider = None
+            
+            img, snd = random.choice(screamer_list)
+            screamer_data = img + "|" + snd
+
             play_screamer(screamer_data)
             
         if cube_screamer2.visible and distance(joueur.position, cube_screamer2.position) < 3.5:
             cube_screamer2.visible = False
             cube_screamer2.collider = None
+
+            img, snd = random.choice(screamer_list)
+            screamer_data = img + "|" + snd
+
             play_screamer(screamer_data)
 
     if key == 'left mouse down':
