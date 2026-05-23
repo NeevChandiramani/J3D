@@ -439,6 +439,67 @@ meubles = Entity(
     shader=lit_with_shadows_shader,
     scale=Vec3(0.5, 1.5, 0.5)
 )
+
+panneau_1 = Entity(
+    model="ressources/affiche1.obj",
+    texture="ressources/visuel-epita.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_3 = Entity(
+    model="ressources/leo.obj",
+    texture="ressources/leonardo.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_4 = Entity(
+    model="ressources/chatelet.obj",
+    texture="ressources/image.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_5 = Entity(
+    model="ressources/karin1.obj",
+    texture="ressources/260408-karina-for-kloud-krush-light-v0-0e3u9uoyzutg1",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_6 = Entity(
+    model="ressources/epi2.obj",
+    texture="ressources/vignettepita.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_7 = Entity(
+    model="ressources/five.obj",
+    texture="ressources/Affiche J3D.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_8 = Entity(
+    model="ressources/train.obj",
+    texture="ressources/merlin_144336495_10bd9321-e5d9-40c3-b83d-d6a4b38f6685-superJumbo.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_9 = Entity(
+    model="ressources/j.obj",
+    texture="ressources/un_juif_pour__exemple_thierry_piquet_theatre_mathurins_affiche_1741610827.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_10 = Entity(
+    model="ressources/kari2.obj",
+    texture="ressources/news-p.v1.20260313.16306f6b54204a0390509c44508b55e3_P2.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
+panneau_11 = Entity(
+    model="ressources/gare.obj",
+    texture="ressources/gare.png",
+    scale=Vec3(0.5, 1.5, 0.5)
+)
+
 joueur = Entity(
     position=(15, 3, 0),
     collider='box',
