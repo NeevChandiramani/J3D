@@ -1559,7 +1559,7 @@ def play_screamer(data):
     # Texture UI relative pour Ursina
     overlay = Entity(
         model='quad',
-        texture=img_path, 
+        texture=res(img_path),
         scale=(camera.aspect_ratio * 2, 2),
         position=(0, 0),
         parent=camera.ui,
