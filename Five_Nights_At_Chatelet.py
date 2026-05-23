@@ -1193,7 +1193,23 @@ def build_help_text():
         'enter': 'Entrée',
     }
 
+    # Inverse du mapping AZERTY -> Ursina appliqué par Menu.py au moment
+    # de la sauvegarde : on retrouve le libellé physique de la touche
+    # qu'aperçoit l'utilisateur sur un clavier AZERTY.
+    ursina_to_azerty = {
+        'q': 'a',
+        'a': 'q',
+        'w': 'z',
+        'z': 'w',
+        ';': 'm',
+        'up arrow': 'up',
+        'down arrow': 'down',
+        'left arrow': 'left',
+        'right arrow': 'right',
+    }
+
     def libelle_touche(t):
+        t = ursina_to_azerty.get(t, t)
         return noms_affichage.get(t, t.upper())
 
     lignes = [
