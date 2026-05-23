@@ -1952,12 +1952,14 @@ def update():
             print(f"[RESEAU] Le joueur {id_joueur} a fini ses tâches !")
 
     if not mur_cree and player_role == 'Survivor':
-        nombre_total_survivants = sum(1 for p in network.other_players.values() if p.get('role') == 'Survivor') + 1
+        nombre_total_survivants = sum(1 for r in all_assigned_roles.values() if r == 'Survivor')
+        if nombre_total_survivants == 0:
+            nombre_total_survivants = 1  # sécurité solo
 
         if mon_statut_fini:
             survivants_ayant_fini.add(str(network.my_id))
 
-        if len(survivants_ayant_fini) >= nombre_total_survivants and nombre_total_survivants > 0:
+        if len(survivants_ayant_fini) >= nombre_total_survivants:
             print("--- TOUTES LES TÂCHES SONT REUSSITES ! ---")
             mur_victoire = Entity(
                 model='cube',
