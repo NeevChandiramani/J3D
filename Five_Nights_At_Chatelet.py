@@ -64,6 +64,16 @@ if os.path.exists("config_touches.json"):
 Five_nights_at_chatelet = Ursina()
 window.fullscreen = True
 
+# Neutraliser le handler interne d'Ursina pour F11 (qui annulerait notre toggle)
+if getattr(window, 'input_entity', None) is not None:
+    _ursina_orig_input = window.input_entity.input
+    def _filtered_window_input(key, _orig=_ursina_orig_input):
+        if key in ('f11', 'f11 up'):
+            return
+        if _orig:
+            _orig(key)
+    window.input_entity.input = _filtered_window_input
+
 # On change le répertoire de travail vers BASE_DIR
 # pour que Ursina trouve les assets avec des chemins relatifs
 os.chdir(BASE_DIR)
@@ -1685,7 +1695,20 @@ def input(key):
         toggle_help()
 
     if key == 'f11':
-        window.fullscreen = not window.fullscreen
+        from panda3d.core import WindowProperties
+        wp = WindowProperties()
+        currently_full = bool(base.win.getProperties().getFullscreen())
+        new_full = not currently_full
+        wp.setFullscreen(new_full)
+        if new_full:
+            try:
+                mon = window.main_monitor
+                wp.setSize(int(mon.width), int(mon.height))
+            except Exception:
+                pass
+        else:
+            wp.setSize(1280, 720)
+        base.win.requestProperties(wp)
 
     if key == touches['Jump'] and on_ground and not is_dead:
         is_jumping = True

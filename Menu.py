@@ -245,6 +245,7 @@ def run_menu():
     menu = Menu()
     running = True
     action = None
+    is_fullscreen_menu = True
 
     while running:
         keys = pygame.key.get_pressed()
@@ -258,7 +259,9 @@ def run_menu():
                 running = False
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_F11 and not menu.waiting_for_key:
-                pygame.display.toggle_fullscreen()
+                is_fullscreen_menu = not is_fullscreen_menu
+                flags = (pygame.FULLSCREEN | pygame.SCALED) if is_fullscreen_menu else pygame.SCALED
+                screen = pygame.display.set_mode((WIDTH, HEIGHT), flags)
                 continue
 
             result = menu.handle_input(event)
