@@ -840,10 +840,10 @@ cube_proche = Entity(
 # CUBE SCREAMER
 
 screamer_list = [
-    ('ressources/screamers/Snapshot_2.PNG', 'ressources/screamers/Snapshot2.ogg'),
-    ('ressources/screamers/Snapshot_3.PNG', 'ressources/screamers/Snapshot3.ogg'),
-    ('ressources/screamers/Snapshot_4.PNG', 'ressources/screamers/Snapshot4.ogg'),
-    ('ressources/screamers/Snapshot_5.PNG', 'ressources/screamers/Snapshot5.ogg'),
+    ('ressources/screamers/Snapshot_2.png', 'ressources/screamers/Snapshot2.ogg'),
+    ('ressources/screamers/Snapshot_3.png', 'ressources/screamers/Snapshot3.ogg'),
+    ('ressources/screamers/Snapshot_4.png', 'ressources/screamers/Snapshot4.ogg'),
+    ('ressources/screamers/Snapshot_5.png', 'ressources/screamers/Snapshot5.ogg'),
 ]
 
 cube_screamer = Entity(
@@ -1616,11 +1616,10 @@ def play_screamer(data):
     if "|" not in data:
         return
     img_path, snd_path = data.split("|", 1)
-    
-    # Texture UI relative pour Ursina
+
     overlay = Entity(
         model='quad',
-        texture=res(img_path),
+        texture=img_path,
         scale=(camera.aspect_ratio * 2, 2),
         position=(0, 0),
         parent=camera.ui,
