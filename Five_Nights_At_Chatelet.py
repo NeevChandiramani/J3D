@@ -87,6 +87,18 @@ Five_nights_at_chatelet = Ursina()
 # pour que Ursina trouve les assets avec des chemins relatifs
 os.chdir(BASE_DIR)
 application.asset_folder = Path(BASE_DIR)
+application.compressed_textures_folder = Path(BASE_DIR) / 'textures_compressed'
+
+# IMPORTANT: la liste `folders` dans ursina.texture_importer est figée à l'import
+# avec l'ancien asset_folder. Sans cette ligne, load_texture continue de chercher
+# dans le dossier d'install (ou de sys.argv[0].parent) au lieu de _MEIPASS.
+from ursina import texture_importer as _tex_imp
+_tex_imp.folders = [
+    application.compressed_textures_folder,
+    application.asset_folder,
+    application.internal_textures_folder,
+]
+logging.info(f"ursina texture folders: {_tex_imp.folders}")
 
 try:                                                                            #-
     pygame.quit()                                                               #-
