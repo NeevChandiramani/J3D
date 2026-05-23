@@ -219,6 +219,8 @@ def assign_role():
     _role_announce_timer = ROLE_ANNOUNCE_DURATION
     show_role_announce()
     print(f"[ROLE] Role attribué : {player_role}")
+    # Lancer l'embuscadeur maintenant que my_id et les entités sont prêts
+    init_embuscadeur()
 
 
 def show_role_announce():
@@ -900,7 +902,195 @@ cube_screamer = Entity(
 
 _screamer_timer = 0.0
 
-#Interface de mort
+
+# ── EMBUSCADEUR (IA) ────────────────────────────────────────────────────────────
+# Positions candidates dans les couloirs et les coins de la map.
+# Dérivées de points_ordonnes (y≈2.97 sol) et SALLES (y≈35.98 étage).
+EMBUSCADE_POSITIONS = [
+    Vec3(-62.18, 35.98,  -2.44),
+    Vec3(-58.68, 35.98,  15.42),
+    Vec3(-63.60, 35.98,  12.92),
+    Vec3(-58.50, 35.98, -17.37),
+    Vec3(-47.42, 35.98, -35.85),
+    Vec3(-32.78, 35.98, -44.47),
+    Vec3(-15.17, 35.98, -50.76),
+    Vec3(-32.14, 35.98, -58.42),
+    Vec3(-24.61, 35.98, -62.90),
+    Vec3(  7.75, 35.98, -50.90),
+    Vec3( 26.25, 35.98, -47.41),
+    Vec3( 13.70, 35.98, -54.77),
+    Vec3( 42.67, 35.98, -38.27),
+    Vec3( 54.41, 35.98, -25.21),
+    Vec3( 56.92, 35.98, -30.63),
+    Vec3( 61.31, 35.98, -10.83),
+    Vec3( 60.98, 35.98,   9.35),
+    Vec3( 53.73, 35.98,  25.28),
+    Vec3( 42.71, 35.98,  39.24),
+    Vec3( 53.03, 35.98,  38.90),
+    Vec3( 24.34, 35.98,  47.64),
+    Vec3(  6.03, 35.98,  52.20),
+    Vec3( 14.75, 35.98,  58.22),
+    Vec3(-36.72, 35.98,  41.70),
+    Vec3(-50.41, 35.98,  31.26),
+    Vec3(-50.61, 35.98,  41.39),
+    Vec3(-43.01, 35.98,  42.13),
+]
+
+EMBUSCADE_DAMAGE        = 15    # HP retirés lors d'un bond
+EMBUSCADE_DETECT_WALK   = 3.5   # rayon de détection (marche)
+EMBUSCADE_DETECT_SPRINT = 9.0   # rayon de détection (sprint — beaucoup de bruit)
+EMBUSCADE_TENSION_TIME  = 0.7   # secondes dans la zone avant le déclenchement
+EMBUSCADE_COOLDOWN      = 30.0  # secondes de pause après chaque attaque
+EMBUSCADE_LEAP_SPEED    = 20.0  # vitesse du bond vers le joueur
+EMBUSCADE_LEAP_DURATION = 0.35  # durée du bond (secondes)
+
+_emb_pos_order    = []     # ordre shufflé propre au joueur (seed = my_id)
+_emb_pos_index    = 0
+_emb_state        = "wait" # "wait" | "hidden" | "tension" | "leap" | "cooldown"
+_emb_tension_timer  = 0.0
+_emb_cooldown_timer = 0.0
+_emb_leap_timer     = 0.0
+_emb_leap_target    = Vec3(0, 0, 0)
+_emb_entity         = None  # entité 3D de l'embuscadeur (créée après assign_role)
+
+
+def _emb_current_pos():
+    idx = _emb_pos_order[_emb_pos_index % len(_emb_pos_order)]
+    return EMBUSCADE_POSITIONS[idx]
+
+
+def _emb_advance():
+    """Passe à la prochaine position dans l'ordre shufflé."""
+    global _emb_pos_index
+    _emb_pos_index = (_emb_pos_index + 1) % len(_emb_pos_order)
+
+
+def init_embuscadeur():
+    """
+    Appelé une seule fois depuis assign_role(), après que network.my_id est connu.
+    Crée l'entité et calcule l'ordre des positions (seed = my_id → unique par joueur).
+    """
+    global _emb_pos_order, _emb_pos_index, _emb_entity, _emb_state
+
+    seed_id = network.my_id if network.my_id is not None else random.randint(1, 99999)
+    try:
+        seed_int = int(seed_id)
+    except (ValueError, TypeError):
+        seed_int = sum(ord(c) for c in str(seed_id))
+
+    rng = random.Random(seed_int + 31337)
+    _emb_pos_order = list(range(len(EMBUSCADE_POSITIONS)))
+    rng.shuffle(_emb_pos_order)
+    _emb_pos_index = 0
+
+    start_pos = _emb_current_pos()
+
+    _emb_entity = Entity(
+        model='cube',
+        color=color.red,
+        scale=(0.8, 2.5, 0.8),
+        position=start_pos,
+        collider=None,
+        shader=lit_with_shadows_shader,
+        enabled=True,
+    )
+
+    _emb_state = "hidden"
+    print(f"[EMBUSCADE] Initialisé à {start_pos}")
+
+
+def _emb_trigger():
+    """Déclenche le bond, le screamer et les dégâts."""
+    global _emb_state, _emb_leap_timer, _emb_leap_target
+
+    if _emb_entity is None:
+        return
+
+    _emb_state      = "leap"
+    _emb_leap_timer = EMBUSCADE_LEAP_DURATION
+    # Cible = tête du joueur
+    _emb_leap_target = Vec3(joueur.x, joueur.y + 1.5, joueur.z)
+
+    _emb_entity.enabled = True
+
+    # Orienter l'embuscadeur vers le joueur
+    delta = _emb_leap_target - _emb_entity.position
+    if delta.length() > 0.01:
+        _emb_entity.look_at(joueur)
+
+    # Screamer + dégâts
+    img, snd = random.choice(screamer_list)
+    play_screamer(img + "|" + snd)
+    if network.connected:
+        network.send_screamer(img + "|" + snd)
+
+    receive_damage(EMBUSCADE_DAMAGE)
+    print(f"[EMBUSCADE] BOND ! -{EMBUSCADE_DAMAGE} HP")
+
+
+def update_embuscadeur():
+    """Appelée chaque frame depuis update()."""
+    global _emb_state, _emb_tension_timer, _emb_cooldown_timer, _emb_leap_timer
+
+    if _emb_entity is None or _emb_state == "wait" or is_dead or player_role is None:
+        return
+
+    # ── COOLDOWN : repositionnement après attaque ──────────────────────────────
+    if _emb_state == "cooldown":
+        _emb_cooldown_timer -= time.dt
+        if _emb_cooldown_timer <= 0:
+            _emb_advance()
+            new_pos = _emb_current_pos()
+            _emb_entity.position = new_pos
+            _emb_entity.enabled  = True
+            _emb_state = "hidden"
+            print(f"[EMBUSCADE] Repositionné → {new_pos}")
+        return
+
+    # ── BOND : l'embuscadeur se précipite vers le joueur ──────────────────────
+    if _emb_state == "leap":
+        _emb_leap_timer -= time.dt
+        if _emb_leap_timer > 0:
+            delta = _emb_leap_target - _emb_entity.position
+            if delta.length() > 0.1:
+                _emb_entity.position += delta.normalized() * EMBUSCADE_LEAP_SPEED * time.dt
+        else:
+            _emb_entity.enabled  = True
+            _emb_state           = "cooldown"
+            _emb_cooldown_timer  = EMBUSCADE_COOLDOWN
+            print(f"[EMBUSCADE] En cooldown {EMBUSCADE_COOLDOWN}s")
+        return
+
+    # ── CACHÉ ou TENSION : calcul bruit joueur ─────────────────────────────────
+    is_moving = (
+        held_keys[touches['Move Forward']]  or held_keys[touches['Move Backward']] or
+        held_keys[touches['Move Left']]     or held_keys[touches['Move Right']]
+    )
+    is_sprinting_now = held_keys[touches['Sprint']] and is_moving and current_stamina > 1
+
+    if is_sprinting_now:
+        detect_r = EMBUSCADE_DETECT_SPRINT
+    elif is_moving:
+        detect_r = EMBUSCADE_DETECT_WALK
+    else:
+        detect_r = 0.0          # immobile = silencieux = indétectable
+
+    dist = distance(joueur.position, _emb_entity.position)
+
+    if _emb_state == "hidden":
+        if detect_r > 0 and dist <= detect_r:
+            _emb_state        = "tension"
+            _emb_tension_timer = EMBUSCADE_TENSION_TIME
+            print(f"[EMBUSCADE] Tension ! dist={dist:.1f} rayon={detect_r:.1f}")
+
+    elif _emb_state == "tension":
+        if detect_r == 0 or dist > detect_r:
+            # Joueur s'est arrêté / éloigné → l'embuscadeur se rendort
+            _emb_state = "hidden"
+            return
+        _emb_tension_timer -= time.dt
+        if _emb_tension_timer <= 0:
+            _emb_trigger()
 ecran_mort = Entity(parent=camera.ui, enabled=False)
 
 fond_mort = Entity(
@@ -1914,6 +2104,9 @@ def update():
     # Rôle : animation d'annonce + indicateur
     update_role_announce()
     update_role_indicator()
+
+    # IA Embuscadeur
+    update_embuscadeur()
 
     # ── Animation personnage ──
 
