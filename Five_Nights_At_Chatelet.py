@@ -1042,6 +1042,7 @@ cube_screamer = Entity(
 )
 
 _screamer_timer = 0.0
+_immobilized_timer = 0.0
 
 
 # ── EMBUSCADEUR (IA) ────────────────────────────────────────────────────────────
@@ -1078,8 +1079,8 @@ EMBUSCADE_POSITIONS = [
 ]
 
 EMBUSCADE_DAMAGE        = 15    # HP retirés lors d'un bond
-EMBUSCADE_DETECT_WALK   = 3.5   # rayon de détection (marche)
-EMBUSCADE_DETECT_SPRINT = 9.0   # rayon de détection (sprint — beaucoup de bruit)
+EMBUSCADE_DETECT_WALK   = 9.0   # rayon de détection (marche)
+EMBUSCADE_DETECT_SPRINT = 18.0   # rayon de détection (sprint — beaucoup de bruit)
 EMBUSCADE_TENSION_TIME  = 0.7   # secondes dans la zone avant le déclenchement
 EMBUSCADE_COOLDOWN      = 30.0  # secondes de pause après chaque attaque
 EMBUSCADE_LEAP_SPEED    = 20.0  # vitesse du bond vers le joueur
@@ -1127,13 +1128,13 @@ def init_embuscadeur():
     start_pos = _emb_current_pos()
 
     _emb_entity = Entity(
-        model='cube',
+        model='ressources/Crackhead.obj',
         color=color.red,
         scale=(0.8, 2.5, 0.8),
         position=start_pos,
         collider=None,
         shader=lit_with_shadows_shader,
-        enabled=True,
+        enabled=False,
     )
 
     _emb_state = "hidden"
@@ -1142,7 +1143,7 @@ def init_embuscadeur():
 
 def _emb_trigger():
     """Déclenche le bond, le screamer et les dégâts."""
-    global _emb_state, _emb_leap_timer, _emb_leap_target
+    global _emb_state, _emb_leap_timer, _emb_leap_target, _immobilized_timer
 
     if _emb_entity is None:
         return
@@ -1162,9 +1163,8 @@ def _emb_trigger():
     # Screamer + dégâts
     img, snd = random.choice(screamer_list)
     play_screamer(img + "|" + snd)
-    if network.connected:
-        network.send_screamer(img + "|" + snd)
 
+    _immobilized_timer = 3.0
     receive_damage(EMBUSCADE_DAMAGE)
     print(f"[EMBUSCADE] BOND ! -{EMBUSCADE_DAMAGE} HP")
 
@@ -1183,7 +1183,7 @@ def update_embuscadeur():
             _emb_advance()
             new_pos = _emb_current_pos()
             _emb_entity.position = new_pos
-            _emb_entity.enabled  = True
+            _emb_entity.enabled  = False
             _emb_state = "hidden"
             print(f"[EMBUSCADE] Repositionné → {new_pos}")
         return
@@ -1196,7 +1196,7 @@ def update_embuscadeur():
             if delta.length() > 0.1:
                 _emb_entity.position += delta.normalized() * EMBUSCADE_LEAP_SPEED * time.dt
         else:
-            _emb_entity.enabled  = True
+            _emb_entity.enabled  = False
             _emb_state           = "cooldown"
             _emb_cooldown_timer  = EMBUSCADE_COOLDOWN
             print(f"[EMBUSCADE] En cooldown {EMBUSCADE_COOLDOWN}s")
@@ -2001,7 +2001,13 @@ def saut():
 
 
 def mouvement_joueur():
-    global current_stamina, _footstep_timer
+    global current_stamina, _footstep_timer, _immobilized_timer
+
+    if _immobilized_timer > 0:
+        AUDIO_GAME['pas_survivor'].stop()
+        AUDIO_GAME['pas_infected'].stop()
+        _footstep_timer = 0.0
+        return
 
     is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
     is_sprinting = held_keys[touches['Sprint']] and current_stamina > 0 and is_moving
@@ -2100,7 +2106,7 @@ def play_screamer(data):
 
 
 def input(key):
-    global is_jumping, vertical_velocity, rectangle_visible, on_ground, _local_ready
+    global is_jumping, vertical_velocity, rectangle_visible, on_ground, _local_ready, _immobilized_timer
 
     # Touches du lobby : actives uniquement pendant l'attente des rôles serveur,
     # quand on est réellement connecté au serveur (sinon le mode solo offline
@@ -2193,6 +2199,7 @@ def input(key):
             screamer_data = img + "|" + snd
 
             play_screamer(screamer_data)
+            _immobilized_timer = 3.0  # Gel du joueur
             
         if cube_screamer2.visible and distance(joueur.position, cube_screamer2.position) < 3.5:
             cube_screamer2.visible = False
@@ -2202,6 +2209,7 @@ def input(key):
             screamer_data = img + "|" + snd
 
             play_screamer(screamer_data)
+            _immobilized_timer = 3.0  # Gel du joueur
 
     if key == 'left mouse down':
         do_attack()
@@ -2219,9 +2227,10 @@ tasks_placees = False
 def update():
     global tasks_placees, navigo_task, rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
     global _heartbeat_playing, _breath_playing, _whisper_timer, _anim_timer, _attack_anim_timer, _is_attack_anim
-    global mur_victoire, mur_cree
+    global mur_victoire, mur_cree, _immobilized_timer
 
-
+    if _immobilized_timer > 0:
+        _immobilized_timer -= time.dt
     enigme.update()
     enigme_signalisation.update()
     enigme_plomberie.update()
