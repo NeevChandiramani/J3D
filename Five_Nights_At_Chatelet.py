@@ -2005,17 +2005,20 @@ def mouvement_joueur():
     global current_stamina, _footstep_timer
 
     is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
-    is_sprinting = held_keys[touches['Sprint']] and current_stamina > 1 and is_moving
+    is_sprinting = held_keys[touches['Sprint']] and current_stamina > 0 and is_moving
 
     if is_sprinting:
         current_stamina -= stamina_drain_rate * time.dt
         current_stamina = max(0, current_stamina)
-        current_speed = base_speed * sprint_speed_multiplier if current_stamina > 0 else base_speed
-    else:
+        current_speed = base_speed * sprint_speed_multiplier
+    elif not held_keys[touches['Sprint']]:
         current_speed = base_speed
         if current_stamina < max_stamina:
             current_stamina += stamina_regen_rate * time.dt
             current_stamina = min(max_stamina, current_stamina)
+    else:
+        # Touche sprint enfoncée mais stamina à 0 — on marche, stamina ne remonte pas
+        current_speed = base_speed
 
     stamina_text.text = f'Stamina: {int(current_stamina)}'
 
@@ -2331,7 +2334,7 @@ def update():
             _send_timer = 0
             _is_moving_now = (held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']]
                               or held_keys[touches['Move Left']] or held_keys[touches['Move Right']])
-            _is_sprinting_now = held_keys[touches['Sprint']] and _is_moving_now
+            is_sprinting_now = held_keys[touches['Sprint']] and is_moving and current_stamina > 0
             network.send_position(
                 joueur.x, joueur.y, joueur.z, joueur.rotation_y,
                 mv=int(_is_moving_now),
