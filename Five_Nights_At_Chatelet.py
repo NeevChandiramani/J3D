@@ -224,27 +224,6 @@ def apply_roles_from_server(roles_dict):
         _destroy_ghost(pid)
 
 
-# --- ATTENTE DES RÔLES (multijoueur, sans lobby) ---
-
-_waiting_for_roles = False
-
-
-def start_waiting_for_roles():
-    """Active l'attente silencieuse des rôles envoyés par le serveur (mode multi)."""
-    global _waiting_for_roles
-    _waiting_for_roles = True
-    print("[NET] En attente des rôles attribués par le serveur")
-
-
-def update_waiting_for_roles():
-    """Vérifie chaque frame si le serveur a envoyé les rôles, puis démarre la partie."""
-    global _waiting_for_roles
-    if not _waiting_for_roles:
-        return
-    roles = network.get_assigned_roles() if network.connected else None
-    if roles:
-        _waiting_for_roles = False
-        apply_roles_from_server(roles)
 
 
 def show_role_announce():
@@ -302,10 +281,8 @@ def update_connection_screen():
         if _connection_fade <= 0.0:
             connection_screen_root.enabled = False
             _connection_screen_active = False
-            if network.connected:
-                start_waiting_for_roles()   # multi : on attend les rôles serveur
-            else:
-                assign_role()               # solo : tirage local immédiat
+            # Tirage local immédiat : on ne dépend plus du serveur pour les rôles.
+            assign_role()
 
 
 def update_role_announce():
@@ -2034,12 +2011,6 @@ def input(key):
     if key == 'p':
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
-    # Pendant l'attente des rôles (multi), on ne réagit qu'à ÉCHAP pour quitter.
-    if _waiting_for_roles:
-        if key == 'escape':
-            quitter_jeu()
-        return
-
     if key == 'escape':
         if enigme.is_open or enigme_plomberie.is_open or enigme_signalisation.is_open:
             enigme.handle_input(key)
@@ -2142,11 +2113,6 @@ def update():
     enigme_plomberie.update()
 
     update_connection_screen()
-    update_waiting_for_roles()
-
-    # Tant qu'on attend les rôles serveur, on bloque la logique de jeu.
-    if _waiting_for_roles:
-        return
 
     if calcul_termine and player_role is not None and not tasks_placees:
         
