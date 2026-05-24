@@ -22,10 +22,10 @@ INTERACT_RANGE = 3.0
 
 class EnigmeElectrique:
     """
-    Puzzle d'interrupteurs 2D pour Ursina.
+    2D switch puzzle for Ursina.
 
-    Règle : cliquer sur l'interrupteur i inverse i-1, i, i+1.
-    Victoire : tous les 5 sur ON (haut / vert).
+    Rule: clicking switch i toggles i-1, i, and i+1.
+    Win condition: all 5 switches ON (up / green).
     """
 
     def __init__(self, on_success=None):
@@ -123,9 +123,9 @@ class EnigmeElectrique:
 
     def _on_win(self):
         self.solved       = True
-        self._status_text.text  = '[ CIRCUIT RÉTABLI ]'
+        self._status_text.text  = '[ CIRCUIT RESTORED ]'
         self._status_text.color = color.lime
-        self._close_timer = 2.0          # fermeture automatique dans 2 s
+        self._close_timer = 2.0          # automatic close in 2 s
         if callable(self.on_success):
             self.on_success()
 
@@ -173,7 +173,7 @@ class EnigmeElectrique:
         # ── Titres ──
         self._title = Text(
             parent   = self._root,
-            text     = 'PANNEAU ÉLECTRIQUE',
+            text     = 'ELECTRICAL PANEL',
             position = (0, 0.215),
             scale    = 1.4,
             color    = self._COL_TITLE,
@@ -182,7 +182,7 @@ class EnigmeElectrique:
         )
         self._subtitle = Text(
             parent   = self._root,
-            text     = 'mettre tous les circuits sur ON',
+            text     = 'set all circuits to ON',
             position = (0, 0.165),
             scale    = 0.9,
             color    = self._COL_LABEL,
@@ -258,7 +258,7 @@ class EnigmeElectrique:
         # ── Bouton Fermer ──
         self._close_btn = Button(
             parent          = self._root,
-            text            = 'FERMER',
+            text            = 'CLOSE',
             text_color      = self._COL_LABEL,
             color           = color.rgba(15, 30, 15, 200),
             highlight_color = color.rgba(25, 60, 25, 220),
