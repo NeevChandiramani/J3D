@@ -88,7 +88,7 @@ def maybe_assign_roles(force=False):
 
         with lobby_lock:
             pids = list(lobby.keys())
-            all_ready = len(pids) >= 1 and all(lobby[p].get("ready") for p in pids)
+            all_ready = len(pids) >= 2 and all(lobby[p].get("ready") for p in pids)
 
         if not force and not all_ready:
             return
