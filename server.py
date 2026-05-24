@@ -76,9 +76,10 @@ def broadcast_lobby_state():
     broadcast_message({"type": "lobby_state", "players": snapshot})
 
 
-def maybe_assign_roles():
-    """Si tous les joueurs présents sont prêts (et ≥ 2), tire les rôles
-    et les broadcast. Idempotent : ne fait rien si déjà attribués."""
+def maybe_assign_roles(force=False):
+    """Tire les rôles et les broadcast. Idempotent : ne fait rien si déjà attribués.
+    En mode normal, attend que tous les joueurs présents soient prêts.
+    Avec force=True, démarre immédiatement avec les joueurs connectés."""
     global assigned_roles
 
     with roles_lock:
@@ -89,13 +90,16 @@ def maybe_assign_roles():
             pids = list(lobby.keys())
             all_ready = len(pids) >= 1 and all(lobby[p].get("ready") for p in pids)
 
-        if not all_ready:
+        if not force and not all_ready:
+            return
+
+        if not pids:
             return
 
         if len(pids) <= 1:
             # Solo : 70/30 comme avant
             role = random.choices(["Survivor", "Infected"], weights=[70, 30])[0]
-            roles = {pids[0]: role} if pids else {}
+            roles = {pids[0]: role}
         else:
             nb_infectes = max(1, min(len(pids) - 1, round(len(pids) * INFECTED_RATIO)))
             infectes = set(random.sample(pids, nb_infectes))
@@ -103,7 +107,7 @@ def maybe_assign_roles():
 
         assigned_roles = roles
 
-    print(f"[SERVER] Rôles attribués : {roles}")
+    print(f"[SERVER] Rôles attribués ({'force' if force else 'all-ready'}) : {roles}")
     broadcast_message({"type": "roles", "roles": roles})
 
 
@@ -179,6 +183,10 @@ def handle_client(conn, addr, player_id):
                         print(f"[SERVER] {player_id} ready={is_ready}")
                         broadcast_lobby_state()
                         maybe_assign_roles()
+
+                    elif isinstance(msg, dict) and msg.get("type") == "force_start":
+                        print(f"[SERVER] {player_id} force_start")
+                        maybe_assign_roles(force=True)
 
                     else:
                         # Position / état d'animation : on stocke et on broadcast l'état complet

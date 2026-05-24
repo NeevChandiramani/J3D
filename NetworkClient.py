@@ -169,6 +169,16 @@ class NetworkClient:
         except Exception as e:
             print(f"Erreur envoi ready : {e}")
 
+    def send_force_start(self):
+        """Demande au serveur de démarrer la partie sans attendre que tous soient prêts."""
+        if not self.connected: return
+        try:
+            msg = {"type": "force_start"}
+            self.sock.sendall((json.dumps(msg) + "\n").encode())
+            print("[LOBBY] Force start envoyé")
+        except Exception as e:
+            print(f"Erreur envoi force_start : {e}")
+
     def get_lobby_state(self):
         """Retourne l'état du lobby : {pid: {"ready": bool}}."""
         with self._lock:

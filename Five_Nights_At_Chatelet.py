@@ -290,10 +290,10 @@ def update_lobby():
     lobby_status.text = f"{nb_prets} / {nb_total} prêts"
 
     if _lobby_ready:
-        lobby_hint.text = "Vous êtes PRÊT — ENTRÉE pour annuler   |   ÉCHAP pour quitter"
+        lobby_hint.text = "Vous êtes PRÊT — ENTRÉE annuler  |  F forcer le démarrage  |  ÉCHAP quitter"
         lobby_hint.color = color.rgba(80, 220, 100, 220)
     else:
-        lobby_hint.text = "ENTRÉE pour être prêt   |   ÉCHAP pour quitter"
+        lobby_hint.text = "ENTRÉE pour être prêt  |  F forcer le démarrage  |  ÉCHAP quitter"
         lobby_hint.color = color.rgba(220, 220, 220, 220)
 
 
@@ -2107,11 +2107,14 @@ def input(key):
     if key == 'p':
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
-    # Lobby : ENTRÉE bascule le statut Prêt, ÉCHAP quitte le jeu.
+    # Lobby : ENTRÉE bascule le statut Prêt, F force le démarrage, ÉCHAP quitte.
     # Les autres touches sont ignorées pour éviter les conflits d'overlay.
     if _lobby_active:
         if key in ('enter', 'return'):
             toggle_ready()
+        elif key == 'f':
+            if network.connected:
+                network.send_force_start()
         elif key == 'escape':
             quitter_jeu()
         return
