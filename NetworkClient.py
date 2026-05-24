@@ -77,6 +77,7 @@ class NetworkClient:
                         elif isinstance(msg, dict) and msg.get("type") == "lobby_state":
                             with self._lock:
                                 self.lobby_state = dict(msg.get("players", {}))
+                            print(f"[CLIENT] lobby_state reçu : {self.lobby_state}")
 
                         # Cas roles : attribution des rôles par le serveur
                         elif isinstance(msg, dict) and msg.get("type") == "roles":
