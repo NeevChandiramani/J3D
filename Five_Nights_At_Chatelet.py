@@ -1242,16 +1242,23 @@ def bouton_menu():
     subprocess.Popen([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "Five_Nights_At_Chatelet.py")])
     application.quit()
 
-interaction_text = Text(
-    text='Maintenez sur E pour libérer',
-    parent=scene,
-    position=(14.89, 95, 45.97),
-    scale=5,
-    color=color.white,
-    billboard=True,
-    enabled=True
+levier_cube = Entity(
+    model='cube',
+    color=color.orange,
+    position=(14.89, 93.54, 45.97),
+    scale=(1, 2, 1),
+    collider='box',
 )
 
+interaction_text = Text(
+    text='[E] Liberer',
+    parent=camera.ui,
+    origin=(0, 0),
+    position=(0, 0),
+    scale=2,
+    color=color.orange,
+    enabled=False
+)
 # HP
 
 MAX_HP = 100
@@ -1318,53 +1325,78 @@ def respawn_player():
 def update_liberation():
     global _liberation_timer, _liberation_en_cours, _liberation_cible, is_dead
 
+    # Les coordonnées exactes de ton collider/levier à l'étage
     POS_LEVIER = Vec3(14.89, 93.54, 45.97)
     RAYON = 3.0
 
-    # Si le joueur local est mort, il ne peut pas libérer
-    if player_role == 'Infected':
-        _liberation_en_cours = False
-        _liberation_timer = 0.0
+    # 1. Sécurité : L'Infecté ou un joueur mort ne peut pas libérer les autres
+    if player_role == 'Infected' or is_dead:
+        if _liberation_en_cours:
+            _liberation_en_cours = False
+            _liberation_timer = 0.0
         return
-
-    # Chercher un joueur mort proche du levier
+    
+    dist_joueur_levier = distance(joueur.position, POS_LEVIER)
+    
+    # 2. On cherche si un fantôme de prisonnier est à portée du levier
     cible_trouvee = None
     for pid, ghost in ghost_entities.items():
         if pid in survivants_en_prison:
-            dist_levier = distance(ghost.position, POS_LEVIER)
-            dist_joueur = distance(joueur.position, POS_LEVIER)
-            if dist_levier < RAYON and dist_joueur < RAYON:
+            dist_ghost_levier = distance(ghost.position, POS_LEVIER)
+            # Le survivant ET le fantôme doivent être proches du levier
+            if dist_ghost_levier < RAYON and dist_joueur_levier < RAYON:
                 cible_trouvee = pid
                 break
 
-    if held_keys[touches['Interact']] and cible_trouvee:
-        if not _liberation_en_cours or _liberation_cible != cible_trouvee:
-            _liberation_en_cours = True
-            _liberation_cible = cible_trouvee
-            _liberation_timer = 0.0
+    # 3. Gestion de l'affichage du texte et de l'interaction
+    if dist_joueur_levier < RAYON:
+        if cible_trouvee:
+            if not _liberation_en_cours:
+                interaction_text.text = "Maintenir E pour libérer le prisonnier"
+                interaction_text.enabled = True
+            
+            # 4. Le joueur maintient la touche d'interaction enfoncée
+            if held_keys[touches['Interact']]:
+                if not _liberation_en_cours or _liberation_cible != cible_trouvee:
+                    _liberation_en_cours = True
+                    _liberation_cible = cible_trouvee
+                    _liberation_timer = 0.0
 
-        _liberation_timer += time.dt
-        # Afficher progression
-        pct = int((_liberation_timer / LIBERATION_DUREE) * 100)
-        interaction_text.text = f'Libération : {pct}%'
-        interaction_text.enabled = True
+                _liberation_timer += time.dt
+                pct = int((_liberation_timer / LIBERATION_DUREE) * 100)
+                interaction_text.text = f'Libération : {pct}%'
+                interaction_text.enabled = True
 
-        if _liberation_timer >= LIBERATION_DUREE:
-            # Libérer le joueur via réseau
-            if network and network.connected:
-                network.sock.sendall((json.dumps({
-                    "type": "liberer_joueur",
-                    "target_id": _liberation_cible
-                }) + "\n").encode())
+                # --- FIN DU TIMER : LIBÉRATION RÉUSSIE ---
+                if _liberation_timer >= LIBERATION_DUREE:
+                    if network and network.connected:
+                        network.sock.sendall((json.dumps({
+                            "type": "liberer_joueur",
+                            "target_id": _liberation_cible
+                        }) + "\n").encode())
+                        print(f"[GAME] Paquet de libération envoyé pour le joueur {_liberation_cible}")
+                    
+                    # Réinitialisation après succès
+                    _liberation_en_cours = False
+                    _liberation_timer = 0.0
+                    _liberation_cible = None
+                    interaction_text.enabled = False
+            else:
+                # Si le joueur relâche la touche E pendant la progression
+                if _liberation_en_cours:
+                    _liberation_en_cours = False
+                    _liberation_timer = 0.0
+        else:
+            # Le joueur est proche du levier mais il n'y a aucun prisonnier dedans
+            interaction_text.text = "Le levier est bloqué (Aucun prisonnier)"
+            interaction_text.enabled = True
+    else:
+        # Le joueur s'est éloigné du levier : on ne touche à rien SAUF si c'était ce levier qui affichait du texte
+        if _liberation_en_cours or interaction_text.text in ["Maintenir E pour libérer le prisonnier", "Le levier est bloqué (Aucun prisonnier)"] or "Libération :" in interaction_text.text:
+            interaction_text.enabled = False
             _liberation_en_cours = False
             _liberation_timer = 0.0
             _liberation_cible = None
-            interaction_text.enabled = False
-    else:
-        _liberation_en_cours = False
-        _liberation_timer = 0.0
-        if cible_trouvee is None:
-            interaction_text.enabled = False
 
 def verifier_defaite():
     global defaite_declenchee
