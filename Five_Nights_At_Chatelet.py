@@ -420,12 +420,12 @@ def _build_ghost(pid):
 
     parts = {
         'model':   model_pivot,
-        'corps':   Entity(parent=model_pivot, model=f'ressources/{prefix}_body.obj',      color=role_color),
-        'tete':    Entity(parent=model_pivot, model=f'ressources/{prefix}_head.obj',      color=role_color),
-        'bras_g':  Entity(parent=model_pivot, model=f'ressources/{prefix}_left_arm.obj',  color=role_color),
-        'bras_d':  Entity(parent=model_pivot, model=f'ressources/{prefix}_right_arm.obj', color=role_color),
-        'jambe_g': Entity(parent=model_pivot, model=f'ressources/{prefix}_left_leg.obj',  color=role_color),
-        'jambe_d': Entity(parent=model_pivot, model=f'ressources/{prefix}_right_leg.obj', color=role_color),
+        'corps':   Entity(parent=model_pivot, model=f'ressources/{prefix}_body.obj'),
+        'tete':    Entity(parent=model_pivot, model=f'ressources/{prefix}_head.obj'),
+        'bras_g':  Entity(parent=model_pivot, model=f'ressources/{prefix}_left_arm.obj'),
+        'bras_d':  Entity(parent=model_pivot, model=f'ressources/{prefix}_right_arm.obj'),
+        'jambe_g': Entity(parent=model_pivot, model=f'ressources/{prefix}_left_leg.obj'),
+        'jambe_d': Entity(parent=model_pivot, model=f'ressources/{prefix}_right_leg.obj'),
     }
 
     ghost_entities[pid] = root
