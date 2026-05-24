@@ -25,7 +25,7 @@ assigned_roles = None         # {pid: "Infected"/"Survivor"} ou None
 roles_lock = threading.Lock()
 
 # Pourcentage d'Infectés en multijoueur (≥ 2 joueurs)
-INFECTED_RATIO = 0.35
+INFECTED_RATIO = 0.45
 
 
 def broadcast_state():
@@ -114,8 +114,9 @@ def maybe_assign_roles(force=False):
             return
 
         if len(pids) <= 1:
-            # Solo : 70/30 comme avant
-            role = random.choices(["Survivor", "Infected"], weights=[70, 30])[0]
+            # Solo : même proba d'Infecté qu'en multi (INFECTED_RATIO).
+            surv_w = max(0.0, 1.0 - INFECTED_RATIO)
+            role = random.choices(["Survivor", "Infected"], weights=[surv_w, INFECTED_RATIO])[0]
             roles = {pids[0]: role}
         else:
             nb_infectes = max(1, min(len(pids) - 1, round(len(pids) * INFECTED_RATIO)))
@@ -264,10 +265,9 @@ def start_server():
 
             if current_roles is not None:
                 broadcast_message({"type": "roles", "roles": current_roles})
-            else:
-                # Démarrage immédiat : on attribue les rôles dès la première connexion
-                # sans attendre que les joueurs cliquent "Prêt".
-                maybe_assign_roles(force=True)
+            # Sinon : on n'attribue rien tout de suite. Le tirage se déclenche
+            # quand tous les joueurs sont "ready" (maybe_assign_roles via "ready")
+            # ou quand un joueur envoie "force_start" depuis le lobby.
 
             t = threading.Thread(target=handle_client, args=(conn, addr, player_id), daemon=True)
             t.start()

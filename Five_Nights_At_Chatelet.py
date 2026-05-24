@@ -141,9 +141,10 @@ _pos_vanne = _pos_electrique = _pos_panneau = _pos_navigo = None
 
 # État de l'écran de connexion (affiché au démarrage)
 _connection_screen_active = True
-_connection_phase = 0            # 0=fondu entrée, 1=palier, 2=fondu sortie
+_connection_phase = 0            # 0=fondu entrée, 1=lobby/attente, 2=fondu sortie
 _connection_fade  = 0.0
-_connection_timer = 0.5          # durée du palier "hold" en secondes
+_connection_timer = 0.5          # palier de fallback solo (jamais utilisé en multi)
+_local_ready = False             # statut "prêt" du joueur local dans le lobby
 CONNECTION_FADE_SPEED = 3.5      # fondu entrée/sortie de l'écran de connexion
 _connection_status_rgb = (80, 220, 100)
 
@@ -287,10 +288,25 @@ def update_connection_screen():
             _connection_phase = 1
 
     elif _connection_phase == 1:
-        _connection_timer -= dt
-        if _connection_timer <= 0:
-            _connection_phase = 2
-            _connection_fade  = 1.0
+        # Multi : on attend que le serveur ait tiré les rôles (déclenché par
+        # "tous prêts" ou par une demande "force_start" venant d'un client).
+        # Solo offline : on attend juste le timer puis on passe en tirage local.
+        if getattr(network, 'connected', False):
+            connection_screen_title.text = 'LOBBY'
+            lobby_snapshot = network.get_lobby_state() if hasattr(network, 'get_lobby_state') else {}
+            total = len(lobby_snapshot) if lobby_snapshot else 1
+            nb_prets = sum(1 for info in lobby_snapshot.values() if info.get('ready'))
+            ready_label = 'PRÊT' if _local_ready else 'PAS PRÊT'
+            connection_screen_status.text = f'{nb_prets} / {total} joueurs prêts  —  vous : {ready_label}'
+            connection_screen_sub.text    = '[R] basculer prêt    [F] démarrer maintenant'
+            if network.get_assigned_roles():
+                _connection_phase = 2
+                _connection_fade  = 1.0
+        else:
+            _connection_timer -= dt
+            if _connection_timer <= 0:
+                _connection_phase = 2
+                _connection_fade  = 1.0
 
     elif _connection_phase == 2:
         _connection_fade = max(0.0, _connection_fade - dt * CONNECTION_FADE_SPEED)
@@ -2031,7 +2047,23 @@ def play_screamer(data):
 
 
 def input(key):
-    global is_jumping, vertical_velocity, rectangle_visible, on_ground
+    global is_jumping, vertical_velocity, rectangle_visible, on_ground, _local_ready
+
+    # Touches du lobby : actives uniquement pendant l'attente des rôles serveur,
+    # quand on est réellement connecté au serveur (sinon le mode solo offline
+    # gère tout via son timer).
+    if (_connection_screen_active and _connection_phase == 1
+            and getattr(network, 'connected', False)):
+        if key == 'r':
+            _local_ready = not _local_ready
+            if hasattr(network, 'send_ready'):
+                network.send_ready(_local_ready)
+            return
+        if key == 'f':
+            if hasattr(network, 'send_force_start'):
+                network.send_force_start()
+            return
+
     if key == 'p':
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
