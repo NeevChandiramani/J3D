@@ -1441,7 +1441,7 @@ def update_hp_ui():
 
 # ATTAQUE
 
-ATTACK_DAMAGE   = 10
+ATTACK_DAMAGE   = 25
 ATTACK_RANGE    = 3.0
 ATTACK_WIDTH    = 2.0
 ATTACK_HEIGHT   = 3.0
