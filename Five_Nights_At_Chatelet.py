@@ -2334,7 +2334,7 @@ def update():
             _send_timer = 0
             _is_moving_now = (held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']]
                               or held_keys[touches['Move Left']] or held_keys[touches['Move Right']])
-            _is_sprinting_now = held_keys[touches['Sprint']] and is_moving and current_stamina > 0
+            _is_sprinting_now = held_keys[touches['Sprint']] and current_stamina > 0
             network.send_position(
                 joueur.x, joueur.y, joueur.z, joueur.rotation_y,
                 mv=int(_is_moving_now),
