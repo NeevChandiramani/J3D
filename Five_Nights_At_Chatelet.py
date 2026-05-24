@@ -2110,11 +2110,17 @@ def input(key):
     # Lobby : ENTRÉE bascule le statut Prêt, F force le démarrage, ÉCHAP quitte.
     # Les autres touches sont ignorées pour éviter les conflits d'overlay.
     if _lobby_active:
+        print(f"[LOBBY] input reçu : '{key}'")
         if key in ('enter', 'return'):
             toggle_ready()
         elif key == 'f':
+            print("[LOBBY] Démarrage forcé demandé")
+            # On tente d'avertir le serveur (utile si d'autres clients attendent),
+            # puis on démarre localement quoi qu'il arrive.
             if network.connected:
                 network.send_force_start()
+            _exit_lobby()
+            assign_role()
         elif key == 'escape':
             quitter_jeu()
         return
