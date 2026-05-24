@@ -578,14 +578,12 @@ def update_ghosts(other_players):
 
             target_pid = str(event.get("target_id"))
             if target_pid in ghost_parts:
-                ghost_role = all_assigned_roles.get(target_pid, "Survivor")
-                orig_color = ROLES[ghost_role]["model_color"]
                 for k in ('corps', 'tete', 'bras_g', 'bras_d', 'jambe_g', 'jambe_d'):
                     part = ghost_parts[target_pid].get(k)
                     if part is None:
                         continue
-                    part.color = color.white
-                    invoke(setattr, part, 'color', orig_color, delay=0.15)
+                    part.color = color.red
+                    invoke(setattr, part, 'color', color.white, delay=0.15)
 
 SALLES = [
     Vec3(-73.42, 35.98, 4.77),
@@ -1491,10 +1489,14 @@ def do_attack():
                 destroy(ghost_entities.pop(pid))
                 ghost_hp.pop(pid, None)
             else:
-                ghost_role = all_assigned_roles.get(str(pid), "Survivor")
-                orig_color = ROLES[ghost_role]["model_color"]
-                ghost.color = color.white
-                invoke(setattr, ghost, 'color', orig_color, delay=0.15)
+                parts = ghost_parts.get(pid)
+                if parts:
+                    for k in ('corps', 'tete', 'bras_g', 'bras_d', 'jambe_g', 'jambe_d'):
+                        part = parts.get(k)
+                        if part is None:
+                            continue
+                        part.color = color.red
+                        invoke(setattr, part, 'color', color.white, delay=0.15)
 
             if network.connected:
                 network.send_damage(pid, ATTACK_DAMAGE)
