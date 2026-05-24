@@ -32,7 +32,7 @@ Chaque énigme est implémentée dans son propre fichier Python et déclenchée 
 
 ## Stack technique
 
-- **Moteur 3D** : Ursina Engine (Panda3D)
+- **Moteur 3D** : Ursina Engine
 - **Menu / overlays 2D** : Pygame
 - **Langage** : Python 3.11
 - **Réseau** : Sockets TCP (broadcast d'état JSON)
