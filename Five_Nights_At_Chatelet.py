@@ -190,6 +190,10 @@ def _apply_role(role_name):
         joueur_bras_d.model  = 'ressources/P_right_arm.obj'
         joueur_jambe_g.model = 'ressources/P_left_leg.obj'
         joueur_jambe_d.model = 'ressources/P_right_leg.obj'
+    if player_role == "Infected":
+        joueur.position = (8.17, 93.54, 40.82)   # spawn infecté
+    else:
+        joueur.position = (15, 8, 10)  # spawn survivant
 
     
     for part in [joueur_corps, joueur_tete, joueur_bras_g, joueur_bras_d, joueur_jambe_g, joueur_jambe_d]:
@@ -1302,7 +1306,10 @@ def respawn_player():
     is_dead = False
     player_hp = MAX_HP
     _invincibility_timer = 1.0
-    joueur.position = (15, 3, 0)
+    if player_role == "Infected":
+        joueur.position = (8.17, 93.54, 40.82)   # spawn infecté
+    else:
+        joueur.position = (15, 8, 10)  # spawn survivant
     hp_text.color = color.lime
     update_hp_ui()
     mouse.locked = True
