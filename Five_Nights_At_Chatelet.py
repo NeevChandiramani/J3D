@@ -1278,13 +1278,13 @@ def bouton_menu():
     application.quit()
 
 interaction_text = Text(
-    text='',
-    origin=(0, 0),
-    position=(0, -0.35),
-    scale=1.5,
+    text='Maintenez sur E pour libérer',
+    parent=scene,
+    position=(14.89, 95, 45.97),
+    scale=5,
     color=color.white,
-    background=False,
-    enabled=False
+    billboard=True,
+    enabled=True
 )
 
 # HP
