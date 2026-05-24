@@ -154,7 +154,7 @@ class EnigmePlomberie:
             if self._successes >= REQUIRED_SUCCESS:
                 self._on_win()
             else:
-                self._status_text.text  = 'PARFAIT !'
+                self._status_text.text  = 'PERFECT!'
                 self._status_text.color = color.rgba32(40, 200, 80, 255)
                 invoke(self._clear_status, delay=0.6)
         else:
@@ -162,14 +162,14 @@ class EnigmePlomberie:
             self._speed     = min(MAX_SPEED, self._speed + SPEED_PENALTY)
             self._flash(success=False)
             self._refresh_dots()
-            self._status_text.text  = 'HORS ZONE !'
+            self._status_text.text  = 'OUT OF ZONE!'
             self._status_text.color = color.rgba32(200, 40, 30, 255)
             invoke(self._clear_status, delay=0.7)
 
     def _on_win(self):
         self.solved = True
         self._purge_btn.disabled = True
-        self._status_text.text  = 'PURGE EFFECTUÉE'
+        self._status_text.text  = 'PURGE COMPLETED'
         self._status_text.color = color.rgba32(40, 255, 100, 255)
         self._needle_bar.color  = color.rgba32(40, 255, 100, 255)
         self._close_timer = AUTO_CLOSE_DELAY
@@ -221,10 +221,10 @@ class EnigmePlomberie:
                scale=(0.53, 0.70), position=(0, 0), z=0.50)
 
         # Titres
-        Text(parent=self._root, text='VANNE DE PURGE B2',
+        Text(parent=self._root, text='PURGE VALVE B2',
              position=(0, 0.325), scale=1.1, color=self._C_TITLE,
              origin=(0, 0), font='VeraMono.ttf')
-        Text(parent=self._root, text='CHÂTELET — ÉGOUTS NIV.-3',
+        Text(parent=self._root, text='CHÂTELET — SEWERS LVL-3',
              position=(0, 0.285), scale=0.75, color=self._C_LABEL,
              origin=(0, 0), font='VeraMono.ttf')
 
@@ -269,7 +269,7 @@ class EnigmePlomberie:
 
         # ── Dots de succès ──
         info_x = 0.08
-        Text(parent=self._root, text='SUCCÈS',
+        Text(parent=self._root, text='SUCCESS',
              position=(info_x, 0.18), scale=0.7, color=self._C_LABEL,
              origin=(0, 0), font='VeraMono.ttf')
 
@@ -284,7 +284,7 @@ class EnigmePlomberie:
             self._dots.append(d)
 
         # ── Barre de vitesse ──
-        Text(parent=self._root, text='PRESSION',
+        Text(parent=self._root, text='PRESSURE',
              position=(info_x, 0.08), scale=0.7, color=self._C_LABEL,
              origin=(0, 0), font='VeraMono.ttf')
 
@@ -308,7 +308,7 @@ class EnigmePlomberie:
         # ── Bouton PURGER ──
         self._purge_btn = Button(
             parent=self._root,
-            text='PURGER / ARRÊT',
+            text='PURGE / STOP',
             text_color=color.rgba32(80, 200, 110, 255),
             color=self._C_BTN,
             highlight_color=self._C_BTN_H,
@@ -323,7 +323,7 @@ class EnigmePlomberie:
         # ── Bouton Fermer ──
         self._close_btn = Button(
             parent=self._root,
-            text='FERMER',
+            text='CLOSE',
             text_color=self._C_LABEL,
             color=color.rgba32(8, 22, 12, 180),
             highlight_color=color.rgba32(15, 40, 20, 200),
