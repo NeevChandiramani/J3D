@@ -224,82 +224,27 @@ def apply_roles_from_server(roles_dict):
         _destroy_ghost(pid)
 
 
-# --- LOBBY MULTIJOUEUR ---
+# --- ATTENTE DES RÔLES (multijoueur, sans lobby) ---
 
-_lobby_active = False
-_lobby_ready = False  # état local : ai-je cliqué Prêt ?
-
-
-def enter_lobby():
-    """Active l'écran lobby. Appelé après la fin du fondu de connexion en mode multi."""
-    global _lobby_active, _lobby_ready
-    _lobby_active = True
-    _lobby_ready = False
-    lobby_root.enabled = True
-    print("[LOBBY] Entrée dans le lobby, en attente que tout le monde soit prêt")
+_waiting_for_roles = False
 
 
-def _exit_lobby():
-    global _lobby_active
-    _lobby_active = False
-    lobby_root.enabled = False
+def start_waiting_for_roles():
+    """Active l'attente silencieuse des rôles envoyés par le serveur (mode multi)."""
+    global _waiting_for_roles
+    _waiting_for_roles = True
+    print("[NET] En attente des rôles attribués par le serveur")
 
 
-def toggle_ready():
-    """Bascule l'état Prêt du joueur local et l'envoie au serveur."""
-    global _lobby_ready
-    if not _lobby_active:
+def update_waiting_for_roles():
+    """Vérifie chaque frame si le serveur a envoyé les rôles, puis démarre la partie."""
+    global _waiting_for_roles
+    if not _waiting_for_roles:
         return
-    _lobby_ready = not _lobby_ready
-    if network.connected:
-        network.send_ready(_lobby_ready)
-
-
-def update_lobby():
-    """Met à jour l'affichage du lobby et bascule en partie quand le serveur envoie les rôles."""
-    if not _lobby_active:
-        return
-
-    # 1) Si le serveur a déjà attribué les rôles, on quitte le lobby et on démarre.
     roles = network.get_assigned_roles() if network.connected else None
     if roles:
-        _exit_lobby()
+        _waiting_for_roles = False
         apply_roles_from_server(roles)
-        return
-
-    # 2) Sinon, on rafraîchit la liste des joueurs et leur état Prêt.
-    state = network.get_lobby_state() if network.connected else {}
-    my_id = str(network.my_id) if network.my_id is not None else "?"
-
-    # On force l'entrée du joueur local au cas où le serveur n'a pas encore broadcast
-    # le premier lobby_state nous concernant.
-    if my_id != "?" and my_id not in state:
-        state[my_id] = {"ready": _lobby_ready}
-    elif my_id in state:
-        # On reflète notre intention locale immédiatement (avant l'aller-retour serveur)
-        state[my_id] = {"ready": _lobby_ready or bool(state[my_id].get("ready"))}
-
-    lignes = []
-    for pid, info in sorted(state.items()):
-        marque = "[X]" if info.get("ready") else "[ ]"
-        suffix = "  (toi)" if pid == my_id else ""
-        lignes.append(f"{marque}  {pid}{suffix}")
-
-    if not lignes:
-        lignes = ["(en attente du serveur...)"]
-
-    lobby_players_text.text = "\n".join(lignes)
-
-    nb_prets = sum(1 for v in state.values() if v.get("ready"))
-    nb_total = len(state)
-    lobby_status.text = f"{nb_prets} / {nb_total} prêts"
-
-    if _lobby_ready:
-        lobby_hint.text = "Vous êtes PRÊT — ENTRÉE annuler  |  F forcer le démarrage  |  ÉCHAP quitter"
-        lobby_hint.color = color.rgba(80, 220, 100, 220)
-    else:
-        lobby_hint.text = "ENTRÉE pour être prêt  |  F forcer le démarrage  |  ÉCHAP quitter"
-        lobby_hint.color = color.rgba(220, 220, 220, 220)
 
 
 def show_role_announce():
@@ -358,9 +303,9 @@ def update_connection_screen():
             connection_screen_root.enabled = False
             _connection_screen_active = False
             if network.connected:
-                enter_lobby()       # multi : passer par le lobby "PRÊT"
+                start_waiting_for_roles()   # multi : on attend les rôles serveur
             else:
-                assign_role()       # solo : tirage local immédiat
+                assign_role()               # solo : tirage local immédiat
 
 
 def update_role_announce():
@@ -1682,59 +1627,6 @@ else:
     _connection_status_rgb        = (220, 50, 50)
 
 
-# UI — LOBBY MULTIJOUEUR (avant le début de la partie)
-
-lobby_root = Entity(parent=camera.ui, enabled=False, z=-0.5)
-
-lobby_bg = Entity(
-    parent=lobby_root,
-    model='quad',
-    color=color.rgba(0, 0, 0, 210),
-    scale=(3, 2),
-    z=0.1
-)
-
-lobby_title = Text(
-    parent=lobby_root,
-    text='LOBBY',
-    origin=(0, 0),
-    position=(0, 0.34),
-    scale=3,
-    color=color.rgba(200, 200, 200, 255),
-    font='VeraMono.ttf'
-)
-
-lobby_status = Text(
-    parent=lobby_root,
-    text='',
-    origin=(0, 0),
-    position=(0, 0.24),
-    scale=1.6,
-    color=color.rgba(180, 180, 180, 255),
-    font='VeraMono.ttf'
-)
-
-lobby_players_text = Text(
-    parent=lobby_root,
-    text='',
-    origin=(0, 0),
-    position=(0, 0.02),
-    scale=1.4,
-    color=color.rgba(220, 220, 220, 255),
-    font='VeraMono.ttf'
-)
-
-lobby_hint = Text(
-    parent=lobby_root,
-    text='Appuyez sur ENTRÉE quand vous êtes prêt',
-    origin=(0, 0),
-    position=(0, -0.28),
-    scale=1.4,
-    color=color.rgba(220, 220, 220, 220),
-    font='VeraMono.ttf'
-)
-
-
 # Indicateur de rôle permanent (coin haut droit)
 role_indicator = Text(
     text='',
@@ -2142,24 +2034,9 @@ def input(key):
     if key == 'p':
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
-    # Lobby : ENTRÉE bascule le statut Prêt, F force le démarrage, ÉCHAP quitte.
-    # Les autres touches sont ignorées pour éviter les conflits d'overlay.
-    if _lobby_active:
-        print(f"[LOBBY] input reçu : '{key}'")
-        if key in ('enter', 'return'):
-            toggle_ready()
-        elif key == 'f':
-            print("[LOBBY] Démarrage forcé demandé")
-            if network.connected:
-                # On laisse le serveur attribuer les rôles et les broadcaster.
-                # update_lobby() détectera les rôles à la frame suivante et
-                # appellera _exit_lobby() + apply_roles_from_server() proprement.
-                network.send_force_start()
-            else:
-                # Hors-ligne : tirage local immédiat.
-                _exit_lobby()
-                assign_role()
-        elif key == 'escape':
+    # Pendant l'attente des rôles (multi), on ne réagit qu'à ÉCHAP pour quitter.
+    if _waiting_for_roles:
+        if key == 'escape':
             quitter_jeu()
         return
 
@@ -2265,10 +2142,10 @@ def update():
     enigme_plomberie.update()
 
     update_connection_screen()
-    update_lobby()
+    update_waiting_for_roles()
 
-    # Tant que le lobby est actif, on bloque la logique de jeu (mouvements, IA, etc.)
-    if _lobby_active:
+    # Tant qu'on attend les rôles serveur, on bloque la logique de jeu.
+    if _waiting_for_roles:
         return
 
     if calcul_termine and player_role is not None and not tasks_placees:

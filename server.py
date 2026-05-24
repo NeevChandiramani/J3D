@@ -264,6 +264,10 @@ def start_server():
 
             if current_roles is not None:
                 broadcast_message({"type": "roles", "roles": current_roles})
+            else:
+                # Démarrage immédiat : on attribue les rôles dès la première connexion
+                # sans attendre que les joueurs cliquent "Prêt".
+                maybe_assign_roles(force=True)
 
             t = threading.Thread(target=handle_client, args=(conn, addr, player_id), daemon=True)
             t.start()
