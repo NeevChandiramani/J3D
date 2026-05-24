@@ -84,6 +84,10 @@ class NetworkClient:
                             with self._lock:
                                 self.assigned_roles = dict(msg.get("roles", {}))
                             print(f"[CLIENT] Rôles reçus : {self.assigned_roles}")
+                        
+                        elif isinstance(msg, dict) and msg.get("type") == "survivant_emprisonne":
+                            with self._lock:
+                                self.game_event_queue.append(msg)
 
                         # Cas 4 : C'est la liste des positions/rotations des joueurs
                         else:
