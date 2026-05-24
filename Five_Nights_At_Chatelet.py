@@ -2473,6 +2473,14 @@ def update():
             id_joueur = msg['id']
             survivants_ayant_fini.add(id_joueur)
             print(f"[RESEAU] Le joueur {id_joueur} a fini ses tâches !")
+        elif msg['type'] == 'survivant_emprisonne':
+            survivants_en_prison.add(msg['id'])
+            print(f"[PRISON] Joueur {msg['id']} emprisonné")
+        elif msg['type'] == 'liberer_joueur':
+            if msg.get('target_id') == str(network.my_id):
+                respawn_player()
+                print("[PRISON] Tu as été libéré !")
+            survivants_en_prison.discard(msg.get('target_id'))
 
     if not mur_cree and player_role == 'Survivor':
         nombre_total_survivants = sum(1 for r in all_assigned_roles.values() if r == 'Survivor')
@@ -2513,6 +2521,7 @@ def update():
             invoke(declencher_retour_menu, delay=4.0)
         
     update_liberation()
+    verifier_defaite()
 
 
 
