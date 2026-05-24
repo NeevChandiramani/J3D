@@ -1340,11 +1340,10 @@ def update_liberation():
     
     # 2. On cherche si un fantôme de prisonnier est à portée du levier
     cible_trouvee = None
-    for pid, ghost in ghost_entities.items():
-        if pid in survivants_en_prison:
-            dist_ghost_levier = distance(ghost.position, POS_LEVIER)
-            # Le survivant ET le fantôme doivent être proches du levier
-            if dist_ghost_levier < RAYON and dist_joueur_levier < RAYON:
+    dist_joueur = distance(joueur.position, POS_LEVIER)
+    if dist_joueur < RAYON:
+        for pid in survivants_en_prison:
+            if pid in ghost_entities:
                 cible_trouvee = pid
                 break
 
