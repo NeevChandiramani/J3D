@@ -1341,11 +1341,8 @@ def update_liberation():
     # 2. On cherche si un fantôme de prisonnier est à portée du levier
     cible_trouvee = None
     dist_joueur = distance(joueur.position, POS_LEVIER)
-    if dist_joueur < RAYON:
-        for pid in survivants_en_prison:
-            if pid in ghost_entities:
-                cible_trouvee = pid
-                break
+    if dist_joueur < RAYON and len(survivants_en_prison) > 0:
+        cible_trouvee = True  # on sait juste qu'il y a des prisonniers
 
     # 3. Gestion de l'affichage du texte et de l'interaction
     if dist_joueur_levier < RAYON:
@@ -1369,13 +1366,13 @@ def update_liberation():
                 # --- FIN DU TIMER : LIBÉRATION RÉUSSIE ---
                 if _liberation_timer >= LIBERATION_DUREE:
                     if network and network.connected:
-                        network.sock.sendall((json.dumps({
-                            "type": "liberer_joueur",
-                            "target_id": _liberation_cible
-                        }) + "\n").encode())
-                        print(f"[GAME] Paquet de libération envoyé pour le joueur {_liberation_cible}")
+                        for pid in list(survivants_en_prison):
+                            network.sock.sendall((json.dumps({
+                                "type": "liberer_joueur",
+                                "target_id": pid
+                            }) + "\n").encode())
+                            print(f"[GAME] Libération envoyée pour {pid}")
                     
-                    # Réinitialisation après succès
                     _liberation_en_cours = False
                     _liberation_timer = 0.0
                     _liberation_cible = None
