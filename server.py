@@ -192,6 +192,10 @@ def handle_client(conn, addr, player_id):
                         target_id = msg.get("target_id")
                         print(f"[SERVER] Libération de {target_id} par {player_id}")
                         send_to_player(target_id, msg)
+                    
+                    elif isinstance(msg, dict) and msg.get("type") == "survivant_emprisonne":
+                        print(f"[SERVER] Survivant emprisonné : {player_id}")
+                        broadcast_message(msg)
 
                     elif isinstance(msg, dict) and msg.get("type") == "ready":
                         is_ready = bool(msg.get("ready", False))
