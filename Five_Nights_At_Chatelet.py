@@ -685,20 +685,36 @@ _pos_screamer2 = None
 calcul_termine = False # Nouvelle variable de sécurité
 navigo_task = None
 
+_tache_electrique_faite = False
+_tache_plomberie_faite = False
+_tache_signalisation_faite = False
+_tache_navigo_faite = False
+
 def purge_validee():
+    global _tache_plomberie_faite
+    if _tache_plomberie_faite:
+        return
+    _tache_plomberie_faite = True
     print("[GAME] Égouts purgés !")
     valider_une_tache()
 
 enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
 
 def enigme_resolue():
+    global _tache_electrique_faite
+    if _tache_electrique_faite:
+        return
+    _tache_electrique_faite = True
     print("[GAME] Puzzle électrique validé !")
     valider_une_tache()
-    # mets ici ce que tu veux déclencher (ouvrir une porte, XP, etc.)
 
 enigme = EnigmeElectrique(on_success=enigme_resolue)
 
 def signalisation_restauree():
+    global _tache_signalisation_faite
+    if _tache_signalisation_faite:
+        return
+    _tache_signalisation_faite = True
     print("[GAME] Signalisation restaurée !")
     valider_une_tache()
 
@@ -735,6 +751,13 @@ def init_tasks_math():
 
 threading.Thread(target=init_tasks_math, daemon=True).start()
 
+def navigo_complete():
+    global _tache_navigo_faite
+    if _tache_navigo_faite:
+        return
+    _tache_navigo_faite = True
+    valider_une_tache()
+    
 def valider_une_tache():
     global mes_taches_accomplies, mon_statut_fini
     
@@ -2219,7 +2242,7 @@ def update():
         navigo_task = NavigoTask(
             player=joueur,
             position=_pos_navigo,
-            on_complete=valider_une_tache,
+            on_complete=navigo_complete,
             interaction_key=touches['Interact'],
         )
         
