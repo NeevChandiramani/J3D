@@ -2397,7 +2397,7 @@ def update():
 
     is_moving = (held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']]
                  or held_keys[touches['Move Left']] or held_keys[touches['Move Right']])
-    is_sprinting_now = held_keys[touches['Sprint']] and is_moving and current_stamina > 1
+    is_sprinting = held_keys[touches['Sprint']] and is_moving and current_stamina > 1
 
     anim_speed = 12 if is_sprinting else 7
 
