@@ -2052,14 +2052,19 @@ def input(key):
     # Touches du lobby : actives uniquement pendant l'attente des rôles serveur,
     # quand on est réellement connecté au serveur (sinon le mode solo offline
     # gère tout via son timer).
+    if key in ('r', 'f'):
+        print(f"[LOBBY-DBG] touche={key!r} active={_connection_screen_active} "
+              f"phase={_connection_phase} connected={getattr(network, 'connected', False)}")
     if (_connection_screen_active and _connection_phase == 1
             and getattr(network, 'connected', False)):
         if key == 'r':
             _local_ready = not _local_ready
+            print(f"[LOBBY-DBG] _local_ready -> {_local_ready}")
             if hasattr(network, 'send_ready'):
                 network.send_ready(_local_ready)
             return
         if key == 'f':
+            print("[LOBBY-DBG] envoi force_start")
             if hasattr(network, 'send_force_start'):
                 network.send_force_start()
             return
