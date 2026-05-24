@@ -153,7 +153,7 @@ class NavigoTask:
         )
         self._screen_text = Text(
             parent=self.ui_root,
-            text='APPROCHEZ VOTRE TITRE',
+            text='SWIPE YOUR PASS',
             color=color.rgb32(100, 230, 100),
             scale=0.9,
             position=(0, 0.1),
@@ -237,7 +237,7 @@ class NavigoTask:
         # Instructions en bas du boîtier
         Text(
             parent=self.ui_root,
-            text='Glissez votre carte →',
+            text='Swipe your card →',
             color=color.rgb32(190, 190, 210),
             scale=0.8,
             position=(0, -0.135),
@@ -312,7 +312,7 @@ class NavigoTask:
 
         # Si l'utilisateur relâche la carte sans atteindre le bord droit
         if self._is_swiping and not card_moving and card.x < self._card_x_max - 0.01:
-            self._set_message('RECOMMENCEZ', color.rgb32(220, 150, 0))
+            self._set_message('TRY AGAIN', color.rgb32(220, 150, 0))
             self._reset_card()
 
     def _evaluate_swipe(self, duration: float):
@@ -320,16 +320,16 @@ class NavigoTask:
         self._is_swiping = False
 
         if duration < SWIPE_MIN_DURATION:
-            self._set_message('ERREUR : TROP RAPIDE', color.rgb32(220, 50, 50))
+            self._set_message('ERROR: TOO FAST', color.rgb32(220, 50, 50))
             self._reset_card()
 
         elif duration > SWIPE_MAX_DURATION:
-            self._set_message('ERREUR : TROP LENT', color.rgb32(220, 50, 50))
+            self._set_message('ERROR: TOO SLOW', color.rgb32(220, 50, 50))
             self._reset_card()
 
         else:
             # Succès !
-            self._set_message('VALIDÉ  ✓  MERCI', color.rgb32(60, 220, 100))
+            self._set_message('VALIDATED  ✓  THANKS', color.rgb32(60, 220, 100))
             self._screen_bg.color = color.rgb32(10, 50, 20)
             self._world_screen.color = color.rgb32(10, 220, 80)
             self.completed = True
@@ -356,7 +356,7 @@ class NavigoTask:
             return
         self.is_open = True
         self._reset_card()
-        self._set_message('APPROCHEZ VOTRE TITRE', color.rgb32(100, 230, 100))
+        self._set_message('SWIPE YOUR PASS', color.rgb32(100, 230, 100))
         self._screen_bg.color = color.rgb32(20, 30, 20)
         self.ui_root.enabled = True
         mouse.locked  = False
