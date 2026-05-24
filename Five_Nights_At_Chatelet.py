@@ -509,34 +509,6 @@ def update_ghosts(other_players):
         for event in network.get_damage_events():
             if not isinstance(event, dict):
                 continue
-                
-            # --- INTERCEPTION DU MESSAGE TÂCHES FINIES ---
-            if event.get('type') == 'survivant_fini':
-                id_joueur = event.get('id')
-                survivants_ayant_fini.add(id_joueur)
-                print(f"[RESEAU] Le joueur {id_joueur} a fini ses tâches !")
-                
-                # Calcul dynamique du nombre de survivants connectés
-                nombre_total_survivants = sum(1 for p in all_assigned_roles.values() if p == 'Survivor')
-                if nombre_total_survivants == 0:  # Sécurité si l'enchaînement n'est pas encore prêt
-                    nombre_total_survivants = 1
-                    
-                print(f"Survivants prêts : {len(survivants_ayant_fini)} / {nombre_total_survivants}")
-                
-                # Si tous les survivants ont fini, apparition du mur vert
-                if len(survivants_ayant_fini) >= nombre_total_survivants:
-                    if not mur_cree:
-                        mur_victoire = Entity(
-                            model='cube',
-                            color=color.green,
-                            alpha=0.4,              # Semi-transparent 
-                            position=(56.4, 2.97, 0.28),
-                            scale=(0.5, 6.0, 22.68), # Dimensions basées sur tes positions
-                            collider=None           # Pas de collider physique pour entrer dedans
-                        )
-                        mur_cree = True
-                        print("[GAME] Le mur vert de la victoire est apparu ! Fuyez !")
-                continue # Passe à l'événement suivant
 
             if event.get("type") == "screamer":
                 play_screamer(event.get("screamer"))
@@ -2469,6 +2441,10 @@ def update():
         nombre_total_survivants = sum(1 for r in all_assigned_roles.values() if r == 'Survivor')
         if nombre_total_survivants == 0:
             nombre_total_survivants = 1
+
+        # Ajouter le joueur local s'il a fini
+        if mon_statut_fini and network.my_id:
+            survivants_ayant_fini.add(str(network.my_id))
 
         if len(survivants_ayant_fini) >= nombre_total_survivants:
             print("--- TOUTES LES TÂCHES SONT REUSSITES ! ---")
