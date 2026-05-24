@@ -1078,7 +1078,7 @@ EMBUSCADE_POSITIONS = [
     Vec3(-43.01, 35.98,  42.13),
 ]
 
-EMBUSCADE_DAMAGE        = 15    # HP retirés lors d'un bond
+EMBUSCADE_DAMAGE        = 5    # HP retirés lors d'un bond
 EMBUSCADE_DETECT_WALK   = 9.0   # rayon de détection (marche)
 EMBUSCADE_DETECT_SPRINT = 18.0   # rayon de détection (sprint — beaucoup de bruit)
 EMBUSCADE_TENSION_TIME  = 0.7   # secondes dans la zone avant le déclenchement
