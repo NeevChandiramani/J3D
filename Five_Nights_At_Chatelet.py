@@ -671,7 +671,7 @@ panneau_5 = Entity(
 
 panneau_6 = Entity(
     model="ressources/epi2.obj",
-    texture="ressources/vignettepita.png",
+    texture="ressources/vignettepita.jpg",
     scale=Vec3(0.5, 1.5, 0.5)
 )
 
