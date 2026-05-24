@@ -77,13 +77,19 @@ class NetworkClient:
                         elif isinstance(msg, dict) and msg.get("type") == "lobby_state":
                             with self._lock:
                                 self.lobby_state = dict(msg.get("players", {}))
-                            print(f"[CLIENT] lobby_state reçu : {self.lobby_state}")
+                            try:
+                                print(f"[CLIENT] lobby_state reçu : {self.lobby_state}")
+                            except Exception:
+                                pass
 
                         # Cas roles : attribution des rôles par le serveur
                         elif isinstance(msg, dict) and msg.get("type") == "roles":
                             with self._lock:
                                 self.assigned_roles = dict(msg.get("roles", {}))
-                            print(f"[CLIENT] Rôles reçus : {self.assigned_roles}")
+                            try:
+                                print(f"[CLIENT] Rôles reçus : {self.assigned_roles}")
+                            except Exception:
+                                pass
                         
                         elif isinstance(msg, dict) and msg.get("type") == "survivant_emprisonne":
                             with self._lock:

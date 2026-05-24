@@ -3,6 +3,7 @@ import threading
 import json
 import uuid
 import random
+import time
 
 HOST = "0.0.0.0"
 PORT = 5555
@@ -74,6 +75,22 @@ def broadcast_lobby_state():
     with lobby_lock:
         snapshot = {pid: dict(info) for pid, info in lobby.items()}
     broadcast_message({"type": "lobby_state", "players": snapshot})
+
+
+def lobby_heartbeat_loop():
+    """Rediffuse lobby_state régulièrement tant qu'un broadcast initial peut
+    s'être perdu et que les rôles ne sont pas encore attribués."""
+    while True:
+        time.sleep(2.0)
+        with roles_lock:
+            roles_done = assigned_roles is not None
+        if roles_done:
+            continue
+        with lobby_lock:
+            empty = not lobby
+        if empty:
+            continue
+        broadcast_lobby_state()
 
 
 def maybe_assign_roles(force=False):
@@ -209,6 +226,8 @@ def start_server():
     server.bind((HOST, PORT))
     server.listen()
     print(f"[SERVER] En écoute sur {HOST}:{PORT}")
+
+    threading.Thread(target=lobby_heartbeat_loop, daemon=True).start()
 
     while True:
         try:

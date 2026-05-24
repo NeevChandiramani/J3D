@@ -218,6 +218,11 @@ def apply_roles_from_server(roles_dict):
     my_role = all_assigned_roles.get(my_str, "Survivor") if my_str else "Survivor"
     _apply_role(my_role)
 
+    # Si des ghosts ont déjà été construits avant l'arrivée des rôles, on les détruit
+    # pour qu'ils soient recréés par update_ghosts() avec le bon prefix C/P.
+    for pid in list(ghost_entities.keys()):
+        _destroy_ghost(pid)
+
 
 # --- LOBBY MULTIJOUEUR ---
 
@@ -2146,12 +2151,15 @@ def input(key):
             toggle_ready()
         elif key == 'f':
             print("[LOBBY] Démarrage forcé demandé")
-            # On tente d'avertir le serveur (utile si d'autres clients attendent),
-            # puis on démarre localement quoi qu'il arrive.
             if network.connected:
+                # On laisse le serveur attribuer les rôles et les broadcaster.
+                # update_lobby() détectera les rôles à la frame suivante et
+                # appellera _exit_lobby() + apply_roles_from_server() proprement.
                 network.send_force_start()
-            _exit_lobby()
-            assign_role()
+            else:
+                # Hors-ligne : tirage local immédiat.
+                _exit_lobby()
+                assign_role()
         elif key == 'escape':
             quitter_jeu()
         return
