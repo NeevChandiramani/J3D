@@ -1994,8 +1994,6 @@ camera.fov = 90
 camera.rotation = (15, 0, 0)
 
 def mouvement_camera():
-    if is_dead:
-        return
     joueur.rotation_y      += mouse.velocity[0] * 80
     camera_pivot.rotation_x -= mouse.velocity[1] * 80
     camera_pivot.rotation_x  = clamp(camera_pivot.rotation_x, -30, 45)
@@ -2044,8 +2042,6 @@ def saut():
 
 def mouvement_joueur():
     global current_stamina, _footstep_timer
-    if is_dead:
-        return
 
     is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
     is_sprinting = held_keys[touches['Sprint']] and current_stamina > 1 and is_moving
