@@ -411,7 +411,6 @@ def update_role_indicator():
 def _build_ghost(pid):
     """Crée un ghost articulé (6 pièces) calqué sur la structure du joueur local."""
     ghost_role = all_assigned_roles.get(str(pid), "Survivor")
-    role_color = ROLES[ghost_role]["model_color"]
     prefix = 'C' if ghost_role == "Infected" else 'P'
 
     # Racine = porteur du collider et de la position, sans modèle visible.
