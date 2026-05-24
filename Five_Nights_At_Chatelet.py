@@ -98,7 +98,9 @@ except Exception:                                                               
 network = NetworkClient()
 connection_ok = network.connect()
 
-ghost_entities = {}   # {player_id: Entity}
+ghost_entities = {}   # {player_id: Entity racine du ghost (collider + position)}
+ghost_parts = {}      # {player_id: {"corps","tete","bras_g","bras_d","jambe_g","jambe_d","model"}}
+ghost_anim_state = {} # {player_id: {"prev_atk": int, "is_attack": bool, "attack_timer": float, "anim_timer": float}}
 ghost_hp = {}         # {player_id: int}
 
 SEND_INTERVAL = 0.05
@@ -164,39 +166,11 @@ LIBERATION_DUREE = 5.0
 _liberation_en_cours = False
 _liberation_cible = None  # le joueur mort qu'on est en train de libérer
 
-def assign_role():
-    """Attribution aléatoire et équilibrée des rôles au lancement."""
-    global player_role, MAX_HP, base_speed, _role_announced, _role_announce_timer, all_assigned_roles
+def _apply_role(role_name):
+    """Applique le rôle décidé : stats, modèles 3D locaux, annonce, embuscadeur."""
+    global player_role, MAX_HP, base_speed, _role_announced, _role_announce_timer
+    player_role = role_name
 
-    players = network.get_other_players() if network.connected else {}
-    nb_players = len(players) + 1
-
-    if nb_players <= 1:
-        # En solo : tirage aléatoire
-        player_role = random.choices(["Survivor", "Infected"], weights=[70, 30])[0]
-        if network.my_id is not None:
-            all_assigned_roles[str(network.my_id)] = player_role
-    else:
-        # En multijoueur : S'assurer qu'il y a au moins 1 Infecté et au moins 1 Survivant
-        nb_infectes = max(1, min(nb_players - 1, round(nb_players * 0.35)))
-        
-        all_ids = sorted([str(pid) for pid in players.keys()])
-        if network.my_id is not None:
-            all_ids.append(str(network.my_id))
-            all_ids.sort()
-            
-        random.seed(sum(ord(c) for c in "".join(all_ids)))
-        infectes_ids = random.sample(all_ids, nb_infectes)
-        random.seed()  # Réinitialise la seed pour la suite du jeu
-        
-        # Enregistrer les rôles de tous les joueurs présents
-        for pid in all_ids:
-            all_assigned_roles[pid] = "Infected" if pid in infectes_ids else "Survivor"
-            
-        my_str = str(network.my_id) if network.my_id is not None else all_ids[0]
-        player_role = all_assigned_roles.get(my_str, "Survivor")
-
-    # Appliquer les statistiques et le modèle 3D selon le rôle
     role_data = ROLES[player_role]
     MAX_HP = role_data["max_hp"]
     base_speed = 6.7 * role_data["speed_mult"]
@@ -224,8 +198,103 @@ def assign_role():
     _role_announce_timer = ROLE_ANNOUNCE_DURATION
     show_role_announce()
     print(f"[ROLE] Role attribué : {player_role}")
-    # Lancer l'embuscadeur maintenant que my_id et les entités sont prêts
     init_embuscadeur()
+
+
+def assign_role():
+    """Mode solo (réseau indisponible) : tirage 70/30 local."""
+    global all_assigned_roles
+    role = random.choices(["Survivor", "Infected"], weights=[70, 30])[0]
+    if network.my_id is not None:
+        all_assigned_roles[str(network.my_id)] = role
+    _apply_role(role)
+
+
+def apply_roles_from_server(roles_dict):
+    """Mode multi : applique les rôles décidés par le serveur."""
+    global all_assigned_roles
+    all_assigned_roles = {str(pid): r for pid, r in roles_dict.items()}
+    my_str = str(network.my_id) if network.my_id is not None else None
+    my_role = all_assigned_roles.get(my_str, "Survivor") if my_str else "Survivor"
+    _apply_role(my_role)
+
+
+# --- LOBBY MULTIJOUEUR ---
+
+_lobby_active = False
+_lobby_ready = False  # état local : ai-je cliqué Prêt ?
+
+
+def enter_lobby():
+    """Active l'écran lobby. Appelé après la fin du fondu de connexion en mode multi."""
+    global _lobby_active, _lobby_ready
+    _lobby_active = True
+    _lobby_ready = False
+    lobby_root.enabled = True
+    print("[LOBBY] Entrée dans le lobby, en attente que tout le monde soit prêt")
+
+
+def _exit_lobby():
+    global _lobby_active
+    _lobby_active = False
+    lobby_root.enabled = False
+
+
+def toggle_ready():
+    """Bascule l'état Prêt du joueur local et l'envoie au serveur."""
+    global _lobby_ready
+    if not _lobby_active:
+        return
+    _lobby_ready = not _lobby_ready
+    if network.connected:
+        network.send_ready(_lobby_ready)
+
+
+def update_lobby():
+    """Met à jour l'affichage du lobby et bascule en partie quand le serveur envoie les rôles."""
+    if not _lobby_active:
+        return
+
+    # 1) Si le serveur a déjà attribué les rôles, on quitte le lobby et on démarre.
+    roles = network.get_assigned_roles() if network.connected else None
+    if roles:
+        _exit_lobby()
+        apply_roles_from_server(roles)
+        return
+
+    # 2) Sinon, on rafraîchit la liste des joueurs et leur état Prêt.
+    state = network.get_lobby_state() if network.connected else {}
+    my_id = str(network.my_id) if network.my_id is not None else "?"
+
+    # On force l'entrée du joueur local au cas où le serveur n'a pas encore broadcast
+    # le premier lobby_state nous concernant.
+    if my_id != "?" and my_id not in state:
+        state[my_id] = {"ready": _lobby_ready}
+    elif my_id in state:
+        # On reflète notre intention locale immédiatement (avant l'aller-retour serveur)
+        state[my_id] = {"ready": _lobby_ready or bool(state[my_id].get("ready"))}
+
+    lignes = []
+    for pid, info in sorted(state.items()):
+        marque = "[X]" if info.get("ready") else "[ ]"
+        suffix = "  (toi)" if pid == my_id else ""
+        lignes.append(f"{marque}  {pid}{suffix}")
+
+    if not lignes:
+        lignes = ["(en attente du serveur...)"]
+
+    lobby_players_text.text = "\n".join(lignes)
+
+    nb_prets = sum(1 for v in state.values() if v.get("ready"))
+    nb_total = len(state)
+    lobby_status.text = f"{nb_prets} / {nb_total} prêts"
+
+    if _lobby_ready:
+        lobby_hint.text = "Vous êtes PRÊT — ENTRÉE pour annuler   |   ÉCHAP pour quitter"
+        lobby_hint.color = color.rgba(80, 220, 100, 220)
+    else:
+        lobby_hint.text = "ENTRÉE pour être prêt   |   ÉCHAP pour quitter"
+        lobby_hint.color = color.rgba(220, 220, 220, 220)
 
 
 def show_role_announce():
@@ -283,7 +352,10 @@ def update_connection_screen():
         if _connection_fade <= 0.0:
             connection_screen_root.enabled = False
             _connection_screen_active = False
-            assign_role()   # enchaîne sur l'annonce du rôle
+            if network.connected:
+                enter_lobby()       # multi : passer par le lobby "PRÊT"
+            else:
+                assign_role()       # solo : tirage local immédiat
 
 
 def update_role_announce():
@@ -336,35 +408,132 @@ def update_role_indicator():
         role_indicator.color = color.rgba(r, g_c, b, 200)
 
 
+def _build_ghost(pid):
+    """Crée un ghost articulé (6 pièces) calqué sur la structure du joueur local."""
+    ghost_role = all_assigned_roles.get(str(pid), "Survivor")
+    role_color = ROLES[ghost_role]["model_color"]
+    prefix = 'C' if ghost_role == "Infected" else 'P'
+
+    # Racine = porteur du collider et de la position, sans modèle visible.
+    root = Entity(scale_y=3, collider='box')
+    # Pivot intermédiaire pour reproduire l'offset/rotation du joueur local.
+    model_pivot = Entity(parent=root, position=(-0.5, 0, 0), rotation_y=180)
+
+    parts = {
+        'model':   model_pivot,
+        'corps':   Entity(parent=model_pivot, model=f'ressources/{prefix}_body.obj',      color=role_color),
+        'tete':    Entity(parent=model_pivot, model=f'ressources/{prefix}_head.obj',      color=role_color),
+        'bras_g':  Entity(parent=model_pivot, model=f'ressources/{prefix}_left_arm.obj',  color=role_color),
+        'bras_d':  Entity(parent=model_pivot, model=f'ressources/{prefix}_right_arm.obj', color=role_color),
+        'jambe_g': Entity(parent=model_pivot, model=f'ressources/{prefix}_left_leg.obj',  color=role_color),
+        'jambe_d': Entity(parent=model_pivot, model=f'ressources/{prefix}_right_leg.obj', color=role_color),
+    }
+
+    ghost_entities[pid] = root
+    ghost_parts[pid] = parts
+    ghost_anim_state[pid] = {"prev_atk": 0, "is_attack": False, "attack_timer": 0.0, "anim_timer": 0.0}
+    ghost_hp[pid] = ROLES[ghost_role]["max_hp"]
+
+
+def _destroy_ghost(pid):
+    """Détruit toutes les pièces d'un ghost et nettoie les dicts."""
+    parts = ghost_parts.pop(pid, None)
+    if parts:
+        for k, e in parts.items():
+            try: destroy(e)
+            except Exception: pass
+    root = ghost_entities.pop(pid, None)
+    if root:
+        try: destroy(root)
+        except Exception: pass
+    ghost_anim_state.pop(pid, None)
+    ghost_hp.pop(pid, None)
+
+
+def _animate_ghost(pid, mv, sp, atk):
+    """Reproduit sur le ghost les mêmes animations que celles du joueur local
+    (cf. update() lignes ~2132-2175). Utilise un timer local par ghost."""
+    parts = ghost_parts.get(pid)
+    st = ghost_anim_state.get(pid)
+    if not parts or not st:
+        return
+
+    dt = time.dt
+
+    # Détection front montant d'attaque : on déclenche la séquence locale
+    prev_atk = st.get("prev_atk", 0)
+    if atk == 1 and prev_atk == 0:
+        st["is_attack"] = True
+        st["attack_timer"] = 0.0
+    st["prev_atk"] = atk
+
+    if st["is_attack"]:
+        st["attack_timer"] += dt * 14
+        t = math.sin(st["attack_timer"])
+        parts['bras_g'].rotation_x = -t * 45
+        parts['bras_d'].rotation_x = -t * 45
+        parts['corps'].rotation_x  =  t * 10
+        parts['tete'].rotation_x   =  t * 8
+        if st["attack_timer"] >= math.pi:
+            st["is_attack"] = False
+            st["attack_timer"] = 0.0
+            parts['bras_g'].rotation_x = 0
+            parts['bras_d'].rotation_x = 0
+            parts['corps'].rotation_x  = 0
+            parts['tete'].rotation_x   = 0
+        return
+
+    if mv == 1:
+        anim_speed = 12 if sp == 1 else 7
+        st["anim_timer"] += dt * anim_speed
+        at = st["anim_timer"]
+        parts['jambe_g'].rotation_x =  math.sin(at) * 6
+        parts['jambe_d'].rotation_x = -math.sin(at) * 6
+        parts['bras_g'].rotation_x  = -math.sin(at) * 5
+        parts['bras_d'].rotation_x  =  math.sin(at) * 5
+        parts['model'].y            =  math.sin(at * 2) * 0.01
+        parts['corps'].rotation_z   =  math.sin(at) * 0.5
+    else:
+        st["anim_timer"] += dt * 1.5
+        at = st["anim_timer"]
+        parts['jambe_g'].rotation_x = lerp(parts['jambe_g'].rotation_x, 0, dt * 8)
+        parts['jambe_d'].rotation_x = lerp(parts['jambe_d'].rotation_x, 0, dt * 8)
+        parts['bras_g'].rotation_x  = lerp(parts['bras_g'].rotation_x,  0, dt * 8)
+        parts['bras_d'].rotation_x  = lerp(parts['bras_d'].rotation_x,  0, dt * 8)
+        parts['corps'].rotation_z   = lerp(parts['corps'].rotation_z,   0, dt * 8)
+        parts['corps'].y  = math.sin(at) * 0.021
+        parts['tete'].y   = math.sin(at) * 0.019
+        parts['bras_g'].y = math.sin(at) * 0.019
+        parts['bras_d'].y = math.sin(at) * 0.019
+        parts['jambe_g'].y = math.sin(at) * 0.014
+        parts['jambe_d'].y = math.sin(at) * 0.014
+
+
 def update_ghosts(other_players):
     global mur_victoire, mur_cree
-    
+
     for pid in list(ghost_entities.keys()):
         if pid not in other_players:
-            destroy(ghost_entities.pop(pid))
-            ghost_hp.pop(pid, None)
+            _destroy_ghost(pid)
 
     for pid, data in other_players.items():
         if not isinstance(data, dict) or "x" not in data or "y" not in data or "z" not in data:
             continue
 
         if pid not in ghost_entities:
-            # Récupération du rôle du joueur distant pour lui assigner le bon modèle
-            ghost_role = all_assigned_roles.get(str(pid), "Survivor")
-            ghost_model = ROLES[ghost_role]["model_path"]
-            ghost_color = ROLES[ghost_role]["model_color"]
+            _build_ghost(pid)
 
-            ghost_entities[pid] = Entity(
-                model=ghost_model,
-                color=ghost_color,
-                scale_y=3,
-                collider='box'
-            )
-            ghost_hp[pid] = ROLES[ghost_role]["max_hp"]
-
-        ghost_entities[pid].position = Vec3(data["x"], data["y"], data["z"])
+        root = ghost_entities[pid]
+        root.position = Vec3(data["x"], data["y"], data["z"])
         if "ry" in data:
-            ghost_entities[pid].rotation_y = data["ry"]
+            root.rotation_y = data["ry"]
+
+        _animate_ghost(
+            pid,
+            mv=int(data.get("mv", 0)),
+            sp=int(data.get("sp", 0)),
+            atk=int(data.get("atk", 0)),
+        )
 
     if hasattr(network, 'get_damage_events'):
         for event in network.get_damage_events():
@@ -409,13 +578,15 @@ def update_ghosts(other_players):
                 receive_damage(event.get("amount", 10))
 
             target_pid = str(event.get("target_id"))
-            if target_pid in ghost_entities:
-                g = ghost_entities[target_pid]
+            if target_pid in ghost_parts:
                 ghost_role = all_assigned_roles.get(target_pid, "Survivor")
                 orig_color = ROLES[ghost_role]["model_color"]
-                
-                g.color = color.white
-                invoke(setattr, g, 'color', orig_color, delay=0.15)
+                for k in ('corps', 'tete', 'bras_g', 'bras_d', 'jambe_g', 'jambe_d'):
+                    part = ghost_parts[target_pid].get(k)
+                    if part is None:
+                        continue
+                    part.color = color.white
+                    invoke(setattr, part, 'color', orig_color, delay=0.15)
 
 SALLES = [
     Vec3(-73.42, 35.98, 4.77),
@@ -1472,6 +1643,59 @@ else:
     _connection_status_rgb        = (220, 50, 50)
 
 
+# UI — LOBBY MULTIJOUEUR (avant le début de la partie)
+
+lobby_root = Entity(parent=camera.ui, enabled=False, z=-0.5)
+
+lobby_bg = Entity(
+    parent=lobby_root,
+    model='quad',
+    color=color.rgba(0, 0, 0, 210),
+    scale=(3, 2),
+    z=0.1
+)
+
+lobby_title = Text(
+    parent=lobby_root,
+    text='LOBBY',
+    origin=(0, 0),
+    position=(0, 0.34),
+    scale=3,
+    color=color.rgba(200, 200, 200, 255),
+    font='VeraMono.ttf'
+)
+
+lobby_status = Text(
+    parent=lobby_root,
+    text='',
+    origin=(0, 0),
+    position=(0, 0.24),
+    scale=1.6,
+    color=color.rgba(180, 180, 180, 255),
+    font='VeraMono.ttf'
+)
+
+lobby_players_text = Text(
+    parent=lobby_root,
+    text='',
+    origin=(0, 0),
+    position=(0, 0.02),
+    scale=1.4,
+    color=color.rgba(220, 220, 220, 255),
+    font='VeraMono.ttf'
+)
+
+lobby_hint = Text(
+    parent=lobby_root,
+    text='Appuyez sur ENTRÉE quand vous êtes prêt',
+    origin=(0, 0),
+    position=(0, -0.28),
+    scale=1.4,
+    color=color.rgba(220, 220, 220, 220),
+    font='VeraMono.ttf'
+)
+
+
 # Indicateur de rôle permanent (coin haut droit)
 role_indicator = Text(
     text='',
@@ -1883,6 +2107,15 @@ def input(key):
     if key == 'p':
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
+    # Lobby : ENTRÉE bascule le statut Prêt, ÉCHAP quitte le jeu.
+    # Les autres touches sont ignorées pour éviter les conflits d'overlay.
+    if _lobby_active:
+        if key in ('enter', 'return'):
+            toggle_ready()
+        elif key == 'escape':
+            quitter_jeu()
+        return
+
     if key == 'escape':
         if enigme.is_open or enigme_plomberie.is_open or enigme_signalisation.is_open:
             enigme.handle_input(key)
@@ -1985,6 +2218,11 @@ def update():
     enigme_plomberie.update()
 
     update_connection_screen()
+    update_lobby()
+
+    # Tant que le lobby est actif, on bloque la logique de jeu (mouvements, IA, etc.)
+    if _lobby_active:
+        return
 
     if calcul_termine and player_role is not None and not tasks_placees:
         
@@ -2069,7 +2307,16 @@ def update():
         _send_timer += time.dt
         if _send_timer >= SEND_INTERVAL:
             _send_timer = 0
-            network.send_position(joueur.x, joueur.y, joueur.z, joueur.rotation_y)
+            _is_moving_now = (held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']]
+                              or held_keys[touches['Move Left']] or held_keys[touches['Move Right']])
+            _is_sprinting_now = held_keys[touches['Sprint']] and _is_moving_now
+            network.send_position(
+                joueur.x, joueur.y, joueur.z, joueur.rotation_y,
+                mv=int(_is_moving_now),
+                sp=int(_is_sprinting_now),
+                atk=int(_is_attack_anim),
+                at=round(_anim_timer, 2),
+            )
 
         update_ghosts(network.get_other_players())
     else:

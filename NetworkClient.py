@@ -15,6 +15,8 @@ class NetworkClient:
         self._lock = threading.Lock()
         self._buffer = ""
         self.game_event_queue = []
+        self.lobby_state = {}        # {pid: {"ready": bool}}
+        self.assigned_roles = None   # None tant qu'on n'a pas reçu de "roles" du serveur
 
     def connect(self):
         try:
@@ -44,7 +46,7 @@ class NetworkClient:
                     line, self._buffer = self._buffer.split("\n", 1)
                     line = line.strip()
                     if not line: continue
-                    
+
                     try:
                         msg = json.loads(line)
 
@@ -66,10 +68,21 @@ class NetworkClient:
                         elif isinstance(msg, dict) and msg.get("type") == "survivant_fini":
                             with self._lock:
                                 self.game_event_queue.append(msg)
-                        
+
                         elif isinstance(msg, dict) and msg.get("type") == "liberer_joueur":
                             with self._lock:
                                 self.game_event_queue.append(msg)
+
+                        # Cas lobby : état des joueurs (prêt / pas prêt)
+                        elif isinstance(msg, dict) and msg.get("type") == "lobby_state":
+                            with self._lock:
+                                self.lobby_state = dict(msg.get("players", {}))
+
+                        # Cas roles : attribution des rôles par le serveur
+                        elif isinstance(msg, dict) and msg.get("type") == "roles":
+                            with self._lock:
+                                self.assigned_roles = dict(msg.get("roles", {}))
+                            print(f"[CLIENT] Rôles reçus : {self.assigned_roles}")
 
                         # Cas 4 : C'est la liste des positions/rotations des joueurs
                         else:
@@ -86,15 +99,21 @@ class NetworkClient:
                 break
         self.connected = False
 
-    def send_position(self, x, y, z, ry):
-        """Envoie position ET rotation Y au serveur."""
+    def send_position(self, x, y, z, ry, mv=0, sp=0, atk=0, at=0.0):
+        """Envoie position, rotation Y et état d'animation au serveur.
+        mv = is_moving, sp = is_sprinting, atk = is_attack_anim, at = _anim_timer.
+        """
         if not self.connected: return
         try:
             data = {
-                "x": round(x, 2), 
-                "y": round(y, 2), 
-                "z": round(z, 2), 
-                "ry": round(ry, 2)
+                "x": round(x, 2),
+                "y": round(y, 2),
+                "z": round(z, 2),
+                "ry": round(ry, 2),
+                "mv": int(mv),
+                "sp": int(sp),
+                "atk": int(atk),
+                "at": round(float(at), 2),
             }
             self.sock.sendall((json.dumps(data) + "\n").encode())
         except Exception:
@@ -140,10 +159,30 @@ class NetworkClient:
         except Exception as e:
             print(f"Erreur envoi screamer : {e}")
 
+    def send_ready(self, is_ready):
+        """Indique au serveur si ce joueur est prêt à démarrer la partie."""
+        if not self.connected: return
+        try:
+            msg = {"type": "ready", "ready": bool(is_ready)}
+            self.sock.sendall((json.dumps(msg) + "\n").encode())
+            print(f"[LOBBY] Ready={is_ready} envoyé")
+        except Exception as e:
+            print(f"Erreur envoi ready : {e}")
+
+    def get_lobby_state(self):
+        """Retourne l'état du lobby : {pid: {"ready": bool}}."""
+        with self._lock:
+            return dict(self.lobby_state)
+
+    def get_assigned_roles(self):
+        """Retourne le dict des rôles si le serveur les a déjà attribués, sinon None."""
+        with self._lock:
+            return dict(self.assigned_roles) if self.assigned_roles is not None else None
+
     def disconnect(self):
         self.connected = False
         if self.sock: self.sock.close()
-    
+
     def get_game_events(self):
         with self._lock:
             events = list(self.game_event_queue)
