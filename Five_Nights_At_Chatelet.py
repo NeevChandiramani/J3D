@@ -1523,6 +1523,7 @@ base_speed = 6.7
 # UI
 
 distance_interaction = 3
+INTERACTION_HINT_DISTANCE = 4.5
 rectangle_visible = False
 
 rectangle_ui = Entity(
@@ -1567,6 +1568,17 @@ attack_indicator = Text(
     scale=1.3,
     parent=camera.ui,
     color=color.white
+)
+
+# Indication d'interaction (apparaît près d'une tâche)
+interact_hint = Text(
+    text=f"Appuyez sur [{touches['Interact'].upper()}] pour interagir",
+    position=(0, -0.28),
+    origin=(0, 0),
+    scale=1.1,
+    parent=camera.ui,
+    color=color.white,
+    enabled=False,
 )
 
 network_text = Text(
@@ -2261,13 +2273,31 @@ def update():
 
 
     if enigme.is_open or enigme_signalisation.is_open or enigme_plomberie.is_open:
+        interact_hint.enabled = False
         return
-    
+
     if navigo_task:
         if hasattr(navigo_task, 'update'):
             navigo_task.update()
         elif navigo_task.is_open:
+            interact_hint.enabled = False
             return
+
+    # Affiche l'indication "Appuyez sur E" si le joueur est proche d'une tâche
+    show_hint = False
+    if calcul_termine and player_role == "Survivor" and not is_dead:
+        task_positions = [
+            cube_vanne.position,
+            cube_electrique.position,
+            cube_panneau.position,
+        ]
+        if navigo_task and hasattr(navigo_task, '_world_entity'):
+            task_positions.append(navigo_task._world_entity.position)
+        for pos in task_positions:
+            if distance(joueur.position, pos) <= INTERACTION_HINT_DISTANCE:
+                show_hint = True
+                break
+    interact_hint.enabled = show_hint
         
     mouvement_joueur()
     mouvement_camera()
