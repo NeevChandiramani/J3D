@@ -385,12 +385,12 @@ def _build_ghost(pid):
 
     parts = {
         'model':   model_pivot,
-        'corps':   Entity(parent=model_pivot, model=f'ressources/{prefix}_body.obj'),
-        'tete':    Entity(parent=model_pivot, model=f'ressources/{prefix}_head.obj'),
-        'bras_g':  Entity(parent=model_pivot, model=f'ressources/{prefix}_left_arm.obj'),
-        'bras_d':  Entity(parent=model_pivot, model=f'ressources/{prefix}_right_arm.obj'),
-        'jambe_g': Entity(parent=model_pivot, model=f'ressources/{prefix}_left_leg.obj'),
-        'jambe_d': Entity(parent=model_pivot, model=f'ressources/{prefix}_right_leg.obj'),
+        'corps':   Entity(parent=model_pivot, model=f'ressources/{prefix}_body.obj',shader=lit_with_shadows_shader),
+        'tete':    Entity(parent=model_pivot, model=f'ressources/{prefix}_head.obj',shader=lit_with_shadows_shader),
+        'bras_g':  Entity(parent=model_pivot, model=f'ressources/{prefix}_left_arm.obj',shader=lit_with_shadows_shader),
+        'bras_d':  Entity(parent=model_pivot, model=f'ressources/{prefix}_right_arm.obj',shader=lit_with_shadows_shader),
+        'jambe_g': Entity(parent=model_pivot, model=f'ressources/{prefix}_left_leg.obj',shader=lit_with_shadows_shader),
+        'jambe_d': Entity(parent=model_pivot, model=f'ressources/{prefix}_right_leg.obj',shader=lit_with_shadows_shader),
     }
 
     ghost_entities[pid] = root
@@ -822,16 +822,16 @@ _attack_anim_timer = 0.0
 _son_timer = 0.0
 
 
-AmbientLight(color=Vec4(0.01, 0.01, 0.01, 1))
+AmbientLight(color=Vec4(0.03, 0.03, 0.03, 1))
 
 metro_lights = [
-    (Vec3(15, 8, 0),    Vec4(0.07, 0.08, 0.08, 1), 9),
-    (Vec3(-10, 8, 10),  Vec4(0.05, 0.08, 0.06, 1), 9),
-    (Vec3(-30, 8, -8),  Vec4(0.08, 0.04, 0.04, 1), 9),
-    (Vec3(0, 8, -20),   Vec4(0.06, 0.07, 0.09, 1), 9),
-    (Vec3(30, 8, 15),   Vec4(0.08, 0.08, 0.06, 1), 9),
-    (Vec3(-45, 35, 0),  Vec4(0.06, 0.02, 0.02, 1), 12),
-    (Vec3(0, 35, 0),    Vec4(0.05, 0.06, 0.08, 1), 12),
+    (Vec3(15, 8, 0),    Vec4(0.12, 0.13, 0.13, 1), 11),
+    (Vec3(-10, 8, 10),  Vec4(0.09, 0.13, 0.10, 1), 11),
+    (Vec3(-30, 8, -8),  Vec4(0.13, 0.07, 0.07, 1), 11),
+    (Vec3(0, 8, -20),   Vec4(0.10, 0.12, 0.14, 1), 11),
+    (Vec3(30, 8, 15),   Vec4(0.13, 0.13, 0.10, 1), 11),
+    (Vec3(-45, 35, 0),  Vec4(0.10, 0.04, 0.04, 1), 14),
+    (Vec3(0, 35, 0),    Vec4(0.09, 0.11, 0.13, 1), 14),
 ]
 for _pos, _col, _rad in metro_lights:
     _pl = PointLight(position=_pos)
