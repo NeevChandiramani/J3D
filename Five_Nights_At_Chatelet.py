@@ -1299,7 +1299,7 @@ def update_liberation():
     RAYON = 3.0
 
     # Si le joueur local est mort, il ne peut pas libérer
-    if player_role != 'Survivor' or is_dead:
+    if player_role == 'Infected':
         _liberation_en_cours = False
         _liberation_timer = 0.0
         return
@@ -2390,7 +2390,6 @@ def update():
             invoke(declencher_retour_menu, delay=4.0)
         
     update_liberation()
-    verifier_defaite()
 
 
 
