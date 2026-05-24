@@ -165,6 +165,8 @@ _liberation_timer = 0.0
 LIBERATION_DUREE = 5.0
 _liberation_en_cours = False
 _liberation_cible = None  # le joueur mort qu'on est en train de libérer
+survivants_en_prison = set()  # IDs des survivants emprisonnés
+defaite_declenchee = False
 
 def _apply_role(role_name):
     """Applique le rôle décidé : stats, modèles 3D locaux, annonce, embuscadeur."""
@@ -1326,13 +1328,15 @@ def player_death():
     hp_text.color = color.red
     play_sfx('death')
     
-    # Téléporter en prison
     joueur.position = (17.34, 98.17, 60.4)
-    vertical_velocity = 0
-    
-    # Garder la souris locked (pas de menu)
     mouse.locked = True
     mouse.visible = False
+
+    if network and network.connected and network.my_id is not None:
+        network.sock.sendall((json.dumps({
+            "type": "survivant_emprisonne",
+            "id": str(network.my_id)
+        }) + "\n").encode())
 
 def respawn_player():
     global is_dead, player_hp, _invincibility_timer
@@ -1360,7 +1364,7 @@ def update_liberation():
     # Chercher un joueur mort proche du levier
     cible_trouvee = None
     for pid, ghost in ghost_entities.items():
-        if ghost_hp.get(pid, 100) <= 0:
+        if pid in survivants_en_prison:
             dist_levier = distance(ghost.position, POS_LEVIER)
             dist_joueur = distance(joueur.position, POS_LEVIER)
             if dist_levier < RAYON and dist_joueur < RAYON:
@@ -1395,6 +1399,40 @@ def update_liberation():
         _liberation_timer = 0.0
         if cible_trouvee is None:
             interaction_text.enabled = False
+
+def verifier_defaite():
+    global defaite_declenchee
+    if defaite_declenchee:
+        return
+
+    nombre_total_survivants = sum(1 for r in all_assigned_roles.values() if r == 'Survivor')
+    if nombre_total_survivants == 0:
+        return
+
+    # Compter les survivants locaux emprisonnés
+    survivants_emprisonnes = set(survivants_en_prison)
+    if is_dead and player_role == 'Survivor':
+        survivants_emprisonnes.add(str(network.my_id))
+
+    if len(survivants_emprisonnes) >= nombre_total_survivants:
+        defaite_declenchee = True
+        if player_role == 'Survivor':
+            msg_fin = Text(
+                text="DÉFAITE...\nVous avez tous été emprisonnés !",
+                origin=(0, 0),
+                scale=2.5,
+                color=color.red,
+                background=True
+            )
+        else:
+            msg_fin = Text(
+                text="VICTOIRE !\nTous les survivants sont emprisonnés !",
+                origin=(0, 0),
+                scale=2.5,
+                color=color.green,
+                background=True
+            )
+        invoke(declencher_retour_menu, delay=4.0)
 
 def update_hp_ui():
     ratio = player_hp / MAX_HP
