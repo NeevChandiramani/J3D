@@ -113,7 +113,6 @@ ROLES = {
     "Survivor": {
         "description": "Find the exits. Avoid the Infected.",
         "color_rgb": (80, 220, 100),
-        "model_color": color.white,
         "model_path": 'ressources/Perso.obj',
         "speed_mult": 1.0,
         "max_hp": 100,
@@ -122,7 +121,6 @@ ROLES = {
     "Infected": {
         "description": "Eliminate all Survivors.",
         "color_rgb": (220, 50, 50),
-        "model_color": color.red,
         "model_path": 'ressources/Crackhead.obj',
         "speed_mult": 1.15,
         "max_hp": 150,
@@ -191,9 +189,9 @@ def _apply_role(role_name):
         joueur_jambe_g.model = 'ressources/P_left_leg.obj'
         joueur_jambe_d.model = 'ressources/P_right_leg.obj'
 
-    role_color = role_data["model_color"]
+    
     for part in [joueur_corps, joueur_tete, joueur_bras_g, joueur_bras_d, joueur_jambe_g, joueur_jambe_d]:
-        part.color = role_color
+        part.shader = lit_with_shadows_shader
 
     attack_indicator.enabled = role_data["can_attack"]
     _role_announced = True
