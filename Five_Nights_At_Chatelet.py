@@ -102,6 +102,7 @@ ghost_entities = {}   # {player_id: Entity racine du ghost (collider + position)
 ghost_parts = {}      # {player_id: {"corps","tete","bras_g","bras_d","jambe_g","jambe_d","model"}}
 ghost_anim_state = {} # {player_id: {"prev_atk": int, "is_attack": bool, "attack_timer": float, "anim_timer": float}}
 ghost_hp = {}         # {player_id: int}
+ghost_role_by_pid = {} # {player_id: "Survivor"/"Infected"} — rôle réellement utilisé pour bâtir le ghost
 
 SEND_INTERVAL = 0.05
 _send_timer = 0
@@ -202,8 +203,13 @@ def _apply_role(role_name):
 
 
 def assign_role():
-    """Mode solo (réseau indisponible) : tirage 70/30 local."""
+    """Attribue le rôle local. Préfère les rôles du serveur si déjà reçus,
+    sinon tirage 70/30 local (mode solo / réseau indisponible)."""
     global all_assigned_roles
+    server_roles = network.get_assigned_roles() if hasattr(network, 'get_assigned_roles') else None
+    if server_roles:
+        apply_roles_from_server(server_roles)
+        return
     role = random.choices(["Survivor", "Infected"], weights=[70, 30])[0]
     if network.my_id is not None:
         all_assigned_roles[str(network.my_id)] = role
@@ -211,17 +217,33 @@ def assign_role():
 
 
 def apply_roles_from_server(roles_dict):
-    """Mode multi : applique les rôles décidés par le serveur."""
+    """Mode multi : applique les rôles décidés par le serveur.
+    Ne détruit que les ghosts dont le rôle a réellement changé."""
     global all_assigned_roles
     all_assigned_roles = {str(pid): r for pid, r in roles_dict.items()}
     my_str = str(network.my_id) if network.my_id is not None else None
     my_role = all_assigned_roles.get(my_str, "Survivor") if my_str else "Survivor"
-    _apply_role(my_role)
+    if player_role != my_role:
+        _apply_role(my_role)
 
-    # Si des ghosts ont déjà été construits avant l'arrivée des rôles, on les détruit
-    # pour qu'ils soient recréés par update_ghosts() avec le bon prefix C/P.
     for pid in list(ghost_entities.keys()):
-        _destroy_ghost(pid)
+        expected = all_assigned_roles.get(str(pid), "Survivor")
+        if ghost_role_by_pid.get(pid) != expected:
+            _destroy_ghost(pid)
+
+
+def sync_roles_from_server():
+    """À appeler chaque frame en multi : si le serveur a publié de nouveaux rôles
+    (au démarrage ou quand un joueur rejoint), on les applique."""
+    if not getattr(network, 'connected', False):
+        return
+    server_roles = network.get_assigned_roles() if hasattr(network, 'get_assigned_roles') else None
+    if not server_roles:
+        return
+    normalized = {str(pid): r for pid, r in server_roles.items()}
+    if normalized == all_assigned_roles:
+        return
+    apply_roles_from_server(server_roles)
 
 
 
@@ -359,6 +381,7 @@ def _build_ghost(pid):
     ghost_parts[pid] = parts
     ghost_anim_state[pid] = {"prev_atk": 0, "is_attack": False, "attack_timer": 0.0, "anim_timer": 0.0}
     ghost_hp[pid] = ROLES[ghost_role]["max_hp"]
+    ghost_role_by_pid[pid] = ghost_role
 
 
 def _destroy_ghost(pid):
@@ -374,6 +397,7 @@ def _destroy_ghost(pid):
         except Exception: pass
     ghost_anim_state.pop(pid, None)
     ghost_hp.pop(pid, None)
+    ghost_role_by_pid.pop(pid, None)
 
 
 def _animate_ghost(pid, mv, sp, atk):
@@ -2193,6 +2217,8 @@ def update():
     if network.connected:
         network_text.text = f'Réseau: connecté ({len(ghost_entities) + 1} joueur(s))'
         network_text.color = color.lime
+
+        sync_roles_from_server()
 
         _send_timer += time.dt
         if _send_timer >= SEND_INTERVAL:
