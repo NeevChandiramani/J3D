@@ -67,10 +67,10 @@ class EnigmeLabyrintheSignalisation:
 
     # Correspondances correctes  {ligne: terminus}
     SOLUTIONS = {
-        "Ligne 1":  "La Défense",
-        "Ligne 4":  "Bagneux",
-        "Ligne 14": "Aéroport d'Orly",
-        "RER A":    "Marne-la-Vallée",
+        "Line 1":  "La Défense",
+        "Line 4":  "Bagneux",
+        "Line 14": "Aéroport d'Orly",
+        "RER A":   "Marne-la-Vallée",
     }
 
     INTERACTION_DISTANCE = 4.0
@@ -103,7 +103,7 @@ class EnigmeLabyrintheSignalisation:
         # Titre du panneau
         self._titre = Text(
             parent=self._root,
-            text="⚡ LABYRINTHE DES LIGNES",
+            text="⚡ LINE MAZE",
             origin=(0, 0),
             position=(0, 0.30),
             scale=1.35,
@@ -112,7 +112,7 @@ class EnigmeLabyrintheSignalisation:
 
         self._sous_titre = Text(
             parent=self._root,
-            text="Cliquez sur une LIGNE, puis sur son TERMINUS",
+            text="Click a LINE, then its TERMINUS",
             origin=(0, 0),
             position=(0, 0.23),
             scale=0.75,
@@ -120,7 +120,7 @@ class EnigmeLabyrintheSignalisation:
         )
 
         # Labels colonnes
-        Text(parent=self._root, text="LIGNES", origin=(0,0),
+        Text(parent=self._root, text="LINES", origin=(0,0),
              position=(-0.30, 0.17), scale=0.8,
              color=color.rgba32(150, 180, 255, 200))
         Text(parent=self._root, text="TERMINUS", origin=(0,0),
@@ -130,7 +130,7 @@ class EnigmeLabyrintheSignalisation:
         # Message succès (caché par défaut)
         self._msg_succes = Text(
             parent=self._root,
-            text="✔  SIGNALISATION RESTAURÉE",
+            text="✔  SIGNALING RESTORED",
             origin=(0, 0),
             position=(0, -0.30),
             scale=1.5,
@@ -141,7 +141,7 @@ class EnigmeLabyrintheSignalisation:
         # Bouton fermeture (ESC)
         self._btn_close = Button(
             parent=self._root,
-            text="✕  FERMER  [ESC]",
+            text="✕  CLOSE  [ESC]",
             position=(0, -0.38),
             scale=(0.30, 0.055),
             color=color.rgba32(60, 60, 80, 200),
@@ -265,7 +265,7 @@ class EnigmeLabyrintheSignalisation:
     def _on_all_validated(self):
         self._success_shown = True
         self._msg_succes.enabled = True
-        self._btn_close.text = "✔  FERMER"
+        self._btn_close.text = "✔  CLOSE"
         # Fermeture automatique après 2.2 s
         invoke(self.close, delay=2.2)
 
