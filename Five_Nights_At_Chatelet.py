@@ -1884,6 +1884,11 @@ def input(key):
         print(f"[POS] x={round(joueur.x, 2)}, y={round(joueur.y, 2)}, z={round(joueur.z, 2)}")
 
     if key == 'escape':
+        if enigme.is_open or enigme_plomberie.is_open or enigme_signalisation.is_open:
+            enigme.handle_input(key)
+            enigme_plomberie.handle_input(key)
+            enigme_signalisation.handle_input(key)
+            return
         if help_overlay_root.enabled:
             toggle_help()
         else:
