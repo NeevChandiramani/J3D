@@ -1,6 +1,7 @@
-#lignes à commenter pour désactiver le menu = -
+# lignes à commenter pour désactiver le menu = -
 
 
+from ursina import texture_importer as _tex_imp
 import threading
 import math
 import os
@@ -20,7 +21,6 @@ from enigme_plomberie import EnigmePlomberie
 from EnigmeLabyrintheSignalisation import EnigmeLabyrintheSignalisation
 
 
-
 # CHEMINS RESSOURCES (compatibilité PyInstaller)
 
 if getattr(sys, 'frozen', False):
@@ -28,8 +28,10 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 def res(path):
     return os.path.normpath(os.path.join(BASE_DIR, path))
+
 
 # touches par défaut
 touches = {
@@ -42,16 +44,16 @@ touches = {
     'Sprint': 'left shift'
 }
 
-try:                                                                            #-
-    from Menu import run_menu                                                   #-
-except Exception as e:                                                          #-
-    run_menu = None                                                             #-
-    print("Warning: impossible d'importer `Menu.run_menu()`: ", e)              #-
+try:  # -
+    from Menu import run_menu  # -
+except Exception as e:  # -
+    run_menu = None  # -
+    print("Warning: impossible d'importer `Menu.run_menu()`: ", e)  # -
 
-if run_menu:                                                                    #-
-    result = run_menu()                                                         #-
-    if result != 'start':                                                       #-
-        sys.exit()                                                              #-
+if run_menu:  # -
+    result = run_menu()  # -
+    if result != 'start':  # -
+        sys.exit()  # -
 
 # charger les touches modifiées depuis le menu
 if os.path.exists("config_touches.json"):
@@ -67,6 +69,7 @@ window.fullscreen = True
 # Neutraliser le handler interne d'Ursina pour F11 (qui annulerait notre toggle)
 if getattr(window, 'input_entity', None) is not None:
     _ursina_orig_input = window.input_entity.input
+
     def _filtered_window_input(key, _orig=_ursina_orig_input):
         if key in ('f11', 'f11 up'):
             return
@@ -80,17 +83,16 @@ os.chdir(BASE_DIR)
 application.asset_folder = Path(BASE_DIR)
 application.compressed_textures_folder = Path(BASE_DIR) / 'textures_compressed'
 
-from ursina import texture_importer as _tex_imp
 _tex_imp.folders = [
     application.compressed_textures_folder,
     application.asset_folder,
     application.internal_textures_folder,
 ]
 
-try:                                                                            #-
-    pygame.quit()                                                               #-
-except Exception:                                                               #-
-    pass                                                                        #-
+try:  # -
+    pygame.quit()  # -
+except Exception:  # -
+    pass  # -
 
 
 # RÉSEAU
@@ -100,9 +102,9 @@ connection_ok = network.connect()
 
 ghost_entities = {}   # {player_id: Entity racine du ghost (collider + position)}
 ghost_parts = {}      # {player_id: {"corps","tete","bras_g","bras_d","jambe_g","jambe_d","model"}}
-ghost_anim_state = {} # {player_id: {"prev_atk": int, "is_attack": bool, "attack_timer": float, "anim_timer": float}}
+ghost_anim_state = {}  # {player_id: {"prev_atk": int, "is_attack": bool, "attack_timer": float, "anim_timer": float}}
 ghost_hp = {}         # {player_id: int}
-ghost_role_by_pid = {} # {player_id: "Survivor"/"Infected"} — rôle réellement utilisé pour bâtir le ghost
+ghost_role_by_pid = {}  # {player_id: "Survivor"/"Infected"} — rôle réellement utilisé pour bâtir le ghost
 
 SEND_INTERVAL = 0.05
 _send_timer = 0
@@ -130,19 +132,19 @@ ROLES = {
 }
 
 player_role = None
-all_assigned_roles = {} # Stocke les rôles de tous les joueurs pour l'affichage correct des modèles
+all_assigned_roles = {}  # Stocke les rôles de tous les joueurs pour l'affichage correct des modèles
 _role_announced = False
 _role_announce_timer = 0.0
 ROLE_ANNOUNCE_DURATION = 4.0
 _announce_phase = 0
-_announce_fade  = 0.0
-FADE_SPEED      = 2.2
+_announce_fade = 0.0
+FADE_SPEED = 2.2
 _pos_vanne = _pos_electrique = _pos_panneau = _pos_navigo = None
 
 # État de l'écran de connexion (affiché au démarrage)
 _connection_screen_active = True
 _connection_phase = 0            # 0=fondu entrée, 1=lobby/attente, 2=fondu sortie
-_connection_fade  = 0.0
+_connection_fade = 0.0
 _connection_timer = 0.5          # palier de fallback solo (jamais utilisé en multi)
 _local_ready = False             # statut "prêt" du joueur local dans le lobby
 CONNECTION_FADE_SPEED = 3.5      # fondu entrée/sortie de l'écran de connexion
@@ -168,6 +170,7 @@ _liberation_cible = None  # le joueur mort qu'on est en train de libérer
 survivants_en_prison = set()  # IDs des survivants emprisonnés
 defaite_declenchee = False
 
+
 def _apply_role(role_name):
     """Applique le rôle décidé : stats, modèles 3D locaux, annonce, embuscadeur."""
     global player_role, MAX_HP, base_speed, _role_announced, _role_announce_timer
@@ -177,17 +180,17 @@ def _apply_role(role_name):
     MAX_HP = role_data["max_hp"]
     base_speed = 6.7 * role_data["speed_mult"]
     if player_role == "Infected":
-        joueur_corps.model   = 'ressources/C_body.obj'
-        joueur_tete.model    = 'ressources/C_head.obj'
-        joueur_bras_g.model  = 'ressources/C_left_arm.obj'
-        joueur_bras_d.model  = 'ressources/C_right_arm.obj'
+        joueur_corps.model = 'ressources/C_body.obj'
+        joueur_tete.model = 'ressources/C_head.obj'
+        joueur_bras_g.model = 'ressources/C_left_arm.obj'
+        joueur_bras_d.model = 'ressources/C_right_arm.obj'
         joueur_jambe_g.model = 'ressources/C_left_leg.obj'
         joueur_jambe_d.model = 'ressources/C_right_leg.obj'
     else:
-        joueur_corps.model   = 'ressources/P_body.obj'
-        joueur_tete.model    = 'ressources/P_head.obj'
-        joueur_bras_g.model  = 'ressources/P_left_arm.obj'
-        joueur_bras_d.model  = 'ressources/P_right_arm.obj'
+        joueur_corps.model = 'ressources/P_body.obj'
+        joueur_tete.model = 'ressources/P_head.obj'
+        joueur_bras_g.model = 'ressources/P_left_arm.obj'
+        joueur_bras_d.model = 'ressources/P_right_arm.obj'
         joueur_jambe_g.model = 'ressources/P_left_leg.obj'
         joueur_jambe_d.model = 'ressources/P_right_leg.obj'
     if player_role == "Infected":
@@ -195,8 +198,13 @@ def _apply_role(role_name):
     else:
         joueur.position = (15, 8, 10)  # spawn survivant
 
-    
-    for part in [joueur_corps, joueur_tete, joueur_bras_g, joueur_bras_d, joueur_jambe_g, joueur_jambe_d]:
+    for part in [
+            joueur_corps,
+            joueur_tete,
+            joueur_bras_g,
+            joueur_bras_d,
+            joueur_jambe_g,
+            joueur_jambe_d]:
         part.shader = lit_with_shadows_shader
 
     attack_indicator.enabled = role_data["can_attack"]
@@ -251,22 +259,20 @@ def sync_roles_from_server():
     apply_roles_from_server(server_roles)
 
 
-
-
 def show_role_announce():
     global _announce_phase, _announce_fade
     role_data = ROLES[player_role]
     r, g_c, b = role_data["color_rgb"]
-    role_announce_name.text  = player_role.upper()
+    role_announce_name.text = player_role.upper()
     role_announce_name.color = color.rgba(r, g_c, b, 0)
     role_announce_title.color = color.rgba(180, 180, 180, 0)
-    role_announce_desc.text  = role_data["description"]
+    role_announce_desc.text = role_data["description"]
     role_announce_desc.color = color.rgba(200, 200, 200, 0)
-    role_announce_sub.color  = color.rgba(120, 120, 120, 0)
-    role_announce_bg.color   = color.rgba(0, 0, 0, 0)
+    role_announce_sub.color = color.rgba(120, 120, 120, 0)
+    role_announce_bg.color = color.rgba(0, 0, 0, 0)
     role_announce_root.enabled = True
     _announce_phase = 0
-    _announce_fade  = 0.0
+    _announce_fade = 0.0
 
 
 def update_connection_screen():
@@ -282,12 +288,12 @@ def update_connection_screen():
 
     if _connection_phase == 0:
         _connection_fade = min(1.0, _connection_fade + dt * CONNECTION_FADE_SPEED)
-        a_bg   = int(_connection_fade * 210)
+        a_bg = int(_connection_fade * 210)
         a_text = int(_connection_fade * 255)
-        connection_screen_bg.color     = color.rgba(0, 0, 0, a_bg)
-        connection_screen_title.color  = color.rgba(180, 180, 180, a_text)
+        connection_screen_bg.color = color.rgba(0, 0, 0, a_bg)
+        connection_screen_title.color = color.rgba(180, 180, 180, a_text)
         connection_screen_status.color = color.rgba(r, g_c, b, a_text)
-        connection_screen_sub.color    = color.rgba(120, 120, 120, int(a_text * 0.7))
+        connection_screen_sub.color = color.rgba(120, 120, 120, int(a_text * 0.7))
         if _connection_fade >= 1.0:
             _connection_phase = 1
 
@@ -302,24 +308,24 @@ def update_connection_screen():
             nb_prets = sum(1 for info in lobby_snapshot.values() if info.get('ready'))
             ready_label = 'READY' if _local_ready else 'NOT READY'
             connection_screen_status.text = f'{nb_prets} / {total} players ready  —  you: {ready_label}'
-            connection_screen_sub.text    = '[R] toggle ready    [F] start game now'
+            connection_screen_sub.text = '[R] toggle ready    [F] start game now'
             if network.get_assigned_roles():
                 _connection_phase = 2
-                _connection_fade  = 1.0
+                _connection_fade = 1.0
         else:
             _connection_timer -= dt
             if _connection_timer <= 0:
                 _connection_phase = 2
-                _connection_fade  = 1.0
+                _connection_fade = 1.0
 
     elif _connection_phase == 2:
         _connection_fade = max(0.0, _connection_fade - dt * CONNECTION_FADE_SPEED)
-        a_bg   = int(_connection_fade * 210)
+        a_bg = int(_connection_fade * 210)
         a_text = int(_connection_fade * 255)
-        connection_screen_bg.color     = color.rgba(0, 0, 0, a_bg)
-        connection_screen_title.color  = color.rgba(180, 180, 180, a_text)
+        connection_screen_bg.color = color.rgba(0, 0, 0, a_bg)
+        connection_screen_title.color = color.rgba(180, 180, 180, a_text)
         connection_screen_status.color = color.rgba(r, g_c, b, a_text)
-        connection_screen_sub.color    = color.rgba(120, 120, 120, int(a_text * 0.7))
+        connection_screen_sub.color = color.rgba(120, 120, 120, int(a_text * 0.7))
         if _connection_fade <= 0.0:
             connection_screen_root.enabled = False
             _connection_screen_active = False
@@ -338,13 +344,13 @@ def update_role_announce():
 
     if _announce_phase == 0:
         _announce_fade = min(1.0, _announce_fade + dt * FADE_SPEED)
-        a_bg   = int(_announce_fade * 210)
+        a_bg = int(_announce_fade * 210)
         a_text = int(_announce_fade * 255)
-        role_announce_bg.color    = color.rgba(0, 0, 0, a_bg)
+        role_announce_bg.color = color.rgba(0, 0, 0, a_bg)
         role_announce_title.color = color.rgba(180, 180, 180, a_text)
-        role_announce_name.color  = color.rgba(r, g_c, b, a_text)
-        role_announce_desc.color  = color.rgba(200, 200, 200, int(a_text * 0.8))
-        role_announce_sub.color   = color.rgba(120, 120, 120, int(a_text * 0.7))
+        role_announce_name.color = color.rgba(r, g_c, b, a_text)
+        role_announce_desc.color = color.rgba(200, 200, 200, int(a_text * 0.8))
+        role_announce_sub.color = color.rgba(120, 120, 120, int(a_text * 0.7))
         if _announce_fade >= 1.0:
             _announce_phase = 1
 
@@ -352,17 +358,17 @@ def update_role_announce():
         _role_announce_timer -= dt
         if _role_announce_timer <= 0:
             _announce_phase = 2
-            _announce_fade  = 1.0
+            _announce_fade = 1.0
 
     elif _announce_phase == 2:
         _announce_fade = max(0.0, _announce_fade - dt * FADE_SPEED)
-        a_bg   = int(_announce_fade * 210)
+        a_bg = int(_announce_fade * 210)
         a_text = int(_announce_fade * 255)
-        role_announce_bg.color    = color.rgba(0, 0, 0, a_bg)
+        role_announce_bg.color = color.rgba(0, 0, 0, a_bg)
         role_announce_title.color = color.rgba(180, 180, 180, a_text)
-        role_announce_name.color  = color.rgba(r, g_c, b, a_text)
-        role_announce_desc.color  = color.rgba(200, 200, 200, int(a_text * 0.8))
-        role_announce_sub.color   = color.rgba(120, 120, 120, int(a_text * 0.7))
+        role_announce_name.color = color.rgba(r, g_c, b, a_text)
+        role_announce_desc.color = color.rgba(200, 200, 200, int(a_text * 0.8))
+        role_announce_sub.color = color.rgba(120, 120, 120, int(a_text * 0.7))
         if _announce_fade <= 0.0:
             role_announce_root.enabled = False
             _role_announced = False
@@ -373,7 +379,7 @@ def update_role_indicator():
     if player_role:
         role_data = ROLES[player_role]
         r, g_c, b = role_data["color_rgb"]
-        role_indicator.text  = f"[ {player_role.upper()} ]"
+        role_indicator.text = f"[ {player_role.upper()} ]"
         role_indicator.color = color.rgba(r, g_c, b, 200)
 
 
@@ -388,18 +394,40 @@ def _build_ghost(pid):
     model_pivot = Entity(parent=root, position=(-0.5, 0, 0), rotation_y=180)
 
     parts = {
-        'model':   model_pivot,
-        'corps':   Entity(parent=model_pivot, model=f'ressources/{prefix}_body.obj',shader=lit_with_shadows_shader),
-        'tete':    Entity(parent=model_pivot, model=f'ressources/{prefix}_head.obj',shader=lit_with_shadows_shader),
-        'bras_g':  Entity(parent=model_pivot, model=f'ressources/{prefix}_left_arm.obj',shader=lit_with_shadows_shader),
-        'bras_d':  Entity(parent=model_pivot, model=f'ressources/{prefix}_right_arm.obj',shader=lit_with_shadows_shader),
-        'jambe_g': Entity(parent=model_pivot, model=f'ressources/{prefix}_left_leg.obj',shader=lit_with_shadows_shader),
-        'jambe_d': Entity(parent=model_pivot, model=f'ressources/{prefix}_right_leg.obj',shader=lit_with_shadows_shader),
+        'model': model_pivot,
+        'corps': Entity(
+            parent=model_pivot,
+            model=f'ressources/{prefix}_body.obj',
+            shader=lit_with_shadows_shader),
+        'tete': Entity(
+            parent=model_pivot,
+            model=f'ressources/{prefix}_head.obj',
+            shader=lit_with_shadows_shader),
+        'bras_g': Entity(
+            parent=model_pivot,
+            model=f'ressources/{prefix}_left_arm.obj',
+            shader=lit_with_shadows_shader),
+        'bras_d': Entity(
+            parent=model_pivot,
+            model=f'ressources/{prefix}_right_arm.obj',
+            shader=lit_with_shadows_shader),
+        'jambe_g': Entity(
+            parent=model_pivot,
+            model=f'ressources/{prefix}_left_leg.obj',
+            shader=lit_with_shadows_shader),
+        'jambe_d': Entity(
+            parent=model_pivot,
+            model=f'ressources/{prefix}_right_leg.obj',
+            shader=lit_with_shadows_shader),
     }
 
     ghost_entities[pid] = root
     ghost_parts[pid] = parts
-    ghost_anim_state[pid] = {"prev_atk": 0, "is_attack": False, "attack_timer": 0.0, "anim_timer": 0.0}
+    ghost_anim_state[pid] = {
+        "prev_atk": 0,
+        "is_attack": False,
+        "attack_timer": 0.0,
+        "anim_timer": 0.0}
     ghost_hp[pid] = ROLES[ghost_role]["max_hp"]
     ghost_role_by_pid[pid] = ghost_role
 
@@ -409,12 +437,16 @@ def _destroy_ghost(pid):
     parts = ghost_parts.pop(pid, None)
     if parts:
         for k, e in parts.items():
-            try: destroy(e)
-            except Exception: pass
+            try:
+                destroy(e)
+            except Exception:
+                pass
     root = ghost_entities.pop(pid, None)
     if root:
-        try: destroy(root)
-        except Exception: pass
+        try:
+            destroy(root)
+        except Exception:
+            pass
     ghost_anim_state.pop(pid, None)
     ghost_hp.pop(pid, None)
     ghost_role_by_pid.pop(pid, None)
@@ -442,37 +474,37 @@ def _animate_ghost(pid, mv, sp, atk):
         t = math.sin(st["attack_timer"])
         parts['bras_g'].rotation_x = -t * 45
         parts['bras_d'].rotation_x = -t * 45
-        parts['corps'].rotation_x  =  t * 10
-        parts['tete'].rotation_x   =  t * 8
+        parts['corps'].rotation_x = t * 10
+        parts['tete'].rotation_x = t * 8
         if st["attack_timer"] >= math.pi:
             st["is_attack"] = False
             st["attack_timer"] = 0.0
             parts['bras_g'].rotation_x = 0
             parts['bras_d'].rotation_x = 0
-            parts['corps'].rotation_x  = 0
-            parts['tete'].rotation_x   = 0
+            parts['corps'].rotation_x = 0
+            parts['tete'].rotation_x = 0
         return
 
     if mv == 1:
         anim_speed = 12 if sp == 1 else 7
         st["anim_timer"] += dt * anim_speed
         at = st["anim_timer"]
-        parts['jambe_g'].rotation_x =  math.sin(at) * 6
+        parts['jambe_g'].rotation_x = math.sin(at) * 6
         parts['jambe_d'].rotation_x = -math.sin(at) * 6
-        parts['bras_g'].rotation_x  = -math.sin(at) * 5
-        parts['bras_d'].rotation_x  =  math.sin(at) * 5
-        parts['model'].y            =  math.sin(at * 2) * 0.01
-        parts['corps'].rotation_z   =  math.sin(at) * 0.5
+        parts['bras_g'].rotation_x = -math.sin(at) * 5
+        parts['bras_d'].rotation_x = math.sin(at) * 5
+        parts['model'].y = math.sin(at * 2) * 0.01
+        parts['corps'].rotation_z = math.sin(at) * 0.5
     else:
         st["anim_timer"] += dt * 1.5
         at = st["anim_timer"]
         parts['jambe_g'].rotation_x = lerp(parts['jambe_g'].rotation_x, 0, dt * 8)
         parts['jambe_d'].rotation_x = lerp(parts['jambe_d'].rotation_x, 0, dt * 8)
-        parts['bras_g'].rotation_x  = lerp(parts['bras_g'].rotation_x,  0, dt * 8)
-        parts['bras_d'].rotation_x  = lerp(parts['bras_d'].rotation_x,  0, dt * 8)
-        parts['corps'].rotation_z   = lerp(parts['corps'].rotation_z,   0, dt * 8)
-        parts['corps'].y  = math.sin(at) * 0.021
-        parts['tete'].y   = math.sin(at) * 0.019
+        parts['bras_g'].rotation_x = lerp(parts['bras_g'].rotation_x, 0, dt * 8)
+        parts['bras_d'].rotation_x = lerp(parts['bras_d'].rotation_x, 0, dt * 8)
+        parts['corps'].rotation_z = lerp(parts['corps'].rotation_z, 0, dt * 8)
+        parts['corps'].y = math.sin(at) * 0.021
+        parts['tete'].y = math.sin(at) * 0.019
         parts['bras_g'].y = math.sin(at) * 0.019
         parts['bras_d'].y = math.sin(at) * 0.019
         parts['jambe_g'].y = math.sin(at) * 0.014
@@ -513,7 +545,7 @@ def update_ghosts(other_players):
             if event.get("type") == "screamer":
                 play_screamer(event.get("screamer"))
                 continue
-                
+
             print(f"[NET] Event dégât reçu : {event}")
             if network.my_id is not None and str(event.get("target_id")) == str(network.my_id):
                 print(f"[NET] Je suis la cible ! Appel receive_damage({event.get('amount', 10)})")
@@ -528,46 +560,48 @@ def update_ghosts(other_players):
                     part.color = color.red
                     invoke(setattr, part, 'color', color.white, delay=0.15)
 
+
 SALLES = [
     Vec3(-73.42, 35.98, 4.77),
     Vec3(-48.25, 35.98, 49.44),
-    Vec3(34.82,  35.98, 94.12),
-    Vec3(61.85,  35.98, 34.84),
-    Vec3(94.31,  35.98, 9.13),
-    Vec3(65.81,  35.98, -49.09),
-    Vec3(57.14,  93.36, 42.67),
-    Vec3(26.36,  35.98, -61.61),
+    Vec3(34.82, 35.98, 94.12),
+    Vec3(61.85, 35.98, 34.84),
+    Vec3(94.31, 35.98, 9.13),
+    Vec3(65.81, 35.98, -49.09),
+    Vec3(57.14, 93.36, 42.67),
+    Vec3(26.36, 35.98, -61.61),
     Vec3(-23.41, 35.98, -73.21),
     Vec3(-72.82, 35.98, -37.3),
 ]
 DISTANCE_MIN = 60
 
+
 def choisir_salles_tasks(player_id):
     try:
         rng = random.Random(int(player_id))
-    except:
+    except BaseException:
         seed_int = sum(ord(c) for c in str(player_id))
         rng = random.Random(seed_int)
-    
+
     tasks = ['navigo', 'vanne', 'electrique', 'panneau', 'screamer1', 'screamer2']
-    
+
     for _ in range(1000):
         choix = rng.sample(range(len(SALLES)), 6)
         valide = True
-        
+
         for i in range(len(choix)):
             for j in range(i + 1, len(choix)):
                 a, b = SALLES[choix[i]], SALLES[choix[j]]
-                dist = math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
+                dist = math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2 + (a.z - b.z)**2)
                 if dist < DISTANCE_MIN:
                     valide = False
                     break
             if not valide:
                 break
-                
+
         if valide:
             return dict(zip(tasks, [SALLES[i] for i in choix]))
-    
+
     return dict(zip(tasks, rng.sample(SALLES, 6)))
 
 
@@ -628,8 +662,10 @@ panneau_8 = Entity(
 panneau_9 = Entity(
     model="ressources/j.obj",
     texture="ressources/un_juif_pour__exemple_thierry_piquet_theatre_mathurins_affiche_1741610827.png",
-    scale=Vec3(0.5, 1.5, 0.5)
-)
+    scale=Vec3(
+        0.5,
+        1.5,
+        0.5))
 
 panneau_10 = Entity(
     model="ressources/kari2.obj",
@@ -668,7 +704,7 @@ cube_panneau = Entity(
 )
 
 cube_screamer1 = Entity(
-    model='cube', color=color.red, 
+    model='cube', color=color.red,
     position=(0, 0, 0),
     collider='box', shader=lit_with_shadows_shader
 )
@@ -682,13 +718,14 @@ cube_screamer2 = Entity(
 _pos_screamer1 = None
 _pos_screamer2 = None
 
-calcul_termine = False # Nouvelle variable de sécurité
+calcul_termine = False  # Nouvelle variable de sécurité
 navigo_task = None
 
 _tache_electrique_faite = False
 _tache_plomberie_faite = False
 _tache_signalisation_faite = False
 _tache_navigo_faite = False
+
 
 def purge_validee():
     global _tache_plomberie_faite
@@ -698,7 +735,9 @@ def purge_validee():
     print("[GAME] Sewers purged!")
     valider_une_tache()
 
+
 enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
+
 
 def enigme_resolue():
     global _tache_electrique_faite
@@ -708,7 +747,9 @@ def enigme_resolue():
     print("[GAME] Electrical puzzle solved!")
     valider_une_tache()
 
+
 enigme = EnigmeElectrique(on_success=enigme_resolue)
+
 
 def signalisation_restauree():
     global _tache_signalisation_faite
@@ -718,38 +759,42 @@ def signalisation_restauree():
     print("[GAME] Signage restored!")
     valider_une_tache()
 
+
 enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
+
 
 def init_tasks_math():
     global _pos_vanne, _pos_electrique, _pos_panneau, _pos_navigo, calcul_termine
     global _pos_screamer1, _pos_screamer2
     import time as pytime
-    
+
     attente = 0
     while network.my_id is None and attente < 30:
         pytime.sleep(0.1)
         attente += 1
-    
+
     seed_id = network.my_id if network.my_id is not None else random.randint(1, 99999)
     try:
         seed_int = int(seed_id)
     except ValueError:
         seed_int = sum(ord(c) for c in str(seed_id))
-    
+
     pos = choisir_salles_tasks(seed_int)
-    
-    _pos_vanne      = pos['vanne']      + Vec3(0, 2.5, 0)
+
+    _pos_vanne = pos['vanne'] + Vec3(0, 2.5, 0)
     _pos_electrique = pos['electrique'] + Vec3(0, 2.5, 0)
-    _pos_panneau    = pos['panneau']    + Vec3(0, 2.5, 0)
-    _pos_navigo     = pos['navigo']     + Vec3(0, 2.5, 0)
-    
-    _pos_screamer1  = pos['screamer1']  + Vec3(0, 2.5, 0)
-    _pos_screamer2  = pos['screamer2']  + Vec3(0, 2.5, 0)
-    
+    _pos_panneau = pos['panneau'] + Vec3(0, 2.5, 0)
+    _pos_navigo = pos['navigo'] + Vec3(0, 2.5, 0)
+
+    _pos_screamer1 = pos['screamer1'] + Vec3(0, 2.5, 0)
+    _pos_screamer2 = pos['screamer2'] + Vec3(0, 2.5, 0)
+
     calcul_termine = True
     print("[TASKS] Positions calculated successfully in background!")
 
+
 threading.Thread(target=init_tasks_math, daemon=True).start()
+
 
 def navigo_complete():
     global _tache_navigo_faite
@@ -757,18 +802,21 @@ def navigo_complete():
         return
     _tache_navigo_faite = True
     valider_une_tache()
-    
+
+
 def valider_une_tache():
     global mes_taches_accomplies, mon_statut_fini
-    
+
     mes_taches_accomplies += 1
     print(f"[TASKS] Progress: {mes_taches_accomplies}/{total_de_mes_taches}")
-    
+
     if mes_taches_accomplies >= total_de_mes_taches and not mon_statut_fini:
         mon_statut_fini = True
         print("[GAME] All tasks done, message sent!")
         if network and network.connected and network.my_id is not None:
-            network.sock.sendall((json.dumps({"type": "survivant_fini", "id": network.my_id}) + "\n").encode())
+            network.sock.sendall(
+                (json.dumps({"type": "survivant_fini", "id": network.my_id}) + "\n").encode())
+
 
 def declencher_retour_menu():
     if run_menu:
@@ -778,6 +826,7 @@ def declencher_retour_menu():
     sys.exit()
 
 # SYSTEME AUDIO
+
 
 if not pygame.mixer.get_init():
     pygame.mixer.init()
@@ -803,11 +852,13 @@ AUDIO_GAME = {
     'haunted': pygame.mixer.Sound(res('ressources/sounds/haunted.ogg'))
 }
 
+
 def play_sfx(name, volume=1.0):
     if name in AUDIO_GAME:
         s = AUDIO_GAME[name]
         s.set_volume(volume)
         s.play()
+
 
 # Variables pour le suivi des boucles et timers audio
 _heartbeat_playing = False
@@ -824,13 +875,13 @@ _son_timer = 0.0
 AmbientLight(color=Vec4(0.03, 0.03, 0.03, 1))
 
 metro_lights = [
-    (Vec3(15, 8, 0),    Vec4(0.12, 0.13, 0.13, 1), 11),
-    (Vec3(-10, 8, 10),  Vec4(0.09, 0.13, 0.10, 1), 11),
-    (Vec3(-30, 8, -8),  Vec4(0.13, 0.07, 0.07, 1), 11),
-    (Vec3(0, 8, -20),   Vec4(0.10, 0.12, 0.14, 1), 11),
-    (Vec3(30, 8, 15),   Vec4(0.13, 0.13, 0.10, 1), 11),
-    (Vec3(-45, 35, 0),  Vec4(0.10, 0.04, 0.04, 1), 14),
-    (Vec3(0, 35, 0),    Vec4(0.09, 0.11, 0.13, 1), 14),
+    (Vec3(15, 8, 0), Vec4(0.12, 0.13, 0.13, 1), 11),
+    (Vec3(-10, 8, 10), Vec4(0.09, 0.13, 0.10, 1), 11),
+    (Vec3(-30, 8, -8), Vec4(0.13, 0.07, 0.07, 1), 11),
+    (Vec3(0, 8, -20), Vec4(0.10, 0.12, 0.14, 1), 11),
+    (Vec3(30, 8, 15), Vec4(0.13, 0.13, 0.10, 1), 11),
+    (Vec3(-45, 35, 0), Vec4(0.10, 0.04, 0.04, 1), 14),
+    (Vec3(0, 35, 0), Vec4(0.09, 0.11, 0.13, 1), 14),
 ]
 for _pos, _col, _rad in metro_lights:
     _pl = PointLight(position=_pos)
@@ -844,16 +895,16 @@ halo_joueur.radius = 10
 
 
 joueur_model = Entity(
-    parent=joueur, 
-    position=(-0.5, 0, 0), 
+    parent=joueur,
+    position=(-0.5, 0, 0),
     rotation_y=180
 )
-joueur_corps       = Entity(parent=joueur_model, model='ressources/C_body.obj')
-joueur_tete        = Entity(parent=joueur_model, model='ressources/C_head.obj')
-joueur_bras_g      = Entity(parent=joueur_model, model='ressources/C_left_arm.obj')
-joueur_bras_d      = Entity(parent=joueur_model, model='ressources/C_right_arm.obj')
-joueur_jambe_g     = Entity(parent=joueur_model, model='ressources/C_left_leg.obj')
-joueur_jambe_d     = Entity(parent=joueur_model, model='ressources/C_right_leg.obj')
+joueur_corps = Entity(parent=joueur_model, model='ressources/C_body.obj')
+joueur_tete = Entity(parent=joueur_model, model='ressources/C_head.obj')
+joueur_bras_g = Entity(parent=joueur_model, model='ressources/C_left_arm.obj')
+joueur_bras_d = Entity(parent=joueur_model, model='ressources/C_right_arm.obj')
+joueur_jambe_g = Entity(parent=joueur_model, model='ressources/C_left_leg.obj')
+joueur_jambe_d = Entity(parent=joueur_model, model='ressources/C_right_leg.obj')
 
 
 rambarde_1 = Entity(
@@ -924,7 +975,7 @@ blocs_murs = [
     [Vec3(22.6, 35.98, -46.26), Vec3(27.26, 35.98, -46.62), Vec3(33.98, 35.98, -76.26), Vec3(12.45, 35.98, -80.95), Vec3(5.38, 35.98, -51.59), Vec3(8.56, 35.98, -49.4)],
     [Vec3(-16.11, 35.98, -48.61), Vec3(-12.94, 35.98, -51.98), Vec3(-21.83, 35.98, -77.37), Vec3(-43.33, 35.98, -68.5), Vec3(-34.72, 35.98, -43.41), Vec3(-30.45, 35.98, -43.57)],
     [Vec3(-47.72, 35.98, -30.76), Vec3(-45.69, 35.98, -35.89), Vec3(-67.14, 35.98, -51.22), Vec3(-80.07, 35.98, -30.47), Vec3(-58.93, 35.98, -15.29), Vec3(-55.54, 35.98, -19.31)],
-    
+
     [Vec3(42.81, 93.36, 34.87), Vec3(60.31, 93.36, 50.99), Vec3(68.72, 93.36, 41.28), Vec3(50.98, 93.54, 25.25)],
     [Vec3(55.0, 93.54, 15.13), Vec3(44.5, 93.54, 15.36), Vec3(44.78, 93.54, 10.56), Vec3(43.04, 93.54, 11.91)]
 ]
@@ -954,11 +1005,11 @@ murs_coordonnees = [
     (Vec3(-15.93, 93.54, 29.18), Vec3(-13.53, 93.54, 46.81))
 ]
 
-murs_boucles = [
-    [Vec3(7.9, 93.54, 48.54), Vec3(21.78, 93.54, 45.87), Vec3(27.65, 93.49, 69.08), Vec3(13.89, 93.49, 71.36)]
-]
+murs_boucles = [[Vec3(7.9, 93.54, 48.54), Vec3(21.78, 93.54, 45.87),
+                 Vec3(27.65, 93.49, 69.08), Vec3(13.89, 93.49, 71.36)]]
 
 mur_cylindre = []
+
 
 def ajouter_segment(p1, p2, force_hauteur=None, force_y_centre=None):
     centre = (p1 + p2) / 2
@@ -968,10 +1019,10 @@ def ajouter_segment(p1, p2, force_hauteur=None, force_y_centre=None):
     else:
         hauteur = 150.0 - p1.y
         centre.y = p1.y + (hauteur / 2)
-        
+
     longueur = math.sqrt((p2.x - p1.x)**2 + (p2.z - p1.z)**2)
     angle = math.degrees(math.atan2(p2.x - p1.x, p2.z - p1.z))
-    
+
     segment = Entity(
         model='cube',
         collider='box',
@@ -983,6 +1034,7 @@ def ajouter_segment(p1, p2, force_hauteur=None, force_y_centre=None):
     )
     mur_cylindre.append(segment)
 
+
 for points_du_mur in blocs_murs:
     for idx in range(len(points_du_mur) - 1):
         ajouter_segment(points_du_mur[idx], points_du_mur[idx + 1])
@@ -991,7 +1043,8 @@ h_totale = 35.0 - 2.97
 y_mid = 2.97 + (h_totale / 2)
 nb_points = len(points_ordonnes)
 for idx in range(nb_points):
-    ajouter_segment(points_ordonnes[idx], points_ordonnes[(idx + 1) % nb_points], force_hauteur=h_totale, force_y_centre=y_mid)
+    ajouter_segment(points_ordonnes[idx], points_ordonnes[(idx + 1) %
+                                                          nb_points], force_hauteur=h_totale, force_y_centre=y_mid)
 
 for p1, p2 in murs_coordonnees:
     ajouter_segment(p1, p2)
@@ -1044,51 +1097,51 @@ _immobilized_timer = 0.0
 # Positions candidates dans les couloirs et les coins de la map.
 # Dérivées de points_ordonnes (y≈2.97 sol) et SALLES (y≈35.98 étage).
 EMBUSCADE_POSITIONS = [
-    Vec3(-62.18, 35.98,  -2.44),
-    Vec3(-58.68, 35.98,  15.42),
-    Vec3(-63.60, 35.98,  12.92),
+    Vec3(-62.18, 35.98, -2.44),
+    Vec3(-58.68, 35.98, 15.42),
+    Vec3(-63.60, 35.98, 12.92),
     Vec3(-58.50, 35.98, -17.37),
     Vec3(-47.42, 35.98, -35.85),
     Vec3(-32.78, 35.98, -44.47),
     Vec3(-15.17, 35.98, -50.76),
     Vec3(-32.14, 35.98, -58.42),
     Vec3(-24.61, 35.98, -62.90),
-    Vec3(  7.75, 35.98, -50.90),
-    Vec3( 26.25, 35.98, -47.41),
-    Vec3( 13.70, 35.98, -54.77),
-    Vec3( 42.67, 35.98, -38.27),
-    Vec3( 54.41, 35.98, -25.21),
-    Vec3( 56.92, 35.98, -30.63),
-    Vec3( 61.31, 35.98, -10.83),
-    Vec3( 60.98, 35.98,   9.35),
-    Vec3( 53.73, 35.98,  25.28),
-    Vec3( 42.71, 35.98,  39.24),
-    Vec3( 53.03, 35.98,  38.90),
-    Vec3( 24.34, 35.98,  47.64),
-    Vec3(  6.03, 35.98,  52.20),
-    Vec3( 14.75, 35.98,  58.22),
-    Vec3(-36.72, 35.98,  41.70),
-    Vec3(-50.41, 35.98,  31.26),
-    Vec3(-50.61, 35.98,  41.39),
-    Vec3(-43.01, 35.98,  42.13),
+    Vec3(7.75, 35.98, -50.90),
+    Vec3(26.25, 35.98, -47.41),
+    Vec3(13.70, 35.98, -54.77),
+    Vec3(42.67, 35.98, -38.27),
+    Vec3(54.41, 35.98, -25.21),
+    Vec3(56.92, 35.98, -30.63),
+    Vec3(61.31, 35.98, -10.83),
+    Vec3(60.98, 35.98, 9.35),
+    Vec3(53.73, 35.98, 25.28),
+    Vec3(42.71, 35.98, 39.24),
+    Vec3(53.03, 35.98, 38.90),
+    Vec3(24.34, 35.98, 47.64),
+    Vec3(6.03, 35.98, 52.20),
+    Vec3(14.75, 35.98, 58.22),
+    Vec3(-36.72, 35.98, 41.70),
+    Vec3(-50.41, 35.98, 31.26),
+    Vec3(-50.61, 35.98, 41.39),
+    Vec3(-43.01, 35.98, 42.13),
 ]
 
-EMBUSCADE_DAMAGE        = 5    # HP retirés lors d'un bond
-EMBUSCADE_DETECT_WALK   = 9.0   # rayon de détection (marche)
+EMBUSCADE_DAMAGE = 5    # HP retirés lors d'un bond
+EMBUSCADE_DETECT_WALK = 9.0   # rayon de détection (marche)
 EMBUSCADE_DETECT_SPRINT = 18.0   # rayon de détection (sprint — beaucoup de bruit)
-EMBUSCADE_TENSION_TIME  = 0.7   # secondes dans la zone avant le déclenchement
-EMBUSCADE_COOLDOWN      = 30.0  # secondes de pause après chaque attaque
-EMBUSCADE_LEAP_SPEED    = 20.0  # vitesse du bond vers le joueur
+EMBUSCADE_TENSION_TIME = 0.7   # secondes dans la zone avant le déclenchement
+EMBUSCADE_COOLDOWN = 30.0  # secondes de pause après chaque attaque
+EMBUSCADE_LEAP_SPEED = 20.0  # vitesse du bond vers le joueur
 EMBUSCADE_LEAP_DURATION = 0.35  # durée du bond (secondes)
 
-_emb_pos_order    = []     # ordre shufflé propre au joueur (seed = my_id)
-_emb_pos_index    = 0
-_emb_state        = "wait" # "wait" | "hidden" | "tension" | "leap" | "cooldown"
-_emb_tension_timer  = 0.0
+_emb_pos_order = []     # ordre shufflé propre au joueur (seed = my_id)
+_emb_pos_index = 0
+_emb_state = "wait"  # "wait" | "hidden" | "tension" | "leap" | "cooldown"
+_emb_tension_timer = 0.0
 _emb_cooldown_timer = 0.0
-_emb_leap_timer     = 0.0
-_emb_leap_target    = Vec3(0, 0, 0)
-_emb_entity         = None  # entité 3D de l'embuscadeur (créée après assign_role)
+_emb_leap_timer = 0.0
+_emb_leap_target = Vec3(0, 0, 0)
+_emb_entity = None  # entité 3D de l'embuscadeur (créée après assign_role)
 
 
 def _emb_current_pos():
@@ -1143,7 +1196,7 @@ def _emb_trigger():
     if _emb_entity is None:
         return
 
-    _emb_state      = "leap"
+    _emb_state = "leap"
     _emb_leap_timer = EMBUSCADE_LEAP_DURATION
     # Cible = tête du joueur
     _emb_leap_target = Vec3(joueur.x, joueur.y + 1.5, joueur.z)
@@ -1178,7 +1231,7 @@ def update_embuscadeur():
             _emb_advance()
             new_pos = _emb_current_pos()
             _emb_entity.position = new_pos
-            _emb_entity.enabled  = False
+            _emb_entity.enabled = False
             _emb_state = "hidden"
             print(f"[EMBUSCADE] Repositionné → {new_pos}")
         return
@@ -1191,16 +1244,16 @@ def update_embuscadeur():
             if delta.length() > 0.1:
                 _emb_entity.position += delta.normalized() * EMBUSCADE_LEAP_SPEED * time.dt
         else:
-            _emb_entity.enabled  = False
-            _emb_state           = "cooldown"
-            _emb_cooldown_timer  = EMBUSCADE_COOLDOWN
+            _emb_entity.enabled = False
+            _emb_state = "cooldown"
+            _emb_cooldown_timer = EMBUSCADE_COOLDOWN
             print(f"[EMBUSCADE] En cooldown {EMBUSCADE_COOLDOWN}s")
         return
 
     # ── CACHÉ ou TENSION : calcul bruit joueur ─────────────────────────────────
     is_moving = (
-        held_keys[touches['Move Forward']]  or held_keys[touches['Move Backward']] or
-        held_keys[touches['Move Left']]     or held_keys[touches['Move Right']]
+        held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or
+        held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
     )
     is_sprinting_now = held_keys[touches['Sprint']] and is_moving and current_stamina > 1
 
@@ -1215,7 +1268,7 @@ def update_embuscadeur():
 
     if _emb_state == "hidden":
         if detect_r > 0 and dist <= detect_r:
-            _emb_state        = "tension"
+            _emb_state = "tension"
             _emb_tension_timer = EMBUSCADE_TENSION_TIME
             print(f"[EMBUSCADE] Tension ! dist={dist:.1f} rayon={detect_r:.1f}")
 
@@ -1228,14 +1281,20 @@ def update_embuscadeur():
         if _emb_tension_timer <= 0:
             _emb_trigger()
 
+
 def bouton_respawn():
     respawn_player()
 
+
 def bouton_menu():
     network.disconnect()
-    import subprocess, sys, os
-    subprocess.Popen([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "Five_Nights_At_Chatelet.py")])
+    import subprocess
+    import sys
+    import os
+    subprocess.Popen([sys.executable, os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "Five_Nights_At_Chatelet.py")])
     application.quit()
+
 
 levier_cube = Entity(
     model='cube',
@@ -1264,13 +1323,14 @@ is_dead = False
 _death_timer = 0.0
 RESPAWN_DELAY = 3.0
 
+
 def receive_damage(amount):
     global player_hp, _invincibility_timer, is_dead
-    print(f"[DAMAGE] receive_damage appelé : amount={amount}, hp={player_hp}, invincible={_invincibility_timer:.2f}, dead={is_dead}")
+    print(f"[DAMAGE] receive_damage called: amount={amount}, hp={player_hp}, invincible={_invincibility_timer:.2f}, dead={is_dead}")
     if _invincibility_timer > 0 or is_dead:
         print("[DAMAGE] Ignoré (invincible ou mort)")
         return
-    
+
     play_sfx('hurt')
 
     player_hp -= amount
@@ -1286,13 +1346,14 @@ def receive_damage(amount):
         print("[DAMAGE] → player_death()")
         player_death()
 
+
 def player_death():
     global is_dead
     is_dead = True
     hp_text.text = 'HP: 0  —  IMPRISONED'
     hp_text.color = color.red
     play_sfx('death')
-    
+
     joueur.position = (17.34, 98.17, 60.4)
     mouse.locked = True
     mouse.visible = False
@@ -1302,6 +1363,7 @@ def player_death():
             "type": "survivant_emprisonne",
             "id": str(network.my_id)
         }) + "\n").encode())
+
 
 def respawn_player():
     global is_dead, player_hp, _invincibility_timer
@@ -1317,6 +1379,7 @@ def respawn_player():
     mouse.locked = True
     mouse.visible = False
 
+
 def update_liberation():
     global _liberation_timer, _liberation_en_cours, _liberation_cible, is_dead
 
@@ -1330,9 +1393,9 @@ def update_liberation():
             _liberation_en_cours = False
             _liberation_timer = 0.0
         return
-    
+
     dist_joueur_levier = distance(joueur.position, POS_LEVIER)
-    
+
     # 2. On cherche si un fantôme de prisonnier est à portée du levier
     cible_trouvee = None
     dist_joueur = distance(joueur.position, POS_LEVIER)
@@ -1345,7 +1408,7 @@ def update_liberation():
             if not _liberation_en_cours:
                 interaction_text.text = "Hold E to free the prisoner"
                 interaction_text.enabled = True
-            
+
             # 4. Le joueur maintient la touche d'interaction enfoncée
             if held_keys[touches['Interact']]:
                 if not _liberation_en_cours or _liberation_cible != cible_trouvee:
@@ -1367,7 +1430,7 @@ def update_liberation():
                                 "target_id": pid
                             }) + "\n").encode())
                             print(f"[GAME] Liberation sent for {pid}")
-                    
+
                     _liberation_en_cours = False
                     _liberation_timer = 0.0
                     _liberation_cible = None
@@ -1382,12 +1445,16 @@ def update_liberation():
             interaction_text.text = "Lever locked (No prisoner)"
             interaction_text.enabled = True
     else:
-        # Le joueur s'est éloigné du levier : on ne touche à rien SAUF si c'était ce levier qui affichait du texte
-        if _liberation_en_cours or interaction_text.text in ["Maintenir E pour libérer le prisonnier", "Le levier est bloqué (Aucun prisonnier)"] or "Libération :" in interaction_text.text:
+        # Le joueur s'est éloigné du levier : on ne touche à rien SAUF si c'était
+        # ce levier qui affichait du texte
+        if _liberation_en_cours or interaction_text.text in [
+            "Maintenir E pour libérer le prisonnier",
+                "Le levier est bloqué (Aucun prisonnier)"] or "Libération :" in interaction_text.text:
             interaction_text.enabled = False
             _liberation_en_cours = False
             _liberation_timer = 0.0
             _liberation_cible = None
+
 
 def verifier_defaite():
     global defaite_declenchee
@@ -1423,6 +1490,7 @@ def verifier_defaite():
             )
         invoke(declencher_retour_menu, delay=4.0)
 
+
 def update_hp_ui():
     ratio = player_hp / MAX_HP
     hp_text.text = f'HP: {player_hp}'
@@ -1436,12 +1504,13 @@ def update_hp_ui():
 
 # ATTAQUE
 
-ATTACK_DAMAGE   = 25
-ATTACK_RANGE    = 3.0
-ATTACK_WIDTH    = 2.0
-ATTACK_HEIGHT   = 3.0
+ATTACK_DAMAGE = 25
+ATTACK_RANGE = 3.0
+ATTACK_WIDTH = 2.0
+ATTACK_HEIGHT = 3.0
 ATTACK_COOLDOWN = 0.6
-_attack_timer   = 0.0
+_attack_timer = 0.0
+
 
 def do_attack():
     global _attack_timer, _attack_anim_timer, _is_attack_anim
@@ -1452,10 +1521,9 @@ def do_attack():
     _attack_timer = ATTACK_COOLDOWN
     _is_attack_anim = True
     _attack_anim_timer = 0.0
-   
 
     forward = Vec3(joueur.forward.x, 0, joueur.forward.z).normalized()
-    right   = Vec3(joueur.right.x,   0, joueur.right.z  ).normalized()
+    right = Vec3(joueur.right.x, 0, joueur.right.z).normalized()
 
     center = joueur.position + Vec3(0, 1, 0) + forward * (ATTACK_RANGE * 0.5)
     hitbox_vis = Entity(
@@ -1470,12 +1538,13 @@ def do_attack():
     hit_someone = False
 
     for pid, ghost in list(ghost_entities.items()):
-        delta  = ghost.position - joueur.position
+        delta = ghost.position - joueur.position
         f_dist = delta.dot(forward)
         s_dist = abs(delta.dot(right))
         h_dist = abs((ghost.position.y + 1.5) - (joueur.position.y + 1.5))
 
-        if (0 < f_dist <= ATTACK_RANGE) and (s_dist <= ATTACK_WIDTH * 0.5) and (h_dist <= ATTACK_HEIGHT * 0.5):
+        if (0 < f_dist <= ATTACK_RANGE) and (
+                s_dist <= ATTACK_WIDTH * 0.5) and (h_dist <= ATTACK_HEIGHT * 0.5):
             hit_someone = True
             ghost_hp[pid] = max(0, ghost_hp.get(pid, MAX_HP) - ATTACK_DAMAGE)
             print(f"[ATTACK] HIT sur {pid} ! HP restant : {ghost_hp[pid]}")
@@ -1498,11 +1567,7 @@ def do_attack():
                 network.send_damage(pid, ATTACK_DAMAGE)
 
 
-
-
-
 # STAMINA
-
 max_stamina = 100
 current_stamina = max_stamina
 stamina_drain_rate = 25
@@ -1679,11 +1744,11 @@ connection_screen_sub = Text(
 if connection_ok:
     connection_screen_status.text = 'Server connected'
     connection_screen_sub.text = 'Multiplayer mode'
-    _connection_status_rgb        = (80, 220, 100)
+    _connection_status_rgb = (80, 220, 100)
 else:
     connection_screen_status.text = 'Connection failed'
-    connection_screen_sub.text    = 'Single player mode'
-    _connection_status_rgb        = (220, 50, 50)
+    connection_screen_sub.text = 'Single player mode'
+    _connection_status_rgb = (220, 50, 50)
 
 
 # Indicateur de rôle permanent (coin haut droit)
@@ -1800,17 +1865,17 @@ def build_help_text():
         return noms_affichage.get(t, t.upper())
 
     lignes = [
-        ('Avancer',   libelle_touche(touches['Move Forward'])),
-        ('Reculer',   libelle_touche(touches['Move Backward'])),
-        ('Gauche',    libelle_touche(touches['Move Left'])),
-        ('Droite',    libelle_touche(touches['Move Right'])),
-        ('Sauter',    libelle_touche(touches['Jump'])),
-        ('Sprint',    libelle_touche(touches['Sprint'])),
+        ('Avancer', libelle_touche(touches['Move Forward'])),
+        ('Reculer', libelle_touche(touches['Move Backward'])),
+        ('Gauche', libelle_touche(touches['Move Left'])),
+        ('Droite', libelle_touche(touches['Move Right'])),
+        ('Sauter', libelle_touche(touches['Jump'])),
+        ('Sprint', libelle_touche(touches['Sprint'])),
         ('Interagir', libelle_touche(touches['Interact'])),
-        ('Attaquer',  'Clic gauche'),
-        ('Aide',      'H'),
-        ('Plein écran','F11'),
-        ('Pause',     'Échap'),
+        ('Attaquer', 'Clic gauche'),
+        ('Aide', 'H'),
+        ('Plein écran', 'F11'),
+        ('Pause', 'Échap'),
     ]
     help_body.text = '\n'.join(
         f"{nom.ljust(12)} :  {touche}" for nom, touche in lignes
@@ -1934,7 +1999,6 @@ Button(
 )
 
 
-
 # CAMÉRA & JOUEUR
 
 mouse.locked = True
@@ -1945,12 +2009,14 @@ camera.parent = camera_pivot
 camera.fov = 90
 camera.rotation = (15, 0, 0)
 
+
 def mouvement_camera():
-    joueur.rotation_y      += mouse.velocity[0] * 80
+    joueur.rotation_y += mouse.velocity[0] * 80
     camera_pivot.rotation_x -= mouse.velocity[1] * 80
-    camera_pivot.rotation_x  = clamp(camera_pivot.rotation_x, -30, 45)
-    camera_pivot.rotation_y  = 0
+    camera_pivot.rotation_x = clamp(camera_pivot.rotation_x, -30, 45)
+    camera_pivot.rotation_y = 0
     camera.position = (0, 0, -5)
+
 
 is_jumping = False
 vertical_velocity = 0
@@ -1966,7 +2032,7 @@ def saut():
     joueur.y += vertical_velocity * time.dt
 
     col_info = raycast(
-        joueur.position + Vec3(0, 0.1, 0), 
+        joueur.position + Vec3(0, 0.1, 0),
         Vec3(0, -1, 0),
         distance=1.5,
         ignore=[joueur]
@@ -1976,7 +2042,7 @@ def saut():
         ground_y = col_info.world_point.y
 
         if joueur.y <= ground_y + 0.6:
-            joueur.y = ground_y + 0.5  
+            joueur.y = ground_y + 0.5
             vertical_velocity = 0
             is_jumping = False
             on_ground = True
@@ -2001,7 +2067,8 @@ def mouvement_joueur():
         _footstep_timer = 0.0
         return
 
-    is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
+    is_moving = held_keys[touches['Move Forward']] or held_keys[touches['Move Backward']
+                                                                ] or held_keys[touches['Move Left']] or held_keys[touches['Move Right']]
     is_sprinting = held_keys[touches['Sprint']] and current_stamina > 0 and is_moving
 
     if is_sprinting:
@@ -2025,7 +2092,7 @@ def mouvement_joueur():
         # L'Infected ou le sprint réduit l'intervalle entre les pas (rythme plus rapide)
         step_interval = 0.25 if is_sprinting else 0.45
         if player_role == "Infected":
-            step_interval *= 0.85 # Rythme légèrement plus frénétique pour le monstre
+            step_interval *= 0.85  # Rythme légèrement plus frénétique pour le monstre
 
         if _footstep_timer >= step_interval:
             _footstep_timer = 0.0
@@ -2039,17 +2106,19 @@ def mouvement_joueur():
     if not is_moving:
         AUDIO_GAME['pas_survivor'].stop()
         AUDIO_GAME['pas_infected'].stop()
-        
-    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * held_keys[touches['Move Forward']]
-    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * -held_keys[touches['Move Backward']]
-    droite = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * held_keys[touches['Move Right']]
-    gauche = Vec3(camera_pivot.right.x,   0, camera_pivot.right.z  ) * -held_keys[touches['Move Left']]
+
+    avance = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * \
+        held_keys[touches['Move Forward']]
+    recule = Vec3(camera_pivot.forward.x, 0, camera_pivot.forward.z) * - \
+        held_keys[touches['Move Backward']]
+    droite = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * held_keys[touches['Move Right']]
+    gauche = Vec3(camera_pivot.right.x, 0, camera_pivot.right.z) * -held_keys[touches['Move Left']]
     move_vec = avance + recule + droite + gauche
 
     if move_vec.length_squared() > 0:
         direction = move_vec.normalized()
         move = direction * time.dt * current_speed
-        right = Vec3(direction.z, 0, -direction.x) 
+        right = Vec3(direction.z, 0, -direction.x)
 
         origins = [
             joueur.position + Vec3(0, 0.3, 0),
@@ -2065,7 +2134,7 @@ def mouvement_joueur():
             col = raycast(origin, direction, distance=1.0, ignore=[joueur, sol])
             if col and col.hit:
                 normal = col.world_normal
-                if normal.y < 0.7:  
+                if normal.y < 0.7:
                     bloque = True
                     break
 
@@ -2168,12 +2237,12 @@ def input(key):
         if dist_s <= distance_interaction:
             img, snd = random.choice(screamer_list)
             screamer_data = img + "|" + snd
-            
+
             play_screamer(screamer_data)
 
         if enigme.can_interact(joueur.position, cube_electrique.position):
             enigme.open()
-        enigme.handle_input(key) 
+        enigme.handle_input(key)
 
         if enigme_plomberie.can_interact(joueur.position, cube_vanne.position):
             enigme_plomberie.open()
@@ -2192,7 +2261,7 @@ def input(key):
 
             play_screamer(screamer_data)
             _immobilized_timer = 3.0  # Gel du joueur
-            
+
         if cube_screamer2.visible and distance(joueur.position, cube_screamer2.position) < 3.5:
             cube_screamer2.visible = False
             cube_screamer2.collider = None
@@ -2214,7 +2283,9 @@ def input(key):
         for mur in mur_cylindre:
             mur.visible = not mur.visible
 
+
 tasks_placees = False
+
 
 def update():
     global tasks_placees, navigo_task, rectangle_visible, _send_timer, _son_timer, _attack_timer, _invincibility_timer, _death_timer
@@ -2230,22 +2301,22 @@ def update():
     update_connection_screen()
 
     if calcul_termine and player_role is not None and not tasks_placees:
-        
+
         # 1. On déplace les cubes simples
-        cube_vanne.position      = _pos_vanne
+        cube_vanne.position = _pos_vanne
         cube_electrique.position = _pos_electrique
-        cube_panneau.position    = _pos_panneau
+        cube_panneau.position = _pos_panneau
         if _pos_screamer1 is not None and _pos_screamer2 is not None:
-            cube_screamer1.position  = _pos_screamer1
-            cube_screamer2.position  = _pos_screamer2
-        
+            cube_screamer1.position = _pos_screamer1
+            cube_screamer2.position = _pos_screamer2
+
         navigo_task = NavigoTask(
             player=joueur,
             position=_pos_navigo,
             on_complete=navigo_complete,
             interaction_key=touches['Interact'],
         )
-        
+
         # 3. Masquage pour l'Infecté
         if player_role == "Infected":
             cube_vanne.visible = False
@@ -2259,7 +2330,7 @@ def update():
             cube_screamer1.collider = None
             cube_screamer2.visible = False
             cube_screamer2.collider = None
-            
+
             if hasattr(navigo_task, 'visible'):
                 navigo_task.visible = False
             for attr in ['entity', 'model', 'cube', 'borne']:
@@ -2267,13 +2338,12 @@ def update():
                     obj = getattr(navigo_task, attr)
                     obj.visible = False
                     obj.collider = None
-                    
+
             print("[GAME] Infected: Tasks hidden correctly.")
         else:
             print("[GAME] Survivor: Tasks visible and in place.")
-            
-        tasks_placees = True
 
+        tasks_placees = True
 
     if enigme.is_open or enigme_signalisation.is_open or enigme_plomberie.is_open:
         interact_hint.enabled = False
@@ -2301,7 +2371,7 @@ def update():
                 show_hint = True
                 break
     interact_hint.enabled = show_hint
-        
+
     mouvement_joueur()
     mouvement_camera()
     saut()
@@ -2348,8 +2418,6 @@ def update():
         network_text.text = 'Network: disconnected'
         network_text.color = color.red
 
-
-    
     # Heartbeat (Battements de cœur si hp < 30%)
     if player_hp <= 30 and not is_dead:
         if not _heartbeat_playing:
@@ -2361,7 +2429,7 @@ def update():
             channel_heartbeat.stop()
             _heartbeat_playing = False
 
-    # Infected Breathing 
+    # Infected Breathing
     if player_role == "Infected" and not is_dead:
         if not _breath_playing:
             channel_infected_breath.play(AUDIO_GAME['rale_infected'], loops=-1)
@@ -2385,7 +2453,6 @@ def update():
         channel_ambiance.set_volume(0.5)
         _son_timer = random.uniform(60, 120)
 
-    
     # Rôle : animation d'annonce + indicateur
     update_role_announce()
     update_role_indicator()
@@ -2404,25 +2471,25 @@ def update():
     if is_moving and on_ground and not _is_attack_anim:
         _anim_timer += time.dt * anim_speed
 
-        joueur_jambe_g.rotation_x =  math.sin(_anim_timer) * 6
+        joueur_jambe_g.rotation_x = math.sin(_anim_timer) * 6
         joueur_jambe_d.rotation_x = -math.sin(_anim_timer) * 6
-        joueur_bras_g.rotation_x  = -math.sin(_anim_timer) * 5
-        joueur_bras_d.rotation_x  =  math.sin(_anim_timer) * 5
-        joueur_model.y             =  math.sin(_anim_timer * 2) * 0.01
-        joueur_corps.rotation_z    =  math.sin(_anim_timer) * 0.5
+        joueur_bras_g.rotation_x = -math.sin(_anim_timer) * 5
+        joueur_bras_d.rotation_x = math.sin(_anim_timer) * 5
+        joueur_model.y = math.sin(_anim_timer * 2) * 0.01
+        joueur_corps.rotation_z = math.sin(_anim_timer) * 0.5
 
     elif not _is_attack_anim:
         _anim_timer += time.dt * 1.5
         joueur_jambe_g.rotation_x = lerp(joueur_jambe_g.rotation_x, 0, time.dt * 8)
         joueur_jambe_d.rotation_x = lerp(joueur_jambe_d.rotation_x, 0, time.dt * 8)
-        joueur_bras_g.rotation_x  = lerp(joueur_bras_g.rotation_x,  0, time.dt * 8)
-        joueur_bras_d.rotation_x  = lerp(joueur_bras_d.rotation_x,  0, time.dt * 8)
-        joueur_corps.rotation_z   = lerp(joueur_corps.rotation_z,   0, time.dt * 8)
+        joueur_bras_g.rotation_x = lerp(joueur_bras_g.rotation_x, 0, time.dt * 8)
+        joueur_bras_d.rotation_x = lerp(joueur_bras_d.rotation_x, 0, time.dt * 8)
+        joueur_corps.rotation_z = lerp(joueur_corps.rotation_z, 0, time.dt * 8)
         joueur_corps.y = math.sin(_anim_timer) * 0.021
-        joueur_tete.y  = math.sin(_anim_timer) * 0.019
+        joueur_tete.y = math.sin(_anim_timer) * 0.019
         joueur_bras_g.y = math.sin(_anim_timer) * 0.019
         joueur_bras_d.y = math.sin(_anim_timer) * 0.019
-        joueur_jambe_g.y =  math.sin(_anim_timer) * 0.014
+        joueur_jambe_g.y = math.sin(_anim_timer) * 0.014
         joueur_jambe_d.y = math.sin(_anim_timer) * 0.014
 
     if _is_attack_anim:
@@ -2436,16 +2503,16 @@ def update():
 
         # Corps et tête légèrement vers l'avant
         joueur_corps.rotation_x = t * 10
-        joueur_tete.rotation_x  = t * 8
+        joueur_tete.rotation_x = t * 8
 
         if _attack_anim_timer >= math.pi:
             _is_attack_anim = False
             _attack_anim_timer = 0.0
             joueur_bras_g.rotation_x = 0
             joueur_bras_d.rotation_x = 0
-            joueur_corps.rotation_x  = 0
-            joueur_tete.rotation_x   = 0
-        
+            joueur_corps.rotation_x = 0
+            joueur_tete.rotation_x = 0
+
     for msg in network.get_game_events():
         if msg['type'] == 'survivant_fini':
             id_joueur = msg['id']
@@ -2489,7 +2556,7 @@ def update():
         if abs(joueur.x - 56.4) < 1.3 and -11.5 <= joueur.z <= 12.0:
             victoire_declenchee = True
             print("[VICTORY] You crossed the wall!")
-            
+
             # 1. Message de victoire
             Text(
                 text="VICTORY! You escaped from Châtelet!",
@@ -2498,20 +2565,15 @@ def update():
                 color=color.green,
                 background=True
             )
-            
+
             # 2. Retour au menu après un délai de 4 secondes
             invoke(declencher_retour_menu, delay=4.0)
-        
+
     update_liberation()
-
-
-
-        
-
+    verifier_defaite()
 
 
 # ATTRIBUTION DES RÔLES AU DÉMARRAGE
 # assign_role() est appelé par update_connection_screen() une fois
 # l'écran de connexion disparu, pour éviter le chevauchement des deux écrans.
-
 Five_nights_at_chatelet.run()
