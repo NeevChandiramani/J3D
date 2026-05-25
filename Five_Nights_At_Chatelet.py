@@ -1061,6 +1061,16 @@ test_cube = Entity(
     shader=lit_with_shadows_shader
 )
 
+cube_proche = Entity(
+    model='cube',
+    color=color.orange,
+    position=(10, 5, 3),
+    scale=(1, 1, 1),
+    collider='box',
+    shader=lit_with_shadows_shader
+)
+
+
 
 
 # CUBE SCREAMER
@@ -1071,6 +1081,16 @@ screamer_list = [
     ('ressources/screamers/Snapshot_4.png', 'ressources/screamers/Snapshot4.ogg'),
     ('ressources/screamers/Snapshot_5.png', 'ressources/screamers/Snapshot5.ogg'),
 ]
+
+cube_screamer = Entity(
+    model='cube',
+    color=color.red,
+    position=(-53.015377, 36.245815, 0.37925073),
+    scale=(1, 1, 1),
+    collider='box',
+    shader=lit_with_shadows_shader
+)
+
 
 _screamer_timer = 0.0
 _immobilized_timer = 0.0
