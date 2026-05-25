@@ -289,3 +289,20 @@ class EnigmeLabyrintheSignalisation:
         """Ferme l'UI sur Échap si elle est ouverte."""
         if self.is_open and key == 'escape':
             self.close()
+
+if __name__ == '__main__':
+    app = Ursina()
+
+    def on_win():
+        print('Solved!')
+
+    enigme = EnigmeLabyrintheSignalisation(on_success=on_win)
+    enigme.open()
+
+    def input(key):
+        enigme.handle_input(key)
+
+    def update():
+        enigme.update()
+
+    app.run()

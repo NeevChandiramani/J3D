@@ -351,3 +351,19 @@ class NavigoTask:
         """Nettoie toutes les entités (si tu supprimes la task en cours de partie)."""
         destroy(self._world_entity)
         destroy(self.ui_root)
+
+if __name__ == '__main__':
+    app = Ursina()
+
+    player = Entity()
+
+    def on_win():
+        print('Solved!')
+
+    task = NavigoTask(player=player, on_complete=on_win)
+    task.open()
+
+    def update():
+        task.update()
+
+    app.run()

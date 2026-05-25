@@ -265,3 +265,20 @@ class EnigmeElectrique:
             btn.color           = self._COL_ON  if on else self._COL_OFF
             btn.highlight_color = self._COL_ON_H if on else self._COL_OFF_H
             self._btn_texts[i].text = 'ON ' if on else 'OFF'
+
+if __name__ == '__main__':
+    app = Ursina()
+
+    def on_win():
+        print('Solved!')
+
+    enigme = EnigmeElectrique(on_success=on_win)
+    enigme.open()
+
+    def input(key):
+        enigme.handle_input(key)
+
+    def update():
+        enigme.update()
+
+    app.run()

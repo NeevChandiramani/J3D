@@ -334,3 +334,20 @@ class EnigmePlomberie:
         bar_w = max(0.001, ratio * self._sp_w)
         self._speed_bar.scale_x = bar_w
         self._speed_bar.x = self._sp_left + bar_w * 0.5
+
+if __name__ == '__main__':
+    app = Ursina()
+
+    def on_win():
+        print('Solved!')
+
+    enigme = EnigmePlomberie(on_success=on_win)
+    enigme.open()
+
+    def input(key):
+        enigme.handle_input(key)
+
+    def update():
+        enigme.update()
+
+    app.run()
