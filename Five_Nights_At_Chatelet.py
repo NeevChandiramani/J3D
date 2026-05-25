@@ -687,19 +687,19 @@ joueur = Entity(
 )
 
 cube_vanne = Entity(
-    model='cube', color=color.cyan,
+    model='cube', color=color.red,
     position=(0, 35, 0),
     collider='box', shader=lit_with_shadows_shader
 )
 
 cube_electrique = Entity(
-    model='cube', color=color.yellow,
+    model='cube', color=color.red,
     position=(0, 35, 0),
     collider='box', shader=lit_with_shadows_shader
 )
 
 cube_panneau = Entity(
-    model='cube', color=color.blue,
+    model='cube', color=color.red,
     position=(0, 35, 0),
     collider='box', shader=lit_with_shadows_shader
 )
@@ -1453,15 +1453,10 @@ def update_liberation():
             interaction_text.text = "Lever locked (No prisoner)"
             interaction_text.enabled = True
     else:
-        # Le joueur s'est éloigné du levier : on ne touche à rien SAUF si c'était
-        # ce levier qui affichait du texte
-        if _liberation_en_cours or interaction_text.text in [
-            "Maintenir E pour libérer le prisonnier",
-                "Le levier est bloqué (Aucun prisonnier)"] or "Libération :" in interaction_text.text:
-            interaction_text.enabled = False
-            _liberation_en_cours = False
-            _liberation_timer = 0.0
-            _liberation_cible = None
+        interaction_text.enabled = False
+        _liberation_en_cours = False
+        _liberation_timer = 0.0
+        _liberation_cible = None
 
 
 def verifier_defaite():
