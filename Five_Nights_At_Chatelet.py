@@ -2275,10 +2275,6 @@ def input(key):
     if key == 'left mouse down':
         do_attack()
 
-    if key == 't':
-        print("[DEBUG] Test dégâts forcé")
-        receive_damage(999)
-
     if key == 'k':
         for mur in mur_cylindre:
             mur.visible = not mur.visible
