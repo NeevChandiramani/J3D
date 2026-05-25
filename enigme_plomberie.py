@@ -1,25 +1,6 @@
 from ursina import *
 import math
 
-# ──────────────────────────────────────────────
-# ENIGME PLOMBERIE  —  Five Nights at Châtelet
-# ──────────────────────────────────────────────
-# Intégration dans ton main :
-#
-#   from enigme_plomberie import EnigmePlomberie
-#   enigme = EnigmePlomberie(on_success=ma_fonction_callback)
-#
-#   # Ajouter dans input() :
-#   enigme.handle_input(key)
-#
-#   # Ajouter dans update() :
-#   enigme.update()
-#
-#   # Déclencher depuis la touche 'e' :
-#   if enigme.can_interact(joueur.position, cube_vanne.position):
-#       enigme.open()
-# ──────────────────────────────────────────────
-
 INTERACT_RANGE   = 3.0
 REQUIRED_SUCCESS = 3       # succès consécutifs pour valider
 BASE_SPEED       = 0.45    # vitesse de départ de l'aiguille (unités/s, 0→1)

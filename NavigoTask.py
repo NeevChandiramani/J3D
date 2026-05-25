@@ -1,28 +1,3 @@
-"""
-NavigoTask.py — Mini-jeu "Swipe Pass Navigo" style Among Us
-Compatible Ursina Engine (pip install ursina)
-
-INTÉGRATION DANS TON PROJET :
-    from NavigoTask import NavigoTask
-
-    # Dans ton init, passe la référence à ton entité joueur :
-    navigo_task = NavigoTask(player=joueur, position=(x, y, z))
-
-    # Chaque frame dans ton update() principal :
-    navigo_task.update()
-
-    # Pour bloquer le mouvement du joueur, vérifie :
-    if navigo_task.is_open:
-        return  # ou skip ton mouvement_joueur()
-
-    # Pour savoir si la tâche est réussie :
-    if navigo_task.completed:
-        # fait ce que tu veux (ouvrir une porte, etc.)
-        navigo_task.completed = False  # reset si tu veux rejouer
-
-    # Callback optionnel à la complétion :
-    navigo_task = NavigoTask(player=joueur, on_complete=ma_fonction)
-"""
 
 from ursina import *
 import time as _time

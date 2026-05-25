@@ -1,21 +1,6 @@
 from ursina import *
 import random
 
-# ──────────────────────────────────────────────
-# ENIGME ELECTRIQUE  —  Five Nights at Châtelet
-# ──────────────────────────────────────────────
-# Intégration dans ton main :
-#   from enigme_electrique import EnigmeElectrique
-#   enigme = EnigmeElectrique(on_success=ma_fonction_callback)
-#   # Dans input() ou update() de ton main :
-#   enigme.handle_input(key)   # pour 'escape'
-#   enigme.update()            # si tu veux le cooldown de fermeture
-#
-# Déclencher l'ouverture (depuis ta touche 'e') :
-#   if enigme.can_interact(joueur.position, cube_electrique.position):
-#       enigme.open()
-# ──────────────────────────────────────────────
-
 N_SWITCHES = 5
 INTERACT_RANGE = 3.0
 
