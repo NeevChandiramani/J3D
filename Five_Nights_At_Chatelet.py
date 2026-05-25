@@ -210,6 +210,7 @@ def _apply_role(role_name):
     attack_indicator.enabled = role_data["can_attack"]
     _role_announced = True
     _role_announce_timer = ROLE_ANNOUNCE_DURATION
+    quete_text.enabled = (player_role == "Survivor")
     show_role_announce()
     print(f"[ROLE] Role attribué : {player_role}")
     init_embuscadeur()
@@ -816,6 +817,10 @@ def valider_une_tache():
         if network and network.connected and network.my_id is not None:
             network.sock.sendall(
                 (json.dumps({"type": "survivant_fini", "id": network.my_id}) + "\n").encode())
+    
+    quete_text.text = f'Quêtes : {mes_taches_accomplies} / {total_de_mes_taches}'
+    if mes_taches_accomplies >= total_de_mes_taches:
+        quete_text.color = color.rgba(80, 255, 120, 255)
 
 
 def declencher_retour_menu():
@@ -1608,6 +1613,14 @@ hp_text = Text(
     scale=1.5,
     parent=camera.ui,
     color=color.lime
+)
+
+quete_text = Text(
+    text='Quêtes : 0 / 4',
+    position=(-0.8, -0.25),
+    scale=1.5,
+    parent=camera.ui,
+    color=color.rgba(80, 160, 255, 255)
 )
 
 # Flash rouge reçu lors d'un coup
