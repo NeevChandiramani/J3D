@@ -818,7 +818,7 @@ def valider_une_tache():
             network.sock.sendall(
                 (json.dumps({"type": "survivant_fini", "id": network.my_id}) + "\n").encode())
     
-    quete_text.text = f'Quêtes : {mes_taches_accomplies} / {total_de_mes_taches}'
+    quete_text.text = f'Quests: {mes_taches_accomplies} / {total_de_mes_taches}'
     if mes_taches_accomplies >= total_de_mes_taches:
         quete_text.color = color.rgba(80, 255, 120, 255)
 
@@ -1313,7 +1313,7 @@ levier_cube = Entity(
 )
 
 interaction_text = Text(
-    text='[E] Liberer',
+    text='[E] Liberate',
     parent=camera.ui,
     origin=(0, 0),
     position=(0, 0),
@@ -1616,7 +1616,7 @@ hp_text = Text(
 )
 
 quete_text = Text(
-    text='Quêtes : 0 / 4',
+    text='Quests: 0 / 4',
     position=(-0.8, -0.25),
     scale=1.5,
     parent=camera.ui,
@@ -1644,7 +1644,7 @@ attack_indicator = Text(
 
 # Indication d'interaction (apparaît près d'une tâche)
 interact_hint = Text(
-    text=f"Appuyez sur [{touches['Interact'].upper()}] pour interagir",
+    text=f"Press [{touches['Interact'].upper()}] to interact",
     position=(0, -0.28),
     origin=(0, 0),
     scale=1.1,
@@ -1801,7 +1801,7 @@ Entity(
 
 help_title = Text(
     parent=help_overlay_root,
-    text='AIDE  —  COMMANDES',
+    text='HELP  —  CONTROLS',
     origin=(0, 0),
     position=(0, 0.35),
     scale=1.8,
@@ -1831,7 +1831,7 @@ help_objective = Text(
 
 help_footer = Text(
     parent=help_overlay_root,
-    text='Appuyez sur  H  pour fermer',
+    text='Press H to close',
     origin=(0, 0),
     position=(0, -0.38),
     scale=1.0,
@@ -1841,7 +1841,7 @@ help_footer = Text(
 
 # Indicateur permanent pour faire découvrir l'overlay
 help_hint = Text(
-    text='[H] Aide',
+    text='[H] Help',
     position=(0, -0.47),
     origin=(0, 0),
     scale=1.0,
@@ -1853,12 +1853,12 @@ help_hint = Text(
 def build_help_text():
     """Génère le contenu de l'overlay d'aide à partir des touches courantes."""
     noms_affichage = {
-        'space': 'Espace',
-        'left shift': 'Maj gauche',
-        'right shift': 'Maj droite',
-        'left control': 'Ctrl gauche',
-        'right control': 'Ctrl droite',
-        'enter': 'Entrée',
+        'space': 'Space',
+        'left shift': 'Left Shift',
+        'right shift': 'Right Shift',
+        'left control': 'Left Ctrl',
+        'right control': 'Right Ctrl',
+        'enter': 'Enter',
     }
 
     # Inverse du mapping AZERTY -> Ursina appliqué par Menu.py au moment
@@ -1881,17 +1881,17 @@ def build_help_text():
         return noms_affichage.get(t, t.upper())
 
     lignes = [
-        ('Avancer', libelle_touche(touches['Move Forward'])),
-        ('Reculer', libelle_touche(touches['Move Backward'])),
-        ('Gauche', libelle_touche(touches['Move Left'])),
-        ('Droite', libelle_touche(touches['Move Right'])),
-        ('Sauter', libelle_touche(touches['Jump'])),
+        ('Forward', libelle_touche(touches['Move Forward'])),
+        ('Backward', libelle_touche(touches['Move Backward'])),
+        ('Left', libelle_touche(touches['Move Left'])),
+        ('Right', libelle_touche(touches['Move Right'])),
+        ('Jump', libelle_touche(touches['Jump'])),
         ('Sprint', libelle_touche(touches['Sprint'])),
-        ('Interagir', libelle_touche(touches['Interact'])),
-        ('Attaquer', 'Clic gauche'),
-        ('Aide', 'H'),
-        ('Plein écran', 'F11'),
-        ('Pause', 'Échap'),
+        ('Interact', libelle_touche(touches['Interact'])),
+        ('Attack', 'Left Click'),
+        ('Help', 'H'),
+        ('Fullscreen', 'F11'),
+        ('Pause', 'Escape'),
     ]
     help_body.text = '\n'.join(
         f"{nom.ljust(12)} :  {touche}" for nom, touche in lignes
@@ -1899,12 +1899,12 @@ def build_help_text():
 
     if player_role and player_role in ROLES:
         help_objective.text = (
-            f"Objectif ({player_role}) : {ROLES[player_role]['description']}"
+            f"Objective ({player_role}): {ROLES[player_role]['description']}"
         )
     else:
         help_objective.text = (
-            "Objectif : Survivants, trouvez les sorties.  "
-            "Infectés, éliminez les survivants."
+            "Objective: Survivors, find the exits. "
+            "Infected, eliminate the survivors."
         )
 
 
@@ -1980,7 +1980,7 @@ def ouvrir_aide_depuis_pause():
 
 Button(
     parent=pause_overlay_root,
-    text='Reprendre',
+    text='Resume',
     text_color=color.black,
     position=(0, 0.05),
     scale=(0.36, 0.08),
@@ -1992,7 +1992,7 @@ Button(
 
 Button(
     parent=pause_overlay_root,
-    text='Aide',
+    text='Help',
     text_color=color.black,
     position=(0, -0.06),
     scale=(0.36, 0.08),
@@ -2004,7 +2004,7 @@ Button(
 
 Button(
     parent=pause_overlay_root,
-    text='Quitter',
+    text='Quit',
     text_color=color.black,
     position=(0, -0.17),
     scale=(0.36, 0.08),
@@ -2368,7 +2368,7 @@ def update():
             interact_hint.enabled = False
             return
 
-    # Affiche l'indication "Appuyez sur E" si le joueur est proche d'une tâche
+    # Affiche l'indication "Press E" si le joueur est proche d'une tâche
     show_hint = False
     if calcul_termine and player_role == "Survivor" and not is_dead:
         task_positions = [
@@ -2571,7 +2571,7 @@ def update():
 
             # 1. Message de victoire
             Text(
-                text="VICTORY! You escaped from Châtelet!",
+                text="VICTORY! You escaped from Chatelet!",
                 origin=(0, 0),
                 scale=2.3,
                 color=color.green,
