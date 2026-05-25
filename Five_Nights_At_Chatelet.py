@@ -300,9 +300,9 @@ def update_connection_screen():
             lobby_snapshot = network.get_lobby_state() if hasattr(network, 'get_lobby_state') else {}
             total = len(lobby_snapshot) if lobby_snapshot else 1
             nb_prets = sum(1 for info in lobby_snapshot.values() if info.get('ready'))
-            ready_label = 'PRÊT' if _local_ready else 'PAS PRÊT'
-            connection_screen_status.text = f'{nb_prets} / {total} joueurs prêts  —  vous : {ready_label}'
-            connection_screen_sub.text    = '[R] basculer prêt    [F] démarrer maintenant'
+            ready_label = 'READY' if _local_ready else 'NOT READY'
+            connection_screen_status.text = f'{nb_prets} / {total} players ready  —  you: {ready_label}'
+            connection_screen_sub.text    = '[R] toggle ready    [F] start game now'
             if network.get_assigned_roles():
                 _connection_phase = 2
                 _connection_fade  = 1.0
@@ -695,7 +695,7 @@ def purge_validee():
     if _tache_plomberie_faite:
         return
     _tache_plomberie_faite = True
-    print("[GAME] Égouts purgés !")
+    print("[GAME] Sewers purged!")
     valider_une_tache()
 
 enigme_plomberie = EnigmePlomberie(on_success=purge_validee)
@@ -705,7 +705,7 @@ def enigme_resolue():
     if _tache_electrique_faite:
         return
     _tache_electrique_faite = True
-    print("[GAME] Puzzle électrique validé !")
+    print("[GAME] Electrical puzzle solved!")
     valider_une_tache()
 
 enigme = EnigmeElectrique(on_success=enigme_resolue)
@@ -715,7 +715,7 @@ def signalisation_restauree():
     if _tache_signalisation_faite:
         return
     _tache_signalisation_faite = True
-    print("[GAME] Signalisation restaurée !")
+    print("[GAME] Signage restored!")
     valider_une_tache()
 
 enigme_signalisation = EnigmeLabyrintheSignalisation(on_success=signalisation_restauree)
@@ -747,7 +747,7 @@ def init_tasks_math():
     _pos_screamer2  = pos['screamer2']  + Vec3(0, 2.5, 0)
     
     calcul_termine = True
-    print("[TASKS] Positions calculées avec succès en arrière-plan !")
+    print("[TASKS] Positions calculated successfully in background!")
 
 threading.Thread(target=init_tasks_math, daemon=True).start()
 
@@ -762,11 +762,11 @@ def valider_une_tache():
     global mes_taches_accomplies, mon_statut_fini
     
     mes_taches_accomplies += 1
-    print(f"[TÂCHES] Progression : {mes_taches_accomplies}/{total_de_mes_taches}")
+    print(f"[TASKS] Progress: {mes_taches_accomplies}/{total_de_mes_taches}")
     
     if mes_taches_accomplies >= total_de_mes_taches and not mon_statut_fini:
         mon_statut_fini = True
-        print("[GAME] Toutes mes tâches finies, message envoyé !")
+        print("[GAME] All tasks done, message sent!")
         if network and network.connected and network.my_id is not None:
             network.sock.sendall((json.dumps({"type": "survivant_fini", "id": network.my_id}) + "\n").encode())
 
@@ -1289,7 +1289,7 @@ def receive_damage(amount):
 def player_death():
     global is_dead
     is_dead = True
-    hp_text.text = 'HP: 0  —  EMPRISONNÉ'
+    hp_text.text = 'HP: 0  —  IMPRISONED'
     hp_text.color = color.red
     play_sfx('death')
     
@@ -1343,7 +1343,7 @@ def update_liberation():
     if dist_joueur_levier < RAYON:
         if cible_trouvee:
             if not _liberation_en_cours:
-                interaction_text.text = "Maintenir E pour libérer le prisonnier"
+                interaction_text.text = "Hold E to free the prisoner"
                 interaction_text.enabled = True
             
             # 4. Le joueur maintient la touche d'interaction enfoncée
@@ -1355,7 +1355,7 @@ def update_liberation():
 
                 _liberation_timer += time.dt
                 pct = int((_liberation_timer / LIBERATION_DUREE) * 100)
-                interaction_text.text = f'Libération : {pct}%'
+                interaction_text.text = f'Freeing: {pct}%'
                 interaction_text.enabled = True
 
                 # --- FIN DU TIMER : LIBÉRATION RÉUSSIE ---
@@ -1366,7 +1366,7 @@ def update_liberation():
                                 "type": "liberer_joueur",
                                 "target_id": pid
                             }) + "\n").encode())
-                            print(f"[GAME] Libération envoyée pour {pid}")
+                            print(f"[GAME] Liberation sent for {pid}")
                     
                     _liberation_en_cours = False
                     _liberation_timer = 0.0
@@ -1379,7 +1379,7 @@ def update_liberation():
                     _liberation_timer = 0.0
         else:
             # Le joueur est proche du levier mais il n'y a aucun prisonnier dedans
-            interaction_text.text = "Le levier est bloqué (Aucun prisonnier)"
+            interaction_text.text = "Lever locked (No prisoner)"
             interaction_text.enabled = True
     else:
         # Le joueur s'est éloigné du levier : on ne touche à rien SAUF si c'était ce levier qui affichait du texte
@@ -1407,7 +1407,7 @@ def verifier_defaite():
         defaite_declenchee = True
         if player_role == 'Survivor':
             msg_fin = Text(
-                text="DÉFAITE...\nVous avez tous été emprisonnés !",
+                text="DEFEAT...\nYou have all been imprisoned!",
                 origin=(0, 0),
                 scale=2.5,
                 color=color.red,
@@ -1415,7 +1415,7 @@ def verifier_defaite():
             )
         else:
             msg_fin = Text(
-                text="VICTOIRE !\nTous les survivants sont emprisonnés !",
+                text="VICTORY!\nAll survivors are imprisoned!",
                 origin=(0, 0),
                 scale=2.5,
                 color=color.green,
@@ -1573,7 +1573,7 @@ interact_hint = Text(
 )
 
 network_text = Text(
-    text='Réseau: connexion...',
+    text='Network: connecting...',
     position=(-0.8, 0.45),
     scale=1.2,
     parent=camera.ui,
@@ -1677,12 +1677,12 @@ connection_screen_sub = Text(
 )
 
 if connection_ok:
-    connection_screen_status.text = 'Serveur connecté'
-    connection_screen_sub.text    = 'Mode multijoueur'
+    connection_screen_status.text = 'Server connected'
+    connection_screen_sub.text = 'Multiplayer mode'
     _connection_status_rgb        = (80, 220, 100)
 else:
-    connection_screen_status.text = 'Connexion échouée'
-    connection_screen_sub.text    = 'Mode solo'
+    connection_screen_status.text = 'Connection failed'
+    connection_screen_sub.text    = 'Single player mode'
     _connection_status_rgb        = (220, 50, 50)
 
 
@@ -2268,9 +2268,9 @@ def update():
                     obj.visible = False
                     obj.collider = None
                     
-            print("[GAME] Infecté : Tâches masquées correctement.")
+            print("[GAME] Infected: Tasks hidden correctly.")
         else:
-            print("[GAME] Survivant : Tâches visibles et en place.")
+            print("[GAME] Survivor: Tasks visible and in place.")
             
         tasks_placees = True
 
@@ -2324,7 +2324,7 @@ def update():
 
     # Réseau
     if network.connected:
-        network_text.text = f'Réseau: connecté ({len(ghost_entities) + 1} joueur(s))'
+        network_text.text = f'Network: connected ({len(ghost_entities) + 1} player(s))'
         network_text.color = color.lime
 
         sync_roles_from_server()
@@ -2345,7 +2345,7 @@ def update():
 
         update_ghosts(network.get_other_players())
     else:
-        network_text.text = 'Réseau: déconnecté'
+        network_text.text = 'Network: disconnected'
         network_text.color = color.red
 
 
@@ -2450,14 +2450,14 @@ def update():
         if msg['type'] == 'survivant_fini':
             id_joueur = msg['id']
             survivants_ayant_fini.add(id_joueur)
-            print(f"[RESEAU] Le joueur {id_joueur} a fini ses tâches !")
+            print(f"[NETWORK] Player {id_joueur} finished their tasks!")
         elif msg['type'] == 'survivant_emprisonne':
             survivants_en_prison.add(msg['id'])
-            print(f"[PRISON] Joueur {msg['id']} emprisonné")
+            print(f"[PRISON] Player {msg['id']} imprisoned")
         elif msg['type'] == 'liberer_joueur':
             if msg.get('target_id') == str(network.my_id):
                 respawn_player()
-                print("[PRISON] Tu as été libéré !")
+                print("[PRISON] You have been freed!")
             survivants_en_prison.discard(msg.get('target_id'))
 
     if not mur_cree and player_role == 'Survivor':
@@ -2480,7 +2480,7 @@ def update():
                 collider=None
             )
             mur_cree = True
-            print("[GAME] Le mur vert de la victoire est apparu ! Fuyez !")
+            print("[GAME] The victory green wall has appeared! Run!")
 
     global victoire_declenchee
     if mur_cree and not victoire_declenchee:
@@ -2488,11 +2488,11 @@ def update():
         # Et s'il est bien situé sur la longueur du mur (Z entre -11.5 et 12.0)
         if abs(joueur.x - 56.4) < 1.3 and -11.5 <= joueur.z <= 12.0:
             victoire_declenchee = True
-            print("[VICTOIRE] Vous avez traversé le mur !")
+            print("[VICTORY] You crossed the wall!")
             
             # 1. Message de victoire
             Text(
-                text="VICTOIRE ! Vous vous êtes échappés du Châtelet !",
+                text="VICTORY! You escaped from Châtelet!",
                 origin=(0, 0),
                 scale=2.3,
                 color=color.green,
